@@ -1,0 +1,78 @@
+{
+  "coordinateSystem": "Original downloaded source pixels, [left, top, right, bottom], right and bottom exclusive. Boxes include the complete hairstyle and upper shoulders. Apply segmentation to the full source before cropping where possible.",
+  "reviewedBy": "collect_current visual source review",
+  "players": [
+    {
+      "id": "haaland",
+      "sourcePath": "sources/haaland.jpg",
+      "sourceSize": [500, 703],
+      "cropBox": [0, 0, 500, 570],
+      "headBoundsApprox": [120, 30, 403, 395],
+      "quality": "usable",
+      "notes": "Clear close 3/4 head with all visible hair. The tied-back ponytail is behind the head and not visibly distinctive in this angle; do not invent it. No other person intrudes on the body boundary."
+    },
+    {
+      "id": "salah",
+      "sourcePath": "sources/salah.jpg",
+      "sourceSize": [621, 828],
+      "cropBox": [0, 0, 621, 710],
+      "headBoundsApprox": [100, 1, 489, 530],
+      "quality": "usable-with-mask-cleanup",
+      "notes": "Complete visible curly hairstyle, top wisps nearly touch the source top. Add white padding above; no hidden hair may be reconstructed. Other person's bare arm enters left background around x0..160,y175..355, touching behind the ear; other woman's hair/clothes occupy left below y340. Main Salah component must exclude both. Inspect left ear-to-jacket outline after segmentation."
+    },
+    {
+      "id": "modric",
+      "sourcePath": "sources/modric.png",
+      "sourceSize": [478, 668],
+      "cropBox": [35, 0, 420, 365],
+      "headBoundsApprox": [154, 7, 346, 244],
+      "quality": "usable-with-mask-cleanup",
+      "notes": "Complete hair with thin upper margin. Other player's arm is present at the extreme right, beginning near x414,y210, and should be excluded. The proposed right crop removes most of it; remaining foreground at right must belong to Modric only. Add white padding above."
+    },
+    {
+      "id": "cucurella",
+      "sourcePath": "sources/cucurella.jpg",
+      "sourceSize": [1388, 1945],
+      "cropBox": [0, 0, 1388, 1250],
+      "headBoundsApprox": [39, 22, 1165, 888],
+      "quality": "strong",
+      "notes": "Full broad curls and frontal profile are clear. Preserve the fine detached-looking curly wisps that are genuinely his hair; avoid cutting curls at the sides. Source subject's upper torso is unobstructed."
+    },
+    {
+      "id": "sane",
+      "sourcePath": "sources/sane.jpg",
+      "sourceSize": [500, 750],
+      "cropBox": [0, 50, 500, 650],
+      "headBoundsApprox": [46, 82, 420, 485],
+      "quality": "usable-with-mask-cleanup",
+      "notes": "Selected 2018 braided hairstyle, not an afro. The complete braids on both sides are visible. Teammate hand rests on left shoulder around x0..121,y434..556. Remove that hand from the silhouette and inspect the left shoulder. Other than the shoulder contact, the portrait is clear."
+    },
+    {
+      "id": "ake",
+      "sourcePath": "sources/ake.jpg",
+      "sourceSize": [500, 736],
+      "cropBox": [0, 5, 500, 675],
+      "headBoundsApprox": [65, 43, 451, 534],
+      "quality": "strong",
+      "notes": "Complete frontal braids including the lower individual strand on the left. Preserve all hanging strands and external gaps. No body-boundary obstruction."
+    },
+    {
+      "id": "grealish",
+      "sourcePath": "sources/grealish.jpg",
+      "sourceSize": [500, 672],
+      "cropBox": [0, 0, 500, 625],
+      "headBoundsApprox": [98, 11, 404, 459],
+      "quality": "strong",
+      "notes": "Full hairstyle near the top; add margin above. The dark band is an internal feature and must not remain as a stripe. Preserve the photographed leaning hair volume and beard/chin edge."
+    },
+    {
+      "id": "griezmann",
+      "sourcePath": "sources/griezmann.jpg",
+      "sourceSize": [500, 667],
+      "cropBox": [85, 0, 425, 455],
+      "headBoundsApprox": [144, 9, 377, 303],
+      "quality": "usable",
+      "notes": "Long-haired 2021 portrait with complete back-of-head hair. Crop removes the outstretched glove at the left and emphasizes head/neck. Shoulder pose remains asymmetrical because it is his actual photographed pose; do not fabricate symmetrical shoulders."
+    }
+  ]
+}

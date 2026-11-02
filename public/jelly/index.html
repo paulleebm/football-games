@@ -1,0 +1,1445 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#0b3d2e">
+  <title>발롱도르 만들기</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="../favicon-32.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; background: #0b3d2e; color: #fff; font-family: "Jua", sans-serif; overflow: hidden; }
+    body { display: flex; flex-direction: column; user-select: none; -webkit-user-select: none; }
+    header { display: flex; align-items: center; gap: 12px; padding: 10px 16px; }
+    header a { color: #cfe9dc; text-decoration: none; font-size: 15px; }
+    header h1 { font-size: 20px; flex: 1; }
+    #mute { background: none; border: 0; font-size: 20px; cursor: pointer; padding: 0 4px; }
+    .stat { text-align: center; line-height: 1.1; }
+    .stat small { display: block; font-size: 11px; color: #9cc9b3; }
+    .stat b { font-size: 20px; }
+    #stage { flex: 1; position: relative; touch-action: none; }
+    canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+    #over { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(5, 25, 18, .72); }
+    #over.show { display: flex; }
+    .card { background: #fff; color: #17352a; border-radius: 18px; padding: 24px 28px; text-align: center; box-shadow: 0 6px 0 #3fd6a5; }
+    .card h2 { font-size: 26px; margin-bottom: 6px; }
+    .card p { font-size: 17px; margin-bottom: 16px; }
+    .card button { font-family: inherit; font-size: 18px; border: 0; border-radius: 12px; padding: 10px 26px; background: #17a673; color: #fff; cursor: pointer; }
+    .card input { font-family: inherit; font-size: 16px; padding: 9px 12px; border: 2px solid #cfe3d8; border-radius: 10px; width: 150px; }
+    .lb-form { display: flex; gap: 6px; justify-content: center; margin-bottom: 6px; }
+    .lb-form button { padding: 9px 14px; font-size: 16px; background: #caa23c; }
+    .lb-msg { min-height: 20px; font-size: 14px; color: #5a7a6c; margin-bottom: 6px; }
+    #lbBox { max-height: 34vh; overflow-y: auto; margin-bottom: 14px; }
+    table.lb { width: 100%; border-collapse: collapse; font-size: 15px; }
+    table.lb th { color: #7a9a8c; font-weight: normal; padding: 3px 6px; }
+    table.lb td { padding: 4px 6px; border-top: 1px solid #edf3ef; }
+    table.lb tr.me td { background: #fff4cc; }
+    #over .card { width: min(330px, calc(100vw - 32px)); padding: 20px 18px; }
+  </style>
+  <script src="/points.js"></script>
+</head>
+<body>
+  <header>
+    <a href="../">← 홈</a>
+    <h1>발롱 만들기</h1>
+    <button id="mute" aria-label="효과음 켜기/끄기">🔊</button>
+    <div class="stat"><small>점수</small><b id="score">0</b></div>
+    <div class="stat"><small>최고</small><b id="best">0</b></div>
+  </header>
+  <div id="stage">
+    <canvas id="cv"></canvas>
+    <div id="over"><div class="card">
+      <h2>경기 종료</h2>
+      <p id="final">0점</p>
+      <div class="lb-form"><input id="nick" maxlength="20" placeholder="닉네임"><button id="submitBtn">랭킹 등록</button></div>
+      <div class="lb-msg" id="lbMsg"></div>
+      <div id="lbBox"></div>
+      <button id="again">다시 하기</button>
+    </div></div>
+  </div>
+
+<script>
+// ?mode=hard → 딱복 모드: 같은 규칙, 젤리 대신 단단한 공. 랭킹·최고기록·로그도 따로 센다
+window.JELLY_HARD = new URLSearchParams(location.search).get('mode') === 'hard';
+document.title = '발롱도르 만들기 · ' + (window.JELLY_HARD ? '딱복' : '물복');
+(() => {
+  const HARD = window.JELLY_HARD;
+  document.querySelector('header h1').textContent = '발롱 만들기 · ' + (HARD ? '딱복' : '물복');
+  // ---- 설정 ----
+  const HW = 185;              // 골대 안쪽 반폭
+  const FLOOR = 640;           // 골대 바닥 y (천장은 y = 0)
+  const DANGER = 130;          // 종료선: 쌓인 젤리가 이 선을 OVER_TIME초 넘게 넘어 있으면 경기 종료
+  const OVER_TIME = 2.5;       // 종료선을 넘은 채로 버틸 수 있는 시간 (초)
+  const WARN_GAP = 110;        // 더미가 종료선에서 이 거리 안으로 올라오면 종료선이 보이기 시작한다
+  const QUEUE_MID = DANGER / 2; // 다음에 쏠 젤리는 대기 칸 가운데(이 높이, x = 0)에 하나만 떠 있다
+  const NEXT_DELAY = 0.35;     // 쏘고 나서 다음 젤리가 나오기까지 (초)
+  const QUEUE_ROUND = 0.3;     // 대기 젤리를 동그랗게 유지하는 힘
+  const SHAPE_K = 0.0015;      // 경기장 젤리가 원래 동그란 모양으로 돌아가려는 아주 약한 힘 (0이면 완전 물풍선)
+  const G = 460;               // 아래 방향 중력 (약하게: 우주처럼 둥실. 그래도 떨어지면서 속도가 붙고, 쌓이면 무게로 눌려 빈틈을 채운다)
+  const SUB = 6;               // 프레임당 물리 서브스텝
+  const H = 1 / 60 / SUB;
+  const DAMP = 0.997;          // 위아래 공기 저항 (낮을수록 느릿하게 떨어진다. 너무 낮으면 떨어질 때 속도가 안 붙는다)
+  const INNER_DAMP = 0.06;     // 젤리 안쪽 출렁임을 죽이는 정도: 모래주머니처럼 철퍽 퍼지고 통통 튀지 않는다
+  const DAMP_X = 0.9995;       // 좌우 공기 저항 (거의 없어서 우주처럼 옆으로 오래 둥둥 떠다닌다)
+  // 테두리 두께(공 방식): 물리 계산용 테두리는 보이는 테두리보다 BALL만큼 안쪽에 있고,
+  // 물리 테두리끼리는 SKIN(= BALL 두 개) 이상 떨어지게 한다 → 보이는 테두리는 딱 맞닿고,
+  // 얇은 선이 아니라 두께끼리 부딪히니 테두리가 서로 엇갈려 꼬이기 어렵다
+  const BALL = 7;
+  const SKIN = BALL * 2;
+  const TANGLE_FIX = 0.1;      // 테두리가 꼬인 채로 이 시간(초)을 넘기면 강제로 풀어준다
+  const DENSE_R = 40;          // 무게 기준 반지름
+  const SINK_MIN = 0.6, SINK_MAX = 1.5;   // 크기별 중력 배율 범위 (큰 젤리 0.6배 ~ 작은 젤리 1.5배)
+  const DENSITY_POW = 2;       // 작을수록 무거워지는 정도 (0이면 크기 상관없이 같은 무게, 2면 작을수록 훨씬 무겁다)
+  const CONTACT_DAMP = 0.2;    // 닿은 점끼리의 마찰 (크면 더미가 끈적하게 굳어서 파고들 수 없다)
+  const GROW = 0.08;           // 합쳐진 젤리가 커지는 속도 (작을수록 주변을 덜 튕겨낸다)
+  const WALL_SLIDE = 0.97;     // 옆벽에 닿은 점이 미끄러져 내려가는 정도 (작으면 벽에 달라붙는다)
+  const FLOOR_SLIDE = 0.97;    // 바닥에 닿은 점이 옆으로 미끄러지는 정도
+  // 물 넣은 비닐봉지 모델: 원래 모양은 기억하지 않고 부피와 봉지 둘레만 지킨다
+  const SLACK = 1.25;          // 봉지 둘레 여유 (1이면 동그랗게 팽팽, 클수록 헐렁해서 잘 퍼진다)
+  const STRETCH_K = 0.9;       // 봉지가 늘어나는 것에 대한 저항
+  const SPACING_K = 0.3;       // 점 간격을 고르게 유지 (주름 방지)
+  const CONVEX_K = 0.5;        // 움푹 꺼진 꼭짓점을 펴는 힘 (테두리가 쭈글쭈글해지지 않게)
+  const AREA_K = 0.9;          // 부피 유지
+  // 발사
+  const MAX_DRAG = 160;        // 이만큼 끌면 최대 세기
+  const MIN_SPEED = 330, MAX_SPEED = 900;
+  const ARROW_MIN = 10, ARROW_MAX = 58;  // 조준 화살표 길이 (최소 세기 ~ 최대 세기)
+  const HEAVY = 3;             // 최대 세기로 쏜 젤리는 이 배수만큼 무거워지고 마찰도 줄어 더미를 파고든다
+  // 대기 칸 개수
+
+  // 2026 발롱도르 10위 → 1위. 작은 것부터 합쳐서 1위 케인을 만드는 게 목표
+  // photo: 사진 경로 (없으면 이름만 표시). 메시는 사이트에 사진이 없어 이 폴더에 따로 받아뒀다
+  const CAP = '../captcha/photos/';
+  const TIERS = [
+    { rank: 10, name: '파비안 루이스', photo: CAP + '724488f17af12b590d90.png', r: 30, c: '#ff7aa8' },
+    { rank: 9, name: '올리세', photo: CAP + '99093ec5cb412b70ef8e.png', r: 36, c: '#ffa24c' },
+    { rank: 8, name: '홀란', photo: CAP + '29e74468beeb3384f576.png', r: 43, c: '#ffd84a' },
+    { rank: 7, name: '뎀벨레', photo: CAP + '7210eab9141e76522fb2.png', r: 50, c: '#9be15d' },
+    { rank: 6, name: '크바라츠헬리아', photo: CAP + 'be67a6a0fc0c15cd2392.png', r: 57, c: '#3fd6a5' },
+    { rank: 5, name: '메시', photo: 'messi.png', r: 64, c: '#47b8ff' },
+    { rank: 4, name: '로드리', photo: CAP + '980bb1c3147409be08f5.png', r: 71, c: '#6b7cff' },
+    { rank: 3, name: '야말', photo: CAP + 'a9f23b894264435e7182.png', r: 78, c: '#b06bff' },
+    { rank: 2, name: '음바페', photo: CAP + 'fcd4cd697041d446a53a.png', r: 86, c: '#ff5b5b' },
+    { rank: 1, name: '케인', photo: CAP + 'c4e56af03835d6133ce1.png', r: 96, c: '#ffcf3a' },
+    // 최종: 케인 + 케인. 트로피끼리는 더 합쳐지지 않는다
+    { rank: 0, name: '발롱도르', photo: 'ballondor.jpg', r: 104, c: '#ffcf3a', final: true },
+  ];
+  const FINAL = TIERS.length - 1;
+  // 딱복 크기: 21에서 발롱도르 146까지 단계마다 같은 비율(약 1.21배)로 점점 커진다
+  const HARD_R = [21, 26, 31, 38, 46, 55, 67, 82, 99, 120, 146];
+  if (HARD) TIERS.forEach((t, i) => { t.r = HARD_R[i]; });
+
+  TIERS.forEach(t => {
+    t.img = new Image();
+    if (t.photo) t.img.src = t.photo;
+  });
+  // 대기 칸에 나오는 선수: 처음엔 10~8위만, 높은 단계를 만들수록 위 단계도 섞여 나온다 (최대 SPAWN_MAX_TIER까지)
+  const SPAWN_MAX_TIER = 5;    // 5 = 메시. 그 위(로드리~케인)는 합쳐서만 만들 수 있다
+  const MERGE_DELAY = 0.2;     // 같은 선수끼리 닿으면 이만큼 뒤에 무조건 합쳐진다 (초, 그 사이 튕겨 떨어져도 합쳐짐)
+  const CALM_TIME = 1.2;       // 합체 순간 주변 젤리 움직임을 잠깐 가라앉히는 시간 (튀는 것 방지)
+  const CALM_UP = 30;          // 합체 직후 위로 튀는 속도 상한 (px/s)
+  const MERGE_KICK = 0.1;      // 합체 순간 주변 젤리와 새 젤리의 속도를 이 배율로 줄인다
+  const BALLON_DOR_BONUS = 50000;
+  // 콤보: 한 번 던진 뒤 다음을 던지기 전까지 일어난 합체를 센다. 이어질수록 합체 점수 배수와 연출이 커진다
+  const COMBO_SHOW = 3;        // 이 콤보부터 화면에 '콤보!' 연출이 뜬다
+  const COMBO_MAX = 3;         // 콤보 점수 배수 상한
+  const HITSTOP = 0.045;       // 콤보 순간 물리를 잠깐 멈추는 시간 (콤보마다 조금씩 늘어남, 초)
+  const COMBO_COLORS = ['#ffe066', '#ffb02e', '#ff6b3d', '#ff3d6e', '#7fdcff'];
+  const SOFT_AGE = 1.2;        // 새로 생긴 젤리는 다 커질 때까지 이 시간 동안 주변을 속도 없이 위치로만 밀어낸다
+  const SOFT_SPEED = 120;      // 이보다 빠르게 움직이는 젤리와는 부드럽게 밀기를 쓰지 않는다 (px/s)
+  const SOFT_PUSH = 0.5;       // 그때 한 번에 밀어내는 비율 (작을수록 부드럽게 자리를 잡는다)
+
+  const cv = document.getElementById('cv');
+  const ctx = cv.getContext('2d');
+  const stage = document.getElementById('stage');
+  const $score = document.getElementById('score');
+  const $best = document.getElementById('best');
+  const $over = document.getElementById('over');
+  const $nick = document.getElementById('nick');
+  const $lbMsg = document.getElementById('lbMsg');
+  const $lbBox = document.getElementById('lbBox');
+  const $submit = document.getElementById('submitBtn');
+
+  let startBest = 0, bodies, particles, score, best, cooldown, overTime, gameOver, time, shake, nextIn = 0, nextTier = null, nextAt = 0, maxReached = 0, pileTop = FLOOR, warnIn = 0, played = false;
+  // 콤보 연출: 이어진 수, 마지막 합체 시각, 떠오르는 글자 · 퍼지는 고리, 멈춤 · 번쩍임 남은 시간
+  let combo = 0, maxCombo = 0, popups = [], rings = [], hitstop = 0, flash = 0, flashColor = '#fff';
+  const pairs = new Map();
+  let nextId = 0;
+  let view = { s: 1, x: 0, y: 0 };
+  let aim = null;
+
+  const BEST_KEY = HARD ? 'jellykick-best-hard' : 'jellykick-best';
+  try { best = +localStorage.getItem(BEST_KEY) || 0; } catch { best = 0; }
+
+  // ---- 젤리 ----
+  // 모든 젤리는 같은 물리(테두리 점 링 + 테두리 스프링 + 부피 유지 + 약한 모양 복원 + 충돌)를 쓰고,
+  // 상태(state)마다 "재질"만 다르다:
+  //   queue 대기 칸: 가운데 고정, 다른 젤리와 부딪히지 않음, 동그랗게 유지 (얼굴 똑바로)
+  //   fly   쏜 직후: 중력·감쇠 없이 일자로
+  //   free  경기장: 아래로 중력
+  const RIGID = 1;              // 딱복 모드 모양 복원 (1 = 매 순간 완전한 원)
+  // 딱복(딱딱한 공) 전용 값
+  const HARD_G = 2.4;          // 중력 배율: 둥실하지 않고 묵직하게 떨어진다
+  const HARD_ABSORB = 0.9;     // 부딪힐 때 튕겨 나가는 속도를 이만큼 흡수한다
+  const HARD_UP = 25;          // 다른 공에 닿은 직후 위로 튀는 속도 상한 (px/s): 거의 튀지 않고 툭 얹힌다
+  const HARD_TOUCH = 0.3;      // 닿은 뒤 그 제한이 이어지는 시간 (초)
+  const HARD_MAXPUSH = 3;      // 충돌 한 번에 밀어내는 최대 거리 (px): 깊게 겹쳐도 한 번에 튕겨내지 않고 몇 스텝에 걸쳐 푼다
+  const HARD_FRICTION = 0.3;   // 공끼리 마찰 배율 (작을수록 서로 미끄러지며 좌우로 굴러간다)
+  const MATERIAL = {
+    queue: { gravity: 0, damp: 0.9, shape: HARD ? RIGID : QUEUE_ROUND, rotate: false, mass: 1 },
+    fly: { gravity: 0, damp: 1, shape: HARD ? RIGID : SHAPE_K, rotate: true, mass: 1 },
+    free: { gravity: HARD ? G * HARD_G : G, damp: DAMP, dampX: DAMP_X, shape: HARD ? RIGID : SHAPE_K, rotate: true, mass: 1 },
+  };
+
+  // 점 개수별 단위원 좌표를 한 번만 계산해 둔다
+  const UNIT = new Map();
+  function unitCircle(n) {
+    let u = UNIT.get(n);
+    if (!u) {
+      u = { cos: new Float64Array(n), sin: new Float64Array(n) };
+      for (let i = 0; i < n; i++) { u.cos[i] = Math.cos(i / n * Math.PI * 2); u.sin[i] = Math.sin(i / n * Math.PI * 2); }
+      UNIT.set(n, u);
+    }
+    return u;
+  }
+  const GX = new Float64Array(64), GY = new Float64Array(64);   // 부피 계산용 임시 배열 (매번 새로 만들지 않음)
+
+  function makeBody(tier, x, y, vx = 0, vy = 0, s0 = 1, state = 'free') {
+    const r = TIERS[tier].r, rr = r - BALL;
+    const n = Math.min(44, Math.round(r * 0.42) + 12);
+    const u = unitCircle(n);
+    const b = { id: ++nextId, mergeT: 0, calm: 0, spd: 0, sink: HARD ? 1 : Math.max(SINK_MIN, Math.min(SINK_MAX, DENSE_R / r)), tier, r, rr, n, u, s: s0, state, heavy: 1, flyT: 0, freeT: 0, age: 0, alive: true,
+      px: new Float64Array(n), py: new Float64Array(n), ox: new Float64Array(n), oy: new Float64Array(n),
+      vx: new Float64Array(n), vy: new Float64Array(n), selfT: 0,
+      cx: x, cy: y, wob: 0, minx: 0, maxx: 0, miny: 0, maxy: 0, area0: Math.PI * r * r };
+    for (let i = 0; i < n; i++) {
+      b.px[i] = x + u.cos[i] * rr * s0; b.py[i] = y + u.sin[i] * rr * s0;
+      b.ox[i] = b.px[i] - vx * H; b.oy[i] = b.py[i] - vy * H;
+    }
+    // 다각형 넓이로 맞춰 둔다 (원 넓이보다 아주 조금 작다)
+    b.area0 = signedArea(b.px, b.py, n) / (s0 * s0);
+    bounds(b);
+    return b;
+  }
+
+  function signedArea(xs, ys, n) {
+    let a = 0;
+    for (let i = 0, j = n - 1; i < n; j = i++) a += xs[j] * ys[i] - xs[i] * ys[j];
+    return a / 2;
+  }
+
+  // 작은 젤리일수록 밀도가 높아 더 무겁다 → 큰 젤리를 밀어내고 사이로 가라앉아 아래쪽에 깔린다
+  // 딱복은 크기와 상관없이 밀도가 같다(무게 ∝ 넓이) → 작은 공이 큰 공 밑으로 파고들지 않고 그냥 위로 쌓인다
+  function mass(b) {
+    if (HARD) return Math.pow(b.r / DENSE_R, 2) * MATERIAL[b.state].mass;
+    return Math.pow(DENSE_R / b.r, DENSITY_POW) * b.heavy * MATERIAL[b.state].mass;
+  }
+
+  function centroid(b) {
+    let x = 0, y = 0;
+    for (let i = 0; i < b.n; i++) { x += b.px[i]; y += b.py[i]; }
+    b.cx = x / b.n; b.cy = y / b.n;
+  }
+
+  function bounds(b) {
+    let a = Infinity, c = -Infinity, d = Infinity, e = -Infinity;
+    for (let i = 0; i < b.n; i++) {
+      const x = b.px[i], y = b.py[i];
+      if (x < a) a = x; if (x > c) c = x; if (y < d) d = y; if (y > e) e = y;
+    }
+    b.minx = a; b.maxx = c; b.miny = d; b.maxy = e;
+  }
+
+  function velocity(b) {
+    let x = 0, y = 0;
+    for (let i = 0; i < b.n; i++) { x += b.px[i] - b.ox[i]; y += b.py[i] - b.oy[i]; }
+    return { x: x / b.n / H, y: y / b.n / H };
+  }
+
+  // stretch: 진행 방향 앞쪽 점은 조금 빠르게, 뒤쪽 점은 조금 느리게 → 물렁하게 늘어났다가 출렁이며 돌아온다
+  function setVelocity(b, vx, vy, stretch = 0) {
+    centroid(b);
+    const v = Math.hypot(vx, vy) || 1, dx = vx / v, dy = vy / v;
+    for (let i = 0; i < b.n; i++) {
+      const ex = b.px[i] - b.cx, ey = b.py[i] - b.cy, el = Math.hypot(ex, ey) || 1;
+      const k = 1 + stretch * (ex * dx + ey * dy) / el;
+      b.ox[i] = b.px[i] - vx * k * H; b.oy[i] = b.py[i] - vy * k * H;
+    }
+  }
+
+  // 한 서브스텝: 힘 → 테두리 → 부피 → 모양 → (대기 칸) 높이 고정. 상태별 차이는 MATERIAL 값뿐
+  function stepBody(b) {
+    const m = MATERIAL[b.state], n = b.n, u = b.u;
+    // 1) 힘과 이동 (Verlet)
+    // 세게 쏴서 무거워진 젤리는 공기 저항을 덜 받아 멀리 파고든다
+    const damp = b.heavy > 1 ? Math.pow(m.damp, 1 / b.heavy) : m.damp;
+    const dampX = Math.max(damp, m.dampX || 0);
+    // 밀도가 높은(작은) 젤리는 더 세게, 큰 젤리는 덜 세게 아래로 당긴다 → 작은 젤리가 큰 젤리 밑으로 파고든다
+    const dvy = m.gravity * b.sink * H * H;
+    // 합체 직후(합쳐진 젤리와 그 주변)에는 위로 튀어 오르는 속도만 막는다.
+    // 떨어지거나 옆으로 미끄러지는 건 그대로 둬서 공중에 멈춰 있는 것처럼 보이지 않게
+    // 딱복 모드는 공끼리 닿은 직후 위로 튀는 속도를 제한해 거의 튀지 않는다
+    let lift = 0;
+    const upCap = b.calm > 0 || (b.merged && b.age < SOFT_AGE) ? CALM_UP
+      : HARD && b.state === 'free' && b.touchT > 0 ? HARD_UP : 0;
+    if (upCap) {
+      let vyc = 0;
+      for (let i = 0; i < n; i++) vyc += b.py[i] - b.oy[i];
+      vyc = vyc / n * damp;
+      const cap = -upCap * H;
+      if (vyc < cap) lift = cap - vyc;
+    }
+    // 모래주머니 느낌: 각 점의 속도를 젤리 전체 평균 속도 쪽으로 당겨 안쪽 출렁임(탄성)을 줄인다
+    let mvx = 0, mvy = 0;
+    const inner = b.state === 'free' ? INNER_DAMP : 0;
+    if (inner) {
+      for (let i = 0; i < n; i++) { mvx += b.px[i] - b.ox[i]; mvy += b.py[i] - b.oy[i]; }
+      mvx /= n; mvy /= n;
+    }
+    for (let i = 0; i < n; i++) {
+      let rvx = b.px[i] - b.ox[i], rvy = b.py[i] - b.oy[i];
+      if (inner) { rvx += (mvx - rvx) * inner; rvy += (mvy - rvy) * inner; }
+      const vx = rvx * dampX, vy = rvy * damp + lift;
+      b.ox[i] = b.px[i]; b.oy[i] = b.py[i];
+      b.px[i] += vx; b.py[i] += vy + dvy;
+    }
+    // 2) 테두리: 원일 때 길이(L0)~SLACK배는 자유, 더 늘어나는 건 강하게, 주름은 약하게 막는다
+    const L0 = 2 * b.rr * b.s * Math.sin(Math.PI / n), L1 = L0 * SLACK;
+    for (let i = 0; i < n; i++) {
+      const j = i + 1 === n ? 0 : i + 1;
+      const dx = b.px[j] - b.px[i], dy = b.py[j] - b.py[i];
+      const d = Math.hypot(dx, dy) || 1e-4;
+      let k;
+      if (d > L1) k = (d - L1) / d * 0.5 * STRETCH_K;
+      else if (d < L0) k = (d - L0) / d * 0.5 * SPACING_K;
+      else continue;
+      b.px[i] += dx * k; b.py[i] += dy * k;
+      b.px[j] -= dx * k; b.py[j] -= dy * k;
+    }
+    // 3) 부피 유지: 넓이 제약을 위치로 정확히 투영 → 눌리면 옆으로 퍼진다
+    const C = signedArea(b.px, b.py, n) - b.area0 * b.s * b.s;
+    let sum = 0;
+    for (let i = 0; i < n; i++) {
+      const p = i === 0 ? n - 1 : i - 1, q = i + 1 === n ? 0 : i + 1;
+      GX[i] = 0.5 * (b.py[q] - b.py[p]); GY[i] = 0.5 * (b.px[p] - b.px[q]);
+      sum += GX[i] * GX[i] + GY[i] * GY[i];
+    }
+    if (sum > 1e-9) {
+      const lam = -C / sum * AREA_K;
+      for (let i = 0; i < n; i++) { b.px[i] += GX[i] * lam; b.py[i] += GY[i] * lam; }
+    }
+    // 3.5) 테두리 매끈하게: 안으로 움푹 꺼진 꼭짓점은 양옆 점의 가운데 쪽으로 펴서
+    //      쭈글쭈글한 주름 없이 볼록한 다각형 느낌을 유지한다 (맞닿은 면은 평평하게 눌린다)
+    for (let i = 0; i < n; i++) {
+      const p = i === 0 ? n - 1 : i - 1, q = i + 1 === n ? 0 : i + 1;
+      const ax = b.px[i] - b.px[p], ay = b.py[i] - b.py[p], bx = b.px[q] - b.px[i], by = b.py[q] - b.py[i];
+      if (ax * by - ay * bx >= 0) continue;   // 볼록한 꼭짓점은 그대로
+      b.px[i] += ((b.px[p] + b.px[q]) / 2 - b.px[i]) * CONVEX_K;
+      b.py[i] += ((b.py[p] + b.py[q]) / 2 - b.py[i]) * CONVEX_K;
+    }
+    // 4) 모양 복원: 동그란 모양 쪽으로 살짝. 경기장 젤리는 굴러간 회전을 따라가고, 대기 칸은 얼굴이 똑바르게
+    centroid(b);
+    let c = 1, s = 0;
+    if (m.rotate) {
+      let A = 0, B = 0;
+      for (let i = 0; i < n; i++) {
+        const qx = b.px[i] - b.cx, qy = b.py[i] - b.cy;
+        A += u.cos[i] * qy - u.sin[i] * qx; B += u.cos[i] * qx + u.sin[i] * qy;
+      }
+      const ang = Math.atan2(A, B); c = Math.cos(ang); s = Math.sin(ang);
+    }
+    const k = m.shape;
+    const R = b.rr * b.s, rMin = R * 0.22;
+    for (let i = 0; i < n; i++) {
+      const rx = u.cos[i] * R, ry = u.sin[i] * R;
+      b.px[i] += (b.cx + rx * c - ry * s - b.px[i]) * k;
+      b.py[i] += (b.cy + rx * s + ry * c - b.py[i]) * k;
+      // 봉지가 안으로 접혀 꼬이지 않게 중심에 너무 가까운 점은 밀어낸다
+      const dx = b.px[i] - b.cx, dy = b.py[i] - b.cy, d = Math.hypot(dx, dy) || 1e-6;
+      if (d < rMin) { b.px[i] = b.cx + dx / d * rMin; b.py[i] = b.cy + dy / d * rMin; }
+    }
+    // 5) 대기 젤리: 쏘기 전까지 대기 칸 가운데 고정
+    if (b.state === 'queue') {
+      const dx = -b.cx * 0.3, dy = (QUEUE_MID - b.cy) * 0.3;
+      for (let i = 0; i < n; i++) { b.px[i] += dx; b.py[i] += dy; b.ox[i] += dx; b.oy[i] += dy; }
+    }
+  }
+
+  function inside(B, x, y) {
+    let c = false;
+    for (let i = 0, j = B.n - 1; i < B.n; j = i++) {
+      const xi = B.px[i], yi = B.py[i], xj = B.px[j], yj = B.py[j];
+      if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c;
+    }
+    return c;
+  }
+
+  // 충돌: A의 점이 B의 테두리에서 SKIN 거리 안으로 들어오면(안쪽에 파고든 경우 포함)
+  // B 테두리 바깥 SKIN 거리까지 밀어내고 그 테두리는 반대로 민다.
+  // 테두리끼리 실제로 맞닿기 전에 미리 밀어내니 서로 파고들어 꼬이는 일이 크게 줄고,
+  // 그 SKIN 만큼의 틈은 테두리 선 두께로 덮어서 눈에는 붙어 보인다.
+  function resolve(A, B) {
+    const imA = A.n / mass(A), imB = B.n / mass(B) * 2;
+    // 아무리 무거워도 상대가 최소 10%는 버틴다 (무거운 작은 젤리가 큰 젤리를 뚫고 지나가지 않게)
+    const wa = Math.min(0.9, Math.max(0.1, imA / (imA + imB))), wb = 1 - wa;
+    // 합체로 막 생긴 젤리와 그 옆에 가만히 있던 젤리 사이만 살살 민다.
+    // 빠르게 날아온 젤리는 평소처럼 단단하게 막는다 (안 그러면 막 합쳐진 큰 젤리를 뚫고 지나간다)
+    const soft = ((A.merged && A.age < SOFT_AGE) || (B.merged && B.age < SOFT_AGE)) && A.spd < SOFT_SPEED && B.spd < SOFT_SPEED;
+    // 세게 쏴서 무거워진 젤리는 마찰을 덜 받아 더미 사이를 파고든다
+    // 작은 젤리는 덜 끈적해서 틈으로 잘 미끄러져 들어간다
+    const fr = CONTACT_DAMP * Math.min(1, A.r / DENSE_R / 2) / A.heavy * (HARD ? HARD_FRICTION : 1);
+    const x0 = B.minx - SKIN, x1 = B.maxx + SKIN, y0 = B.miny - SKIN, y1 = B.maxy + SKIN;
+    let hit = false;
+    for (let i = 0; i < A.n; i++) {
+      const x = A.px[i], y = A.py[i];
+      if (x < x0 || x > x1 || y < y0 || y > y1) continue;
+      // B 테두리에서 가장 가까운 점
+      let best = Infinity, ba = 0, bb = 0, bt = 0, qx = 0, qy = 0, nx = 0, ny = 0;
+      for (let a = 0; a < B.n; a++) {
+        const c = a + 1 === B.n ? 0 : a + 1;
+        const ax = B.px[a], ay = B.py[a], ex = B.px[c] - ax, ey = B.py[c] - ay;
+        const len2 = ex * ex + ey * ey || 1e-9;
+        let t = ((x - ax) * ex + (y - ay) * ey) / len2;
+        t = t < 0 ? 0 : t > 1 ? 1 : t;
+        const cx = ax + ex * t, cy = ay + ey * t;
+        const d2 = (x - cx) * (x - cx) + (y - cy) * (y - cy);
+        if (d2 < best) { best = d2; ba = a; bb = c; bt = t; qx = cx; qy = cy; nx = ey; ny = -ex; }
+      }
+      const inB = inside(B, x, y);
+      if (!inB && best >= SKIN * SKIN) continue;
+      hit = true;
+      // 바깥쪽 방향: 밖에 있으면 테두리→점, 안에 있으면 점→테두리. 너무 가까우면 그 변의 바깥 법선
+      const dist = Math.sqrt(best);
+      let ux, uy;
+      if (dist > 1e-4) { ux = (x - qx) / dist; uy = (y - qy) / dist; if (inB) { ux = -ux; uy = -uy; } }
+      else { const l = Math.hypot(nx, ny) || 1; ux = nx / l; uy = ny / l; }
+      let pen = inB ? dist + SKIN : SKIN - dist;        // 밖으로 SKIN 거리까지 밀어낼 양
+      if (HARD) pen = Math.min(pen, HARD_MAXPUSH);
+      const dx = ux * pen, dy = uy * pen;
+      // 방금 합쳐져 생긴 젤리와 겹친 건 위치만 살살 밀어내고 속도는 주지 않는다 (주변이 통통 튀지 않게)
+      const k = soft ? SOFT_PUSH : 1;
+      // 밀어낸 만큼 이전 위치도 같이 옮기면 그만큼 속도가 생기지 않는다 (ab = 흡수 비율)
+      const ab = soft ? 1 : HARD ? HARD_ABSORB : 0;
+      A.px[i] += dx * wa * k; A.py[i] += dy * wa * k;
+      if (ab) { A.ox[i] += dx * wa * k * ab; A.oy[i] += dy * wa * k * ab; }
+      A.ox[i] += (A.px[i] - A.ox[i]) * fr; A.oy[i] += (A.py[i] - A.oy[i]) * fr;
+      const ea = wb * (1 - bt) * k, eb = wb * bt * k;
+      B.px[ba] -= dx * ea; B.py[ba] -= dy * ea;
+      B.px[bb] -= dx * eb; B.py[bb] -= dy * eb;
+      if (ab) {
+        B.ox[ba] -= dx * ea * ab; B.oy[ba] -= dy * ea * ab;
+        B.ox[bb] -= dx * eb * ab; B.oy[bb] -= dy * eb * ab;
+      }
+    }
+    return hit;
+  }
+
+  // 선분 두 개가 서로 엇갈리는지
+  function segCross(ax, ay, bx, by, cx, cy, dx, dy) {
+    const d1 = (bx - ax) * (cy - ay) - (by - ay) * (cx - ax), d2 = (bx - ax) * (dy - ay) - (by - ay) * (dx - ax);
+    if (d1 * d2 >= 0) return false;
+    const d3 = (dx - cx) * (ay - cy) - (dy - cy) * (ax - cx), d4 = (dx - cx) * (by - cy) - (dy - cy) * (bx - cx);
+    return d3 * d4 < 0;
+  }
+  function bodiesCross(A, B) {
+    for (let i = 0; i < A.n; i++) {
+      const i2 = i + 1 === A.n ? 0 : i + 1;
+      const x0 = Math.min(A.px[i], A.px[i2]), x1 = Math.max(A.px[i], A.px[i2]);
+      const y0 = Math.min(A.py[i], A.py[i2]), y1 = Math.max(A.py[i], A.py[i2]);
+      if (x1 < B.minx || x0 > B.maxx || y1 < B.miny || y0 > B.maxy) continue;
+      for (let j = 0; j < B.n; j++) {
+        const j2 = j + 1 === B.n ? 0 : j + 1;
+        if (segCross(A.px[i], A.py[i], A.px[i2], A.py[i2], B.px[j], B.py[j], B.px[j2], B.py[j2])) return true;
+      }
+    }
+    return false;
+  }
+  function selfCross(A) {
+    for (let i = 0; i < A.n; i++) {
+      const i2 = i + 1 === A.n ? 0 : i + 1;
+      for (let j = i + 2; j < A.n; j++) {
+        const j2 = j + 1 === A.n ? 0 : j + 1;
+        if (j2 === i) continue;
+        if (segCross(A.px[i], A.py[i], A.px[i2], A.py[i2], A.px[j], A.py[j], A.px[j2], A.py[j2])) return true;
+      }
+    }
+    return false;
+  }
+  // 꼬인 테두리를 동그란 모양 쪽으로 펴 준다 (속도는 주지 않는다)
+  function smoothOut(b, k) {
+    centroid(b);
+    const R = b.rr * b.s;
+    for (let i = 0; i < b.n; i++) {
+      const dx = (b.cx + b.u.cos[i] * R - b.px[i]) * k, dy = (b.cy + b.u.sin[i] * R - b.py[i]) * k;
+      b.px[i] += dx; b.py[i] += dy; b.ox[i] += dx; b.oy[i] += dy;
+    }
+  }
+  // 안전장치: 테두리가 서로(또는 스스로) 엇갈린 상태가 TANGLE_FIX초 넘게 이어지면
+  // 두 젤리를 중심 반대 방향으로 밀어내고 테두리를 펴서 확실히 풀어 준다
+  const tangles = new Map();
+  function fixTangles(dt) {
+    const seen = new Set();
+    for (const b of bodies) bounds(b);
+    for (let i = 0; i < bodies.length; i++) {
+      const A = bodies[i];
+      if (A.state === 'queue') continue;
+      if (selfCross(A)) { A.selfT += dt; if (A.selfT > TANGLE_FIX) smoothOut(A, 0.35); } else A.selfT = 0;
+      for (let j = i + 1; j < bodies.length; j++) {
+        const B = bodies[j];
+        if (B.state === 'queue' || A.tier === B.tier) continue;   // 같은 선수는 어차피 곧 합쳐진다
+        if (A.maxx < B.minx || B.maxx < A.minx || A.maxy < B.miny || B.maxy < A.miny) continue;
+        if (!bodiesCross(A, B)) continue;
+        const k = A.id + '-' + B.id;
+        seen.add(k);
+        const t = (tangles.get(k) || 0) + dt;
+        tangles.set(k, t);
+        if (t > TANGLE_FIX) {
+          centroid(A); centroid(B);
+          unbury(A, B);
+          smoothOut(A, 0.25); smoothOut(B, 0.25);
+        }
+      }
+    }
+    for (const k of tangles.keys()) if (!seen.has(k)) tangles.delete(k);
+  }
+
+  function unbury(A, B) {
+    let dx = A.cx - B.cx, dy = A.cy - B.cy;
+    const d = Math.hypot(dx, dy);
+    if (d < 1e-3) { dx = 0; dy = -1; } else { dx /= d; dy /= d; }
+    const mA = mass(A), mB = mass(B), step = 3;
+    const sa = step * mB / (mA + mB), sb = step * mA / (mA + mB);
+    for (let i = 0; i < A.n; i++) { A.px[i] += dx * sa; A.py[i] += dy * sa; A.ox[i] += dx * sa; A.oy[i] += dy * sa; }
+    for (let i = 0; i < B.n; i++) { B.px[i] -= dx * sb; B.py[i] -= dy * sb; B.ox[i] -= dx * sb; B.oy[i] -= dy * sb; }
+    A.cx += dx * sa; A.cy += dy * sa; B.cx -= dx * sb; B.cy -= dy * sb;
+  }
+
+  // 날아가던 젤리가 무언가에 닿으면 일자 비행이 끝나고 중력을 받는다
+  function endFly(b) {
+    if (b.state !== 'fly') return;
+    b.state = 'free'; b.freeT = 0;
+    sfx.squish(b.tier);
+  }
+
+  function collide() {
+    for (const b of bodies) bounds(b);
+    for (let i = 0; i < bodies.length; i++) {
+      const A = bodies[i];
+      for (let j = i + 1; j < bodies.length; j++) {
+        const B = bodies[j];
+        if (A.state === 'queue' || B.state === 'queue') continue;   // 대기 젤리는 아무것과도 부딪히지 않는다
+        if (A.maxx + SKIN < B.minx || B.maxx + SKIN < A.minx || A.maxy + SKIN < B.miny || B.maxy + SKIN < A.miny) continue;
+        // 세게 파고들다 중심까지 안으로 들어가 버린 경우: 점 단위로는 빠져나오기 어려우니
+        // 두 중심을 잇는 방향으로 통째로 밀어서 빼낸다
+        if (inside(B, A.cx, A.cy)) unbury(A, B);
+        else if (inside(A, B.cx, B.cy)) unbury(B, A);
+        const h1 = resolve(A, B), h2 = resolve(B, A);
+        if (!h1 && !h2) continue;
+        A.wob = Math.min(1, A.wob + 0.01); B.wob = Math.min(1, B.wob + 0.01);
+        A.touchT = B.touchT = HARD_TOUCH;
+        if (A.tier === B.tier && A.tier !== FINAL) {
+          bookMerge(A, B, false);
+        } else { endFly(A); endFly(B); }
+      }
+    }
+    // 골대 벽, 천장, 바닥
+    // 보이는 테두리가 벽에 딱 닿도록 물리 테두리는 BALL만큼 안쪽을 벽으로 본다
+    const L = -HW + BALL, R = HW - BALL, BOT = FLOOR - BALL, TOP = BALL;
+    for (const b of bodies) {
+      let wall = false;
+      for (let i = 0; i < b.n; i++) {
+        // 벽·바닥은 튕겨내지 않는다: 벽 방향 속도는 없애고(말랑하게 철퍽), 벽을 따라 미끄러지는 속도만 남긴다
+        if (b.px[i] < L) { b.px[i] = L; b.ox[i] = L; b.oy[i] = b.py[i] - (b.py[i] - b.oy[i]) * WALL_SLIDE; wall = true; }
+        else if (b.px[i] > R) { b.px[i] = R; b.ox[i] = R; b.oy[i] = b.py[i] - (b.py[i] - b.oy[i]) * WALL_SLIDE; wall = true; }
+        if (b.py[i] > BOT) { b.py[i] = BOT; b.oy[i] = BOT; b.ox[i] = b.px[i] - (b.px[i] - b.ox[i]) * FLOOR_SLIDE; wall = true; }
+        else if (b.py[i] < TOP) { b.py[i] = TOP; b.oy[i] = TOP; wall = true; }
+      }
+      if (wall) { endFly(b); b.touchT = HARD_TOUCH; }
+    }
+  }
+
+  // 같은 선수끼리 닿는 순간 합체를 예약한다
+  function bookMerge(A, B, instant) {
+    const k = A.id < B.id ? A.id + '-' + B.id : B.id + '-' + A.id;
+    const p = pairs.get(k);
+    if (p) p.instant = p.instant || instant;
+    else pairs.set(k, { A, B, instant, t: 0 });
+  }
+
+  // 예약된 합체는 MERGE_DELAY 뒤에 무조건 실행 (그 사이 떨어져도)
+  function merges(dt) {
+    for (const b of bodies) b.mergeT = 0;
+    for (const [k, p] of pairs) {
+      if (!p.A.alive || !p.B.alive) { pairs.delete(k); continue; }
+      p.t += dt;
+      const prog = p.instant ? 1 : p.t / MERGE_DELAY;
+      p.A.mergeT = Math.max(p.A.mergeT, prog); p.B.mergeT = Math.max(p.B.mergeT, prog);
+      if (prog < 1) continue;
+      pairs.delete(k);
+      const { A, B } = p;
+      if (!A.alive || !B.alive) continue;
+      A.alive = B.alive = false;
+      centroid(A); centroid(B);
+      const va = velocity(A), vb = velocity(B);
+      const mx = (A.cx + B.cx) / 2, my = (A.cy + B.cy) / 2;
+      burst(mx, my, TIERS[A.tier].c, 10 + A.tier * 3);
+      const t = A.tier + 1;
+      maxReached = Math.max(maxReached, t);
+      const mA = A.r * A.r, mB = B.r * B.r;
+      // 딱복: 합쳐진 공은 둘 중 큰 공 크기에서 시작해 커진다 (처음부터 다 큰 원이면 주변 공과 깊게 겹쳐 튕겨 나간다)
+      const s0 = HARD ? Math.max(A.r, B.r) / TIERS[t].r : 1;
+      const nb = makeBody(t, (A.cx * mA + B.cx * mB) / (mA + mB), (A.cy * mA + B.cy * mB) / (mA + mB), 0, 0, s0, 'free');
+      if (!HARD) shapeFromPair(nb, A, B);
+      setVelocity(nb, (va.x + vb.x) / 2 * MERGE_KICK, (va.y + vb.y) / 2 * MERGE_KICK);
+      bounds(nb);
+      nb.heavy = 1;
+      nb.wob = 1;
+      nb.merged = true;
+      bodies.push(nb);
+      comboHit(mx, my, t);
+      const reach = TIERS[t].r * 1.8;
+      for (const o of bodies) {
+        if (o === nb || o.state !== 'free' || Math.hypot(o.cx - mx, o.cy - my) > reach + o.r) continue;
+        o.calm = CALM_TIME;
+        for (let i = 0; i < o.n; i++) {
+          o.ox[i] = o.px[i] - (o.px[i] - o.ox[i]) * MERGE_KICK;
+          o.oy[i] = o.py[i] - (o.py[i] - o.oy[i]) * MERGE_KICK;
+        }
+      }
+      if (t === FINAL) {
+        // 케인 둘이 만나면 발롱도르 트로피 젤리!
+        sfx.trophy();
+        addScore(BALLON_DOR_BONUS);
+        burst(mx, my, '#ffffff', 50);
+        burst(mx, my, '#ffcf3a', 50);
+        shake = 16;
+      } else {
+        sfx.merge(t);
+        // 콤보 배수: 2콤보 ×1.5, 3콤보 ×2 … 5콤보부터 ×3 (발롱도르 보너스에는 붙지 않는다)
+        const base = 5 * 2 ** t, gain = Math.round(base * Math.min(COMBO_MAX, 1 + 0.5 * (combo - 1)));
+        addScore(gain);
+        if (gain > base && combo >= COMBO_SHOW && popups[0]) { popups[0].bonus = gain - base; popups[0].mult = gain / base; }
+        shake = Math.max(shake, 1 + t * 0.5);
+      }
+    }
+    bodies = bodies.filter(b => b.alive);
+  }
+
+  // 대기 칸에는 다음에 쏠 젤리 하나만. 쏘고 NEXT_DELAY 뒤에 다음 젤리가 가운데에 뿅 나타난다
+  function spawnQueue(dt) {
+    nextIn -= dt;
+    if (nextIn > 0 || bodies.some(b => b.state === 'queue')) return;
+    const b = makeBody(nextTier ?? randTier(), 0, QUEUE_MID, 0, 0, 0.6, 'queue');
+    nextTier = randTier(); nextAt = time;
+    b.wob = 1;
+    bodies.push(b);
+  }
+
+  // 합쳐진 젤리의 처음 모양: 새 크기의 원에서 시작하되, 두 젤리가 있던 영역 밖으로 나가는 부분은
+  // 중심 쪽으로 당겨 그 영역 안에 넣는다. 그래서 두 젤리 사이 틈에 끼어 있던 이웃 젤리를 덮지 않고,
+  // 각 점이 각도 순서대로라 테두리가 스스로 꼬이지도 않는다. 이후 부피 유지로 새 크기만큼 부드럽게 퍼진다
+  function shapeFromPair(nb, A, B) {
+    const R = nb.rr, n = nb.n, t = new Float64Array(n);
+    const inPair = (x, y) => inside(A, x, y) || inside(B, x, y);
+    for (let i = 0; i < n; i++) {
+      const dx = nb.u.cos[i] * R, dy = nb.u.sin[i] * R;
+      let lo = 0, hi = 1;
+      if (!inPair(nb.cx + dx, nb.cy + dy)) {
+        // 바깥에서 안쪽으로 훑어 처음 영역 안에 들어오는 지점을 찾고, 두 번 더 좁힌다
+        hi = 0;
+        for (let k = 19; k >= 1; k--) { if (inPair(nb.cx + dx * k / 20, nb.cy + dy * k / 20)) { lo = k / 20; hi = (k + 1) / 20; break; } }
+        for (let it = 0; it < 3 && hi > 0; it++) { const m = (lo + hi) / 2; if (inPair(nb.cx + dx * m, nb.cy + dy * m)) lo = m; else hi = m; }
+        hi = lo;
+      }
+      t[i] = hi;
+    }
+    // 반지름을 양옆과 고르게 다듬고 너무 안쪽으로 꺼진 점은 받쳐서, 처음 모양이 매끈한 별 모양(접히지 않는 모양)이 되게
+    const raw = Float64Array.from(t);
+    for (let pass = 0; pass < 3; pass++) {
+      const prev = Float64Array.from(t);
+      for (let i = 0; i < n; i++) t[i] = (prev[(i + n - 1) % n] + prev[i] * 2 + prev[(i + 1) % n]) / 4;
+    }
+    for (let i = 0; i < n; i++) {
+      // 다듬느라 원래 영역 밖으로 많이 나가지는 않게
+      const k = Math.max(0.45, Math.min(t[i], raw[i] + 0.04));
+      nb.px[i] = nb.cx + nb.u.cos[i] * R * k;
+      nb.py[i] = nb.cy + nb.u.sin[i] * R * k;
+    }
+  }
+
+  function burst(x, y, c, count) {
+    for (let i = 0; i < count; i++) {
+      const a = Math.random() * Math.PI * 2, sp = 50 + Math.random() * 160;
+      particles.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: 2 + Math.random() * 5, c, life: 0.6 + Math.random() * 0.4 });
+    }
+  }
+
+  // 합체할 때마다 콤보를 세고, 2콤보부터 멈춤 · 흔들림 · 고리 · 글자 · 소리를 콤보 수만큼 키운다
+  function comboHit(x, y, tier) {
+    combo++;
+    maxCombo = Math.max(maxCombo, combo);
+    if (combo < COMBO_SHOW) return;   // 연출 · 글자는 COMBO_SHOW 콤보부터 (점수 배수는 2콤보부터 붙는다)
+    const k = Math.min(combo - 2, 6);
+    const c = COMBO_COLORS[Math.min(combo - 2, COMBO_COLORS.length - 1)];
+    hitstop = Math.max(hitstop, HITSTOP + k * 0.012);
+    shake = Math.max(shake, 7 + k * 2.5);
+    if (combo >= 3) { flash = Math.min(0.32, 0.12 + k * 0.05); flashColor = c; }
+    const r = TIERS[tier].r;
+    rings.push({ x, y, r: r * 0.6, to: r * (2.2 + k * 0.25), life: 0, dur: 0.45, c, w: 10 + k * 2 });
+    if (combo >= 4) rings.push({ x, y, r: r * 0.3, to: r * (1.6 + k * 0.2), life: -0.08, dur: 0.45, c: '#ffffff', w: 6 });
+    sparks(x, y, c, 14 + k * 6, 1 + k * 0.15);
+    popups = [{ x, y: y - r * 0.4, n: combo, c, life: 0, dur: 1.1 }];   // 글자는 겹치지 않게 최신 콤보 하나만
+    sfx.combo(combo);
+  }
+
+  // 콤보 때 튀는 길쭉한 불꽃: 보통 파편보다 빠르고 짧다
+  function sparks(x, y, c, count, power) {
+    for (let i = 0; i < count; i++) {
+      const a = Math.random() * Math.PI * 2, sp = (260 + Math.random() * 320) * power;
+      particles.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: 2.5 + Math.random() * 3, c: i % 3 ? c : '#ffffff', life: 0.35 + Math.random() * 0.3, spark: true });
+    }
+  }
+
+  // 콤보 연출은 물리 멈춤(hitstop)과 상관없이 실제 시간으로 흐른다
+  function stepFx(dt) {
+    for (const p of popups) p.life += dt;
+    popups = popups.filter(p => p.life < p.dur);
+    for (const g of rings) g.life += dt;
+    rings = rings.filter(g => g.life < g.dur);
+    flash = Math.max(0, flash - dt * 1.6);
+  }
+
+  function drawFx(c) {
+    for (const g of rings) {
+      if (g.life < 0) continue;
+      const p = g.life / g.dur, e = 1 - (1 - p) ** 3;
+      c.globalAlpha = 1 - p;
+      c.strokeStyle = g.c; c.lineWidth = g.w * (1 - p) + 1;
+      c.beginPath(); c.arc(g.x, g.y, g.r + (g.to - g.r) * e, 0, Math.PI * 2); c.stroke();
+    }
+    c.globalAlpha = 1;
+    for (const p of popups) {
+      const q = p.life / p.dur;
+      // 크게 튀어나왔다가(오버슛) 제자리로, 끝에서 떠오르며 사라진다
+      const pop = q < 0.18 ? 0.4 + 1.1 * (q / 0.18) : 1.5 - 0.5 * Math.min(1, (q - 0.18) / 0.14);
+      const size = (30 + Math.min(p.n, 8) * 4) * pop;
+      const x = Math.max(-HW + 70, Math.min(HW - 70, p.x)) + (q < 0.2 ? (Math.random() - 0.5) * 6 : 0);
+      const y = p.y - 60 * q * q;
+      c.globalAlpha = q > 0.7 ? 1 - (q - 0.7) / 0.3 : 1;
+      c.save();
+      c.translate(x, y); c.rotate(-0.08);
+      c.textAlign = 'center'; c.textBaseline = 'middle';
+      c.lineJoin = 'round';
+      c.font = `${size}px Jua, sans-serif`;
+      c.lineWidth = size * 0.22; c.strokeStyle = 'rgba(0,0,0,.55)';
+      c.strokeText(p.n + ' 콤보!', 0, 3);
+      c.lineWidth = size * 0.14; c.strokeStyle = '#ffffff';
+      c.strokeText(p.n + ' 콤보!', 0, 0);
+      c.fillStyle = p.c;
+      c.fillText(p.n + ' 콤보!', 0, 0);
+      if (p.bonus) {
+        // 콤보 배수와 그 덕에 더 받은 점수
+        const s = size * 0.5, by = size * 0.8;
+        const label = `×${+p.mult.toFixed(1)}  +${p.bonus.toLocaleString()}`;
+        c.font = `${s}px Jua, sans-serif`;
+        c.lineWidth = s * 0.3; c.strokeStyle = '#ffffff';
+        c.strokeText(label, 0, by);
+        c.fillStyle = '#1f1f1f';
+        c.fillText(label, 0, by);
+      }
+      c.restore();
+    }
+    c.globalAlpha = 1;
+  }
+
+  function addScore(v) {
+    score += v;
+    $score.textContent = score;
+    if (score > best) {
+      best = score; $best.textContent = best;
+      try { localStorage.setItem(BEST_KEY, best); } catch {}
+    }
+  }
+
+  // 지금까지 만든 가장 높은 단계(maxReached)보다 2단계 아래까지 나온다. 낮은 단계일수록 자주 나오고,
+  // 후반으로 갈수록 확률이 고르게 퍼져 높은 단계도 자주 나온다
+  function randTier() {
+    const top = Math.max(2, Math.min(SPAWN_MAX_TIER, maxReached - 2));
+    const ratio = 0.6 + 0.04 * (top - 2);
+    const w = [];
+    let sum = 0;
+    for (let i = 0; i <= top; i++) { w.push(Math.pow(ratio, i)); sum += w[i]; }
+    let r = Math.random() * sum;
+    for (let i = 0; i <= top; i++) { if ((r -= w[i]) < 0) return i; }
+    return 0;
+  }
+
+  function reset() {
+    bodies = []; particles = []; pairs.clear(); nextIn = 0; maxReached = 0; played = false;
+    score = 0; cooldown = 0; overTime = 0; pileTop = FLOOR; gameOver = false; time = 0; shake = 0;
+    combo = 0; maxCombo = 0; popups = []; rings = []; hitstop = 0; flash = 0; nextTier = null;
+    $score.textContent = 0; $best.textContent = best;
+    $over.classList.remove('show');
+    startBest = best;
+    // 랭킹용 플레이 세션 시작 (아래 module 스크립트가 받는다)
+    window.dispatchEvent(new Event('jelly:start'));
+  }
+
+  // ---- 효과음: 말랑한 느낌 (파일 없이 WebAudio로 합성) ----
+  // 피치가 미끄러지는 사인파에 빠른 떨림과 공명 필터를 얹으면 "뽀용/뿌직" 같은 젤리 소리가 난다
+  const SFX_VOLUME = 6;         // 전체 효과음 크기
+  let actx = null, muted = false, lastSquish = 0;
+  try { muted = localStorage.getItem('jellyMuted') === '1'; } catch {}
+  const $mute = document.getElementById('mute');
+  $mute.textContent = muted ? '🔇' : '🔊';
+  $mute.addEventListener('click', () => {
+    muted = !muted;
+    $mute.textContent = muted ? '🔇' : '🔊';
+    try { localStorage.setItem('jellyMuted', muted ? '1' : '0'); } catch {}
+  });
+  // 전체 효과음은 master(볼륨 키움) → compressor(겹쳐도 찢어지지 않게) → 스피커
+  let master = null, stale = false;
+  function audio() {
+    if (!actx) {
+      try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch { return null; }
+      const comp = actx.createDynamicsCompressor();
+      comp.threshold.value = -3; comp.knee.value = 6; comp.ratio.value = 6;
+      comp.attack.value = 0.002; comp.release.value = 0.12;
+      master = actx.createGain();
+      master.gain.value = SFX_VOLUME;
+      master.connect(comp); comp.connect(actx.destination);
+    }
+    if (actx.state !== 'running') actx.resume().catch(() => {});
+    return actx;
+  }
+  // 소리 종류를 '배경음'으로 알려 주면 노래 · 영상 같은 다른 앱 소리를 끊지 않고 같이 난다.
+  // (대신 아이폰 무음 스위치를 켜 두면 효과음도 안 난다)
+  function playbackSession() {
+    if (navigator.audioSession) { try { navigator.audioSession.type = 'ambient'; } catch {} }
+  }
+  // 브라우저는 사용자가 화면을 터치/클릭하는 순간에만 소리를 켤 수 있게 한다 (특히 iOS).
+  // 그래서 터치할 때마다 소리가 꺼져 있는지 보고 켠다. 켜져 있으면 아무것도 안 해서 가볍다
+  function unlockAudio() {
+    if (stale && actx) {
+      // 다른 앱 · 탭에 다녀온 뒤의 오디오는 '켜짐' 이라고 나와도 소리가 안 나는 일이 있어(사파리) 버리고 새로 만든다
+      try { actx.close(); } catch {}
+      actx = null; master = null;
+    }
+    stale = false;
+    playbackSession();
+    if (actx && actx.state === 'running') return;
+    const a = audio();
+    if (!a) return;
+    try {
+      const src = a.createBufferSource();
+      src.buffer = a.createBuffer(1, 1, 22050);
+      src.connect(a.destination);
+      src.start(0);
+    } catch {}
+  }
+  // 사파리는 끌었다 놓는 손동작(젤리 쏘기)의 touchend 를 '사용자 동작' 으로 쳐 주지 않을 때가 있어서,
+  // 화면에 손이 닿는 순간(touchstart · pointerdown)에도 켜 본다
+  for (const ev of ['touchstart', 'pointerdown', 'touchend', 'pointerup', 'mouseup', 'click', 'keydown']) window.addEventListener(ev, unlockAudio, true);
+  // 화면을 떠나면 소리를 멈추고, 돌아와서 처음 터치할 때 새로 켠다
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      stale = true;
+      if (actx) actx.suspend().catch(() => {});
+    }
+  });
+  window.addEventListener('pagehide', () => { stale = true; });
+  function blop(freq, dur, vol, slide, wobble = 0.05) {
+    if (muted) return;
+    const a = audio();
+    if (!a) return;
+    const t = a.currentTime;
+    const o = a.createOscillator(), g = a.createGain(), f = a.createBiquadFilter();
+    const lfo = a.createOscillator(), lg = a.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(freq, t);
+    o.frequency.exponentialRampToValueAtTime(freq * slide, t + dur);
+    lfo.frequency.value = 22; lg.gain.value = freq * wobble;
+    lfo.connect(lg); lg.connect(o.frequency);
+    f.type = 'lowpass'; f.frequency.value = freq * 3; f.Q.value = 8;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol, t + 0.015);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(f); f.connect(g); g.connect(master);
+    o.start(t); lfo.start(t);
+    o.stop(t + dur + 0.03); lfo.stop(t + dur + 0.03);
+  }
+  // 퍽! 하는 타격음: 짧은 잡음을 대역 필터로 깎고 낮은 사인파 쿵을 겹친다
+  function punch(vol, tone) {
+    if (muted) return;
+    const a = audio();
+    if (!a) return;
+    const t = a.currentTime, len = 0.12;
+    const buf = a.createBuffer(1, Math.floor(a.sampleRate * len), a.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length) ** 3;
+    const src = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain();
+    src.buffer = buf;
+    f.type = 'bandpass'; f.frequency.value = tone; f.Q.value = 0.9;
+    g.gain.value = vol;
+    src.connect(f); f.connect(g); g.connect(master);
+    src.start(t);
+    const o = a.createOscillator(), og = a.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(150, t);
+    o.frequency.exponentialRampToValueAtTime(45, t + 0.16);
+    og.gain.setValueAtTime(vol * 1.4, t);
+    og.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+    o.connect(og); og.connect(master);
+    o.start(t); o.stop(t + 0.2);
+  }
+  // 큰 젤리일수록 낮은 소리
+  const pitch = tier => 560 * Math.pow(0.87, tier);
+  const sfx = {
+    shoot: p => blop(240 + p * 200, 0.13, 0.12 + p * 0.1, 1.7, 0.03),          // 쀼웅
+    squish: tier => {                                                         // 뿌직 (너무 자주 안 나게)
+      const now = performance.now();
+      if (now - lastSquish < 70) return;
+      lastSquish = now;
+      blop(pitch(tier) * 0.7, 0.12, 0.12, 0.6, 0.08);
+    },
+    merge: tier => {                                                          // 뽀용
+      const f = pitch(tier);
+      blop(f, 0.22, 0.28, 0.5);
+      setTimeout(() => blop(f * 1.5, 0.14, 0.12, 0.75), 50);
+    },
+    warn: k => blop(660 + 440 * k, 0.09, 0.14 + 0.08 * k, 0.9, 0.01),       // 삐- 경고음
+    combo: n => {                                                            // 퍽 + 콤보마다 한 음씩 올라가는 띠링
+      const k = Math.min(n - 2, 7);
+      punch(0.22 + k * 0.03, 1400 + k * 250);
+      const f = 660 * Math.pow(2, [0, 2, 4, 5, 7, 9, 11, 12][k] / 12);
+      setTimeout(() => blop(f, 0.18, 0.16, 1.02, 0.01), 30);
+      setTimeout(() => blop(f * 1.5, 0.22, 0.12, 1.02, 0.01), 100);
+      if (n >= 4) setTimeout(() => blop(f * 2, 0.26, 0.1, 1.02, 0.01), 170);
+    },
+    trophy: () => [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => blop(f, 0.4, 0.2, 0.98, 0.02), i * 120)),
+  };
+
+  // ---- 입력: 대기 칸 젤리를 누르고 쏠 방향으로 드래그 ----
+  function toWorld(e) {
+    const r = cv.getBoundingClientRect();
+    return { x: (e.clientX - r.left - view.x) / view.s, y: (e.clientY - r.top - view.y) / view.s };
+  }
+  function pick() {
+    return bodies.find(b => b.state === 'queue') || null;
+  }
+  function aimVec() {
+    if (!aim || !aim.body.alive || aim.body.state !== 'queue') return null;
+    const dx = aim.x - aim.sx, dy = aim.y - aim.sy;
+    const len = Math.hypot(dx, dy);
+    if (len < 8) return null;
+    const p = Math.min(len, MAX_DRAG) / MAX_DRAG;
+    const sp = MIN_SPEED + (MAX_SPEED - MIN_SPEED) * p;
+    return { x: dx / len * sp, y: dy / len * sp, dx: dx / len, dy: dy / len, p };
+  }
+  stage.addEventListener('pointerdown', e => {
+    if (gameOver) return;
+    const w = toWorld(e);
+    const body = pick();
+    if (!body) return;
+    aim = { body, sx: w.x, sy: w.y, x: w.x, y: w.y };
+    stage.setPointerCapture(e.pointerId);
+  });
+  stage.addEventListener('pointermove', e => {
+    if (!aim) return;
+    const w = toWorld(e); aim.x = w.x; aim.y = w.y;
+  });
+  stage.addEventListener('pointerup', () => {
+    const v = aimVec();
+    const b = aim && aim.body;
+    aim = null;
+    if (!v || gameOver || cooldown > 0) return;
+    b.state = 'fly';
+    b.flyT = 0;
+    b.heavy = HARD ? 1 : 1 + HEAVY * v.p * v.p;   // 딱복은 세게 쏴도 더미를 파고들지 않는다
+    b.wob = 1;
+    setVelocity(b, v.x, v.y, HARD ? 0 : 0.6);
+    cooldown = 0.12;
+    nextIn = NEXT_DELAY;
+    if (!played) { played = true; window.dispatchEvent(new Event('jelly:play')); }
+    combo = 0;   // 새로 던지면 콤보를 처음부터 센다
+    sfx.shoot(v.p);
+  });
+  stage.addEventListener('pointercancel', () => { aim = null; });
+  document.getElementById('again').addEventListener('click', reset);
+
+  // ---- 경기 종료 + 랭킹 ----
+  function escapeHtml(v) {
+    return String(v ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+  }
+  function medal(i) { return i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : String(i + 1); }
+
+  async function renderLeaderboard() {
+    const rank = window.jellyRank;
+    if (!rank) { $lbBox.innerHTML = '<div class="lb-msg">랭킹 서버에 연결할 수 없어요.</div>'; return; }
+    $lbBox.innerHTML = '<div class="lb-msg">랭킹 불러오는 중…</div>';
+    try {
+      const rows = await rank.top(10);
+      const me = rank.deviceId();
+      $lbBox.innerHTML = rows.length
+        ? `<table class="lb"><tr><th>#</th><th>닉네임</th><th>점수</th></tr>${
+            rows.map((r, i) => `<tr class="${r.id === me ? 'me' : ''}"><td>${medal(i)}</td><td>${escapeHtml(r.nickname)}</td><td>${escapeHtml(r.score)}</td></tr>`).join('')
+          }</table>`
+        : '<div class="lb-msg">아직 등록된 기록이 없어요. 첫 기록을 남겨보세요!</div>';
+    } catch (e) {
+      console.error(e);
+      $lbBox.innerHTML = '<div class="lb-msg">랭킹을 불러오지 못했어요.</div>';
+    }
+  }
+
+  function openGameOver() {
+    aim = null;
+    if (score > 0) {
+      const pts = Math.min(60, Math.max(5, Math.round(Math.sqrt(score) / 2)));
+      const record = score > startBest;
+      window.FSPoints?.earn('jelly', pts + (record ? 30 : 0),
+        `${HARD ? '딱복' : '물복'} ${score.toLocaleString()}점${record ? ' · 최고기록' : ''}`);
+    }
+    document.getElementById('final').textContent = score.toLocaleString() + '점';
+    try { $nick.value = localStorage.getItem('jellyNickname') || localStorage.getItem('bjNickname') || ''; } catch {}
+    $lbMsg.textContent = score > 0 ? '닉네임을 입력하고 기록을 등록하세요' : '';
+    $submit.disabled = score <= 0;
+    $over.classList.add('show');
+    renderLeaderboard();
+  }
+
+  $submit.addEventListener('click', async () => {
+    const nick = $nick.value.trim().slice(0, 20);
+    if (!nick) { $lbMsg.textContent = '닉네임을 입력해 주세요'; $nick.focus(); return; }
+    const rank = window.jellyRank;
+    if (!rank) { $lbMsg.textContent = '랭킹 서버에 연결할 수 없어요.'; return; }
+    try { localStorage.setItem('jellyNickname', nick); } catch {}
+    $submit.disabled = true;
+    $lbMsg.textContent = '등록 중…';
+    try {
+      const res = await rank.submit(nick, score);
+      $lbMsg.textContent = res.ok ? '랭킹에 등록됐어요!' : `내 최고 기록(${res.best.toLocaleString()}점)이 더 높아서 유지돼요`;
+      renderLeaderboard();
+      if (res.ok && window.FSPoints) {
+        const rows = await rank.top(10).catch(() => []);
+        const pos = rows.findIndex(r => r.id === rank.deviceId()) + 1;
+        if (pos > 0) window.FSPoints.rankBonus('jelly', pos);
+      }
+    } catch (e) {
+      console.error(e);
+      $lbMsg.textContent = '등록에 실패했어요. 잠시 후 다시 시도해 주세요.';
+      $submit.disabled = false;
+    }
+  });
+
+  // ---- 루프 ----
+  function step(dt) {
+    time += dt;
+    cooldown = Math.max(0, cooldown - dt);
+    spawnQueue(dt);
+    for (const b of bodies) b.s += (1 - b.s) * GROW;
+    for (let s = 0; s < SUB; s++) {
+      for (const b of bodies) stepBody(b);
+      collide();
+    }
+    for (const b of bodies) {
+      centroid(b); bounds(b);
+      const v = velocity(b); b.spd = Math.hypot(v.x, v.y);
+      b.age += dt;
+      if (b.state === 'fly') { b.flyT += dt; if (b.flyT > 2) endFly(b); }
+      else {
+        b.heavy += (1 - b.heavy) * 0.025;   // 부딪힌 뒤 무게가 서서히 원래대로
+        if (b.state === 'free') b.freeT += dt;
+      }
+      b.wob *= 0.94;
+      if (b.calm > 0) b.calm -= dt;
+      if (b.touchT > 0) b.touchT -= dt;
+    }
+    fixTangles(dt);
+    merges(dt);
+    for (const p of particles) {
+      p.vy += G * 0.8 * dt;
+      p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt;
+    }
+    particles = particles.filter(p => p.life > 0 && p.y < FLOOR);
+    shake *= 0.85;
+
+    // 종료선 체크: 쌓여 있는 젤리(방금 쏜 것 제외)의 꼭대기 높이
+    pileTop = FLOOR;
+    for (const b of bodies) if (b.state === 'free' && b.freeT > 1.2 && b.miny - BALL < pileTop) pileTop = b.miny - BALL;
+    const danger = pileTop < DANGER;
+    overTime = danger ? overTime + dt : Math.max(0, overTime - dt * 2);
+    // 선을 넘어 있는 동안 경고음: 끝이 가까울수록 빠르고 높게
+    if (danger) {
+      warnIn -= dt;
+      if (warnIn <= 0) {
+        const k = Math.min(1, overTime / OVER_TIME);
+        sfx.warn(k);
+        warnIn = 0.5 - 0.32 * k;
+      }
+    } else warnIn = 0;
+    if (overTime > OVER_TIME && !gameOver) {
+      gameOver = true;
+      openGameOver();
+    }
+  }
+
+  // 마지막으로 맞춘 판 크기. 사파리는 나갔다 돌아올 때 잠깐 작아진 크기로 resize 를 보내고, 원래 크기로 돌아왔다는
+  // resize 는 안 보낼 때가 있어서(그러면 게임이 작아지고 왼쪽 위로 쏠린다), 매 프레임 크기가 바뀌었는지 보고 다시 맞춘다
+  let sized = { w: 0, h: 0, dpr: 0 };
+  function resize() {
+    const dpr = window.devicePixelRatio || 1;
+    const w = stage.clientWidth, h = stage.clientHeight;
+    sized = { w, h, dpr };
+    cv.width = w * dpr; cv.height = h * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    view.s = Math.min(w / (2 * HW + 40), h / (FLOOR + 30));
+    view.x = w / 2; view.y = (h - FLOOR * view.s) / 2;
+  }
+  window.addEventListener('resize', resize);
+
+  // ---- 그리기 ----
+  // 보이는 테두리: 물리 테두리의 각 점을 바깥 방향으로 BALL만큼 민 것
+  function outline(b) {
+    const n = b.n;
+    for (let i = 0; i < n; i++) {
+      const p = i === 0 ? n - 1 : i - 1, q = i + 1 === n ? 0 : i + 1;
+      const tx = b.px[q] - b.px[p], ty = b.py[q] - b.py[p], l = Math.hypot(tx, ty) || 1;
+      b.vx[i] = b.px[i] + ty / l * BALL;
+      b.vy[i] = b.py[i] - tx / l * BALL;
+    }
+  }
+
+  function jellyPath(c, b) {
+    const n = b.n, X = b.vx, Y = b.vy;
+    c.beginPath();
+    let mx = (X[n - 1] + X[0]) / 2, my = (Y[n - 1] + Y[0]) / 2;
+    c.moveTo(mx, my);
+    for (let i = 0; i < n; i++) {
+      const j = (i + 1) % n;
+      mx = (X[i] + X[j]) / 2; my = (Y[i] + Y[j]) / 2;
+      c.quadraticCurveTo(X[i], Y[i], mx, my);
+    }
+    c.closePath();
+  }
+
+  // 같은 선수끼리 닿아서 합쳐지기 직전: 점점 하얗게 빛난다
+  function drawMergeGlow(c, b) {
+    if (!b.mergeT) return;
+    jellyPath(c, b);
+    c.fillStyle = `rgba(255,255,255,${Math.min(1, b.mergeT) * 0.45})`;
+    c.fill();
+  }
+
+  // 이미지 삼각형 (u,v)를 화면 삼각형 (x,y)에 붙인다
+  function texTri(c, img, x0, y0, x1, y1, x2, y2, u0, v0, u1, v1, u2, v2) {
+    const d = u0 * (v1 - v2) + u1 * (v2 - v0) + u2 * (v0 - v1);
+    if (!d) return;
+    // 삼각형 사이 이음매가 보이지 않도록 클립 영역을 살짝 키운다
+    const mx = (x0 + x1 + x2) / 3, my = (y0 + y1 + y2) / 3;
+    const grow = (x, y) => { const dx = x - mx, dy = y - my, l = Math.hypot(dx, dy) || 1; return [x + dx / l * 0.9, y + dy / l * 0.9]; };
+    const [a0, b0] = grow(x0, y0), [a1, b1] = grow(x1, y1), [a2, b2] = grow(x2, y2);
+    c.save();
+    c.beginPath(); c.moveTo(a0, b0); c.lineTo(a1, b1); c.lineTo(a2, b2); c.closePath(); c.clip();
+    c.transform(
+      (x0 * (v1 - v2) + x1 * (v2 - v0) + x2 * (v0 - v1)) / d,
+      (y0 * (v1 - v2) + y1 * (v2 - v0) + y2 * (v0 - v1)) / d,
+      (x0 * (u2 - u1) + x1 * (u0 - u2) + x2 * (u1 - u0)) / d,
+      (y0 * (u2 - u1) + y1 * (u0 - u2) + y2 * (u1 - u0)) / d,
+      (x0 * (u1 * v2 - u2 * v1) + x1 * (u2 * v0 - u0 * v2) + x2 * (u0 * v1 - u1 * v0)) / d,
+      (y0 * (u1 * v2 - u2 * v1) + y1 * (u2 * v0 - u0 * v2) + y2 * (u0 * v1 - u1 * v0)) / d);
+    c.drawImage(img, 0, 0);
+    c.restore();
+  }
+
+  // 사진 원의 테두리 점 i를 젤리 테두리 점 i에, 사진 중심을 젤리 무게중심에 붙인다.
+  // 젤리가 동그랄 때는 사진이 그대로 보이고, 찌그러지면 사진도 같이 찌그러진다
+  function drawPhoto(c, b, img) {
+    const h = img.naturalWidth / 2;
+    for (let i = 0; i < b.n; i++) {
+      const j = (i + 1) % b.n;
+      const ai = (i / b.n) * Math.PI * 2, aj = (j / b.n) * Math.PI * 2;
+      texTri(c, img,
+        b.cx, b.cy, b.vx[i], b.vy[i], b.vx[j], b.vy[j],
+        h, h, h + Math.cos(ai) * h, h + Math.sin(ai) * h, h + Math.cos(aj) * h, h + Math.sin(aj) * h);
+    }
+  }
+
+  function drawJelly(c, b, selected) {
+    const t = TIERS[b.tier], r = b.r * b.s;
+    outline(b);
+    if (t.img.complete && t.img.naturalWidth) {
+      c.save();
+      jellyPath(c, b); c.clip();
+      // 사진 배경이 투명이라 단계 색을 먼저 깐다
+      const bg = c.createLinearGradient(0, b.miny - BALL, 0, b.maxy + BALL);
+      bg.addColorStop(0, shade(t.c, 0.35)); bg.addColorStop(1, t.c);
+      c.fillStyle = bg;
+      c.fillRect(b.minx - BALL - 2, b.miny - BALL - 2, b.maxx - b.minx + BALL * 2 + 4, b.maxy - b.miny + BALL * 2 + 4);
+      drawPhoto(c, b, t.img);
+      c.restore();
+      jellyPath(c, b);
+      c.lineWidth = selected ? 5 : 3.5;
+      c.strokeStyle = selected ? '#ffffff' : t.c;
+      c.stroke();
+      drawMergeGlow(c, b);
+      return;
+    }
+    jellyPath(c, b);
+    const g = c.createRadialGradient(b.cx - r * 0.35, b.cy - r * 0.4, r * 0.1, b.cx, b.cy, r * 1.25);
+    g.addColorStop(0, '#ffffff');
+    g.addColorStop(0.18, t.c);
+    g.addColorStop(1, shade(t.c, -0.35));
+    c.fillStyle = g;
+    c.fill();
+    c.lineWidth = selected ? 5 : 3.5;
+    c.strokeStyle = selected ? '#ffffff' : shade(t.c, -0.45);
+    c.stroke();
+    drawMergeGlow(c, b);
+  }
+
+
+
+  function shade(hex, f) {
+    const n = parseInt(hex.slice(1), 16);
+    let r = n >> 16, g = (n >> 8) & 255, b = n & 255;
+    const m = f < 0 ? 0 : 255, k = Math.abs(f);
+    r = Math.round(r + (m - r) * k); g = Math.round(g + (m - g) * k); b = Math.round(b + (m - b) * k);
+    return `rgb(${r},${g},${b})`;
+  }
+
+  // 골대: 잔디 위 그물 배경 + 흰 골포스트, 위쪽은 대기 칸
+  function drawGoal(c) {
+    c.fillStyle = '#145c3f';
+    c.fillRect(-HW, 0, HW * 2, FLOOR);
+    c.save();
+    c.beginPath(); c.rect(-HW, 0, HW * 2, FLOOR); c.clip();
+    c.strokeStyle = 'rgba(255,255,255,.09)'; c.lineWidth = 1.5;
+    for (let k = -FLOOR; k < HW * 2 + FLOOR; k += 22) {
+      c.beginPath(); c.moveTo(-HW + k, 0); c.lineTo(-HW + k - FLOOR, FLOOR); c.stroke();
+      c.beginPath(); c.moveTo(-HW + k - FLOOR, 0); c.lineTo(-HW + k, FLOOR); c.stroke();
+    }
+    c.restore();
+    // 골포스트(크로스바 포함)와 바닥 라인
+    c.fillStyle = '#f4f7f5';
+    c.fillRect(-HW - 12, -12, 12, FLOOR + 24);
+    c.fillRect(HW, -12, 12, FLOOR + 24);
+    c.fillRect(-HW - 12, -12, HW * 2 + 24, 12);
+    c.fillRect(-HW - 12, FLOOR, HW * 2 + 24, 12);
+  }
+
+  // 종료선(점선): 평소엔 안 보이다가 더미가 가까이 올라오면 점점 진하게 보이고,
+  // 넘어가면 빨갛게 깜빡인다. 남은 시간은 경고음으로만 알린다
+  function drawDanger(c) {
+    const near = Math.min(1, Math.max(0, (DANGER + WARN_GAP - pileTop) / WARN_GAP));
+    if (near <= 0 && overTime <= 0) return;
+    c.save();
+    c.setLineDash([8, 8]);
+    c.lineWidth = 2.5;
+    if (overTime > 0) {
+      c.strokeStyle = `rgba(255,70,70,${0.55 + 0.45 * Math.abs(Math.sin(time * 9))})`;
+    } else {
+      c.strokeStyle = `rgba(255,255,255,${0.15 + 0.55 * near})`;
+    }
+    c.beginPath(); c.moveTo(-HW, DANGER); c.lineTo(HW, DANGER); c.stroke();
+    c.restore();
+  }
+
+  // 조준 화살표: 쏘는 방향으로, 세게 당길수록 길어진다 (처음엔 아주 짧게)
+  function drawAim(c) {
+    const v = aimVec();
+    if (!v) return;
+    const b = aim.body;
+    const rr = (b.maxx - b.minx + b.maxy - b.miny) / 4;
+    const len = ARROW_MIN + (ARROW_MAX - ARROW_MIN) * v.p;
+    const sx = b.cx + v.dx * (rr + 6), sy = b.cy + v.dy * (rr + 6);
+    const ex = sx + v.dx * len, ey = sy + v.dy * len;
+    const nx = -v.dy, ny = v.dx, head = 13;
+    const bx = ex - v.dx * head, by = ey - v.dy * head;
+    const shape = () => {
+      c.beginPath();
+      c.moveTo(sx + nx * 3.5, sy + ny * 3.5);
+      c.lineTo(bx + nx * 3.5, by + ny * 3.5);
+      c.lineTo(bx + nx * 10, by + ny * 10);
+      c.lineTo(ex, ey);
+      c.lineTo(bx - nx * 10, by - ny * 10);
+      c.lineTo(bx - nx * 3.5, by - ny * 3.5);
+      c.lineTo(sx - nx * 3.5, sy - ny * 3.5);
+      c.closePath();
+    };
+    c.lineJoin = 'round';
+    c.lineWidth = 5; c.strokeStyle = 'rgba(0,0,0,.45)';
+    shape(); c.stroke();
+    c.fillStyle = '#ffffff';
+    shape(); c.fill();
+  }
+
+  // 다음 젤리: 대기 칸 오른쪽 위에 작게. 바뀔 때마다 뿅 하고 커지며 나타난다
+  function drawNext(c) {
+    if (nextTier == null) return;
+    const t = TIERS[nextTier], r = 17, x = HW - 30, y = 44;
+    const k = Math.min(1, (time - nextAt) / 0.25), s = 1 + 2.2 * (k - 1) ** 3 + 1.2 * (k - 1) ** 2;
+    c.save();
+    c.globalAlpha = 0.92;
+    c.font = '13px Jua, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
+    c.fillStyle = 'rgba(255,255,255,.75)';
+    c.fillText('다음', x, y - r - 11);
+    c.translate(x, y); c.scale(s, s);
+    c.beginPath(); c.arc(0, 0, r, 0, Math.PI * 2);
+    c.fillStyle = t.c; c.fill();
+    if (t.img.complete && t.img.naturalWidth) {
+      c.save(); c.clip(); c.drawImage(t.img, -r, -r, r * 2, r * 2); c.restore();
+    }
+    c.lineWidth = 2.5; c.strokeStyle = t.c; c.stroke();
+    c.restore();
+  }
+  function render() {
+    const w = stage.clientWidth, h = stage.clientHeight;
+    ctx.clearRect(0, 0, w, h);
+    ctx.save();
+    const sx = (Math.random() - 0.5) * shake, sy = (Math.random() - 0.5) * shake;
+    ctx.translate(view.x + sx, view.y + sy);
+    ctx.scale(view.s, view.s);
+    drawGoal(ctx);
+    drawNext(ctx);
+    const sel = aim && aim.body;
+    for (const b of bodies) drawJelly(ctx, b, b === sel);
+    drawDanger(ctx);
+    for (const p of particles) {
+      ctx.globalAlpha = Math.min(1, p.life * 2);
+      if (p.spark) {
+        // 불꽃은 날아가는 방향으로 길게 늘인 선
+        ctx.strokeStyle = p.c; ctx.lineWidth = p.r; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x - p.vx * 0.04, p.y - p.vy * 0.04); ctx.stroke();
+        continue;
+      }
+      ctx.fillStyle = p.c;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    drawFx(ctx);
+    drawAim(ctx);
+    ctx.restore();
+    if (flash > 0) {
+      ctx.globalAlpha = flash;
+      ctx.fillStyle = flashColor;
+      ctx.fillRect(0, 0, w, h);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  let last = performance.now(), acc = 0;
+  function frame(now) {
+    const dt = Math.min(0.1, (now - last) / 1000);
+    last = now;
+    stepFx(dt);
+    // 콤보 순간에는 물리를 잠깐 멈춰 '딱' 걸리는 느낌을 준다
+    if (hitstop > 0) hitstop -= dt;
+    else acc += dt;
+    while (acc >= 1 / 60) { if (!gameOver) step(1 / 60); acc -= 1 / 60; }
+    if (stage.clientWidth !== sized.w || stage.clientHeight !== sized.h || (window.devicePixelRatio || 1) !== sized.dpr) resize();
+    render();
+    requestAnimationFrame(frame);
+  }
+
+  resize();
+  // 선수 사진을 모두 불러온 뒤에 시작한다 (사진이 늦게 떠서 빈 젤리가 잠깐 보이는 일 없게).
+  // 사진 하나가 안 불러와져도 영영 멈추지 않게 PHOTO_WAIT 초가 지나면 그냥 시작한다 (늦은 사진은 오는 대로 보인다)
+  const PHOTO_WAIT = 4;
+  const photosReady = () => Promise.race([
+    Promise.all(TIERS.map(t => t.img.decode().catch(() => {}))),
+    new Promise(r => setTimeout(r, PHOTO_WAIT * 1000)),
+  ]);
+  photosReady().then(() => {
+    reset();
+    requestAnimationFrame(frame);
+  });
+})();
+</script>
+
+<!-- 랭킹: 사이트의 다른 게임들과 같은 Firestore 프로젝트·같은 방식(플레이 세션 → 최고기록만 갱신) -->
+<script type="module">
+  const HARD = window.JELLY_HARD;
+  const GAME = HARD ? 'ballon-jelly-hard' : 'ballon-jelly';
+  const BOARD = HARD ? 'hard' : 'allTime';
+  const FB = 'https://www.gstatic.com/firebasejs/10.14.1/';
+  try {
+    const { initializeApp } = await import(FB + 'firebase-app.js');
+    const {
+      getFirestore, doc, getDoc, setDoc, addDoc, serverTimestamp, collection, query, orderBy, limit, getDocs, increment, writeBatch,
+    } = await import(FB + 'firebase-firestore.js');
+    const app = initializeApp({
+      projectId: 'guess-your-player',
+      appId: '1:1068776442781:web:433981863e0c3da178bd74',
+      storageBucket: 'guess-your-player.firebasestorage.app',
+      apiKey: 'AIzaSyA8SG_LbHeqS9gh0CLFaHUhEI1uG1uYLDY',
+      authDomain: 'guess-your-player.firebaseapp.com',
+      messagingSenderId: '1068776442781',
+    });
+    const db = getFirestore(app);
+
+    function deviceId() {
+      let id = localStorage.getItem('quizDeviceId');
+      if (!id) {
+        id = 'd-' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+        localStorage.setItem('quizDeviceId', id);
+      }
+      return id;
+    }
+    const sessionRef = () => doc(db, 'playSessions', `${GAME}_${deviceId()}`);
+    const entryRef = () => doc(db, 'jellyLeaderboard', BOARD, 'entries', deviceId());
+    const todayKeyKST = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul' }).format(new Date());
+
+    // 판 시작(페이지 열기·다시 하기): 랭킹 위조 방지용 세션(서버 시각)만 만든다
+    async function start() {
+      try {
+        await setDoc(sessionRef(), { startedAt: serverTimestamp() });
+      } catch (e) {
+        console.warn('jelly session failed', e);
+      }
+    }
+
+    // 실제로 첫 슈팅을 했을 때만 /bymile 플레이 로그를 남긴다 (페이지만 열고 나간 건 세지 않는다)
+    async function logPlay() {
+      if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') return;
+      try {
+        let ip = 'unknown';
+        try { ip = (await (await fetch('https://api.ipify.org?format=json')).json()).ip; } catch {}
+        await Promise.all([
+          addDoc(collection(db, 'playLogs'), { ts: serverTimestamp(), ip, game: GAME }),
+          setDoc(doc(db, 'statsCounters', 'totals'), { [GAME]: increment(1) }, { merge: true }),
+          setDoc(doc(db, 'statsDaily', todayKeyKST()), { [GAME]: increment(1) }, { merge: true }),
+        ]);
+      } catch (e) {
+        console.warn('jelly play log failed', e);
+      }
+    }
+
+    // 최고 기록일 때만, 세션 문서를 지우는 같은 배치로 쓴다 (firestore.rules가 검증)
+    async function submit(nickname, score) {
+      const prev = await getDoc(entryRef());
+      if (prev.exists() && prev.data().score >= score) return { ok: false, best: prev.data().score };
+      const batch = writeBatch(db);
+      batch.delete(sessionRef());
+      batch.set(entryRef(), { nickname, score: Math.floor(score), updatedAt: new Date() });
+      await batch.commit();
+      return { ok: true };
+    }
+
+    async function top(n) {
+      const snap = await getDocs(query(collection(db, 'jellyLeaderboard', BOARD, 'entries'), orderBy('score', 'desc'), limit(n)));
+      return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    }
+
+    window.jellyRank = { submit, top, deviceId };
+    window.addEventListener('jelly:start', start);
+    window.addEventListener('jelly:play', logPlay);
+    start();
+  } catch (e) {
+    console.warn('랭킹 모듈을 불러오지 못했어요', e);
+  }
+</script>
+</body>
+</html>

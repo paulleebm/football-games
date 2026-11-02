@@ -1,0 +1,14 @@
+{
+  "firestore": { "database": "(default)", "rules": "firestore.rules", "indexes": "firestore.indexes.json" },
+  "hosting": {
+    "public": "public",
+    "ignore": ["firebase.json", "**/.*", "**/.*/**", "**/node_modules/**", "**/dev-*.html"],
+    "headers": [
+      { "source": "**", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] }
+    ],
+    "rewrites": [
+      { "source": "/fhrm", "destination": "/bymile/index.html" },
+      { "source": "/fhrm/**", "destination": "/bymile/index.html" }
+    ]
+  }
+}

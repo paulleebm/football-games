@@ -1,0 +1,27 @@
+{
+  "coordinateSystem": "original_downloaded_pixels_xyxy_right_bottom_exclusive",
+  "purpose": "Head, full hairstyle, neck and upper shoulders crop recommendations for deterministic masking. Source files remain unmodified.",
+  "players": [
+    {
+      "id": "carles-puyol",
+      "sourceFile": "sources/carles-puyol.jpg",
+      "sourceSize": [960, 1202],
+      "cropBox": [0, 0, 830, 950],
+      "notes": "Hair extends near source left edge at x25 and starts around y25. Include both long sides of hair. The right-facing face is three-quarter: the nose lies inside the outer contour, so a protruding side-profile nose would be incorrect. Crop bottom avoids forearms."
+    },
+    {
+      "id": "andrea-pirlo",
+      "sourceFile": "sources/andrea-pirlo.jpg",
+      "sourceSize": [960, 1390],
+      "cropBox": [240, 150, 620, 540],
+      "notes": "Original is a full-body sports photograph. Hair begins near x350,y190, with face near x480,y245. Crop encloses all wind-blown hair and upper shoulders with modest background margin. Source head is low resolution; use antialiased masking and avoid inventing extra strands."
+    },
+    {
+      "id": "carlos-valderrama",
+      "sourceFile": "sources/carlos-valderrama.jpg",
+      "sourceSize": [960, 640],
+      "cropBox": [280, 35, 890, 640],
+      "notes": "Full afro begins around x320,y70 and ends around x830,y520. Nose points left. Crop retains neck/collar and upper shoulders while excluding as much of the other background people as possible."
+    }
+  ]
+}

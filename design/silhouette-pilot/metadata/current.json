@@ -1,0 +1,183 @@
+[
+  {
+    "id": "salah",
+    "nameKo": "모하메드 살라",
+    "nameEn": "Mohamed Salah",
+    "sourcePageUrl": "https://commons.wikimedia.org/wiki/File:Salah_in_2018.jpg",
+    "sourceImageUrl": "https://upload.wikimedia.org/wikipedia/commons/5/5b/Salah_in_2018.jpg?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=original",
+    "sourcePath": "sources/salah.jpg",
+    "author": "kyivcity.gov.ua",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+    "selectionReason": "풍성한 곱슬머리와 수염 윤곽",
+    "date": "25 May 2018, 05:06:31",
+    "sourceTitle": "Salah in 2018.jpg",
+    "dimensions": [
+      621,
+      828
+    ],
+    "qualityNotes": "시각 검수 완료: 정면 근접사진, 풍성한 곱슬머리 보존. 좌측 다른 사람과 배경은 제거 필요.",
+    "reuseStatus": "license metadata captured; attribution and share-alike required if CC BY-SA",
+    "downloadedAt": "2026-09-12",
+    "visualQa": true
+  },
+  {
+    "id": "modric",
+    "nameKo": "루카 모드리치",
+    "nameEn": "Luka Modric",
+    "sourcePageUrl": "https://commons.wikimedia.org/wiki/File:Luka_Modric_2018.png",
+    "sourceImageUrl": "https://upload.wikimedia.org/wikipedia/commons/d/db/Luka_Modric_2018.png?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=original",
+    "sourcePath": "sources/modric.png",
+    "author": "Антон Зайцев",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "selectionReason": "귀를 덮는 중장발과 가는 턱선",
+    "date": "21 June 2018",
+    "sourceTitle": "Luka Modric 2018.png",
+    "dimensions": [
+      478,
+      668
+    ],
+    "qualityNotes": "시각 검수 완료: 3/4 방향, 중장발 머리 전체. 허리 위 사진에서 머리와 어깨만 크롭 필요.",
+    "reuseStatus": "license metadata captured; attribution and share-alike required if CC BY-SA",
+    "downloadedAt": "2026-09-12",
+    "visualQa": true
+  },
+  {
+    "id": "cucurella",
+    "nameKo": "마르크 쿠쿠렐라",
+    "nameEn": "Marc Cucurella",
+    "sourcePageUrl": "https://commons.wikimedia.org/wiki/File:Marc_Cucurella_Argentina_v_Spain_19_July_2026-064_%28cropped%29.jpg",
+    "sourceImageUrl": "https://upload.wikimedia.org/wikipedia/commons/8/8a/Marc_Cucurella_Argentina_v_Spain_19_July_2026-064_%28cropped%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=original",
+    "sourcePath": "sources/cucurella.jpg",
+    "author": "Bryan Berlin",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "selectionReason": "양옆으로 크게 퍼지는 긴 곱슬머리",
+    "date": "19 July 2026, 15:02:38",
+    "sourceTitle": "Marc Cucurella Argentina v Spain 19 July 2026-064 (cropped).jpg",
+    "dimensions": [
+      1388,
+      1945
+    ],
+    "qualityNotes": "시각 검수 완료: 정면 머리 전체와 넓은 곱슬머리가 잘 드러나는 고해상도 사진.",
+    "reuseStatus": "license metadata captured; attribution and share-alike required if CC BY-SA",
+    "downloadedAt": "2026-09-12",
+    "visualQa": true
+  },
+  {
+    "id": "grealish",
+    "nameKo": "잭 그릴리쉬",
+    "nameEn": "Jack Grealish",
+    "sourcePageUrl": "https://commons.wikimedia.org/wiki/File:ManCity20240722-017_%28cropped%29.jpg",
+    "sourceImageUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a4/ManCity20240722-017_%28cropped%29.jpg/500px-ManCity20240722-017_%28cropped%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=thumbnail&_=20240723053125",
+    "sourcePath": "sources/grealish.jpg",
+    "author": "Hameltion",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "selectionReason": "뒤로 넘긴 머리와 헤어밴드, 옆머리 대비",
+    "date": "22 July 2024, 19:36:06",
+    "sourceTitle": "ManCity20240722-017 (cropped).jpg",
+    "dimensions": [
+      500,
+      672
+    ],
+    "qualityNotes": "시각 검수 완료: 근접 3/4 얼굴, 긴 윗머리와 밴드 볼륨 보존.",
+    "reuseStatus": "license metadata captured; attribution and share-alike required if CC BY-SA",
+    "downloadedAt": "2026-09-12",
+    "originalSourceImageUrl": "https://upload.wikimedia.org/wikipedia/commons/a/a4/ManCity20240722-017_%28cropped%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=original",
+    "visualQa": true
+  },
+  {
+    "id": "haaland",
+    "nameKo": "엘링 홀란드",
+    "nameEn": "Erling Haaland",
+    "sourcePageUrl": "https://commons.wikimedia.org/wiki/File:ManCity20240722-031_%28cropped%29.jpg",
+    "sourceImageUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/57/ManCity20240722-031_%28cropped%29.jpg/500px-ManCity20240722-031_%28cropped%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=thumbnail&_=20240723052538",
+    "sourcePath": "sources/haaland.jpg",
+    "author": "Hameltion",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "selectionReason": "뒤로 묶은 금발과 긴 머리 윤곽",
+    "date": "22 July 2024, 19:37:42",
+    "sourceTitle": "ManCity20240722-031 (cropped).jpg",
+    "dimensions": [
+      500,
+      703
+    ],
+    "qualityNotes": "시각 검수 완료: 머리 전체 포함 근접 3/4 얼굴. 묶은 머리는 뒤에 가려짐. 얼굴 외곽이 드러남.",
+    "reuseStatus": "license metadata captured; attribution and share-alike required if CC BY-SA",
+    "downloadedAt": "2026-09-12",
+    "originalSourceImageUrl": "https://upload.wikimedia.org/wikipedia/commons/5/57/ManCity20240722-031_%28cropped%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=original",
+    "visualQa": true
+  },
+  {
+    "id": "ake",
+    "nameKo": "나탕 아케",
+    "nameEn": "Nathan Ake",
+    "sourcePageUrl": "https://commons.wikimedia.org/wiki/File:Nathan_Ak%C3%A9_Fenerbah%C3%A7e_20260717_%285%29_%28cropped%29.jpg",
+    "sourceImageUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d9/Nathan_Ak%C3%A9_Fenerbah%C3%A7e_20260717_%285%29_%28cropped%29.jpg/500px-Nathan_Ak%C3%A9_Fenerbah%C3%A7e_20260717_%285%29_%28cropped%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=thumbnail&_=20260719003523",
+    "sourcePath": "sources/ake.jpg",
+    "author": "Zafer",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+    "selectionReason": "굵은 레게 머리와 길게 내려오는 머리 윤곽",
+    "date": "17 July 2026, 14:55",
+    "sourceTitle": "Nathan Aké Fenerbahçe 20260717 (5) (cropped).jpg",
+    "dimensions": [
+      500,
+      736
+    ],
+    "qualityNotes": "시각 검수 완료: 근접 정면 얼굴, 양옆 레게 머리 전체 보존.",
+    "reuseStatus": "license metadata captured; attribution and share-alike required if CC BY-SA",
+    "downloadedAt": "2026-09-12",
+    "originalSourceImageUrl": "https://upload.wikimedia.org/wikipedia/commons/d/d9/Nathan_Ak%C3%A9_Fenerbah%C3%A7e_20260717_%285%29_%28cropped%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=original",
+    "visualQa": true
+  },
+  {
+    "id": "griezmann",
+    "nameKo": "앙투안 그리즈만",
+    "nameEn": "Antoine Griezmann",
+    "sourcePageUrl": "https://commons.wikimedia.org/wiki/File:Antoine_Griezmann_%2851100409504%29_%28cropped%29.jpg",
+    "sourceImageUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/cf/Antoine_Griezmann_%2851100409504%29_%28cropped%29.jpg/500px-Antoine_Griezmann_%2851100409504%29_%28cropped%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=thumbnail&_=20231221050845",
+    "sourcePath": "sources/griezmann.jpg",
+    "author": "Biser  Todorov ( User:Biso ) from Sofia, Bulgaria",
+    "license": "CC BY-SA 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+    "selectionReason": "밴드로 넘긴 긴 머리와 뒤통수 볼륨",
+    "date": "7 October 2017, 22:22",
+    "sourceTitle": "Antoine Griezmann (51100409504) (cropped).jpg",
+    "dimensions": [
+      500,
+      667
+    ],
+    "qualityNotes": "시각 검수 완료: 긴 머리와 뒤쪽 볼륨이 보이는 3/4 방향. 뻗은 팔을 제외하고 얼굴과 윗어깨만 크롭.",
+    "reuseStatus": "license metadata captured; attribution and share-alike required if CC BY-SA",
+    "downloadedAt": "2026-09-12",
+    "originalSourceImageUrl": "https://upload.wikimedia.org/wikipedia/commons/c/cf/Antoine_Griezmann_%2851100409504%29_%28cropped%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=original",
+    "visualQa": true
+  },
+  {
+    "id": "sane",
+    "nameKo": "레로이 자네",
+    "nameEn": "Leroy Sane",
+    "sourcePageUrl": "https://commons.wikimedia.org/wiki/File:20180602_FIFA_Friendly_Match_Austria_vs._Germany_Leroy_San%C3%A9_850_0668.jpg",
+    "sourceImageUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/bc/20180602_FIFA_Friendly_Match_Austria_vs._Germany_Leroy_San%C3%A9_850_0668.jpg/500px-20180602_FIFA_Friendly_Match_Austria_vs._Germany_Leroy_San%C3%A9_850_0668.jpg?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=thumbnail&_=20180605151803",
+    "sourcePath": "sources/sane.jpg",
+    "author": "Granada",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "selectionReason": "짧게 땋은 머리 가닥이 양옆과 뒤로 튀어나오는 윤곽",
+    "date": "2 June 2018 17:10:12.34",
+    "sourceTitle": "20180602 FIFA Friendly Match Austria vs. Germany Leroy Sané 850 0668.jpg",
+    "dimensions": [
+      500,
+      750
+    ],
+    "qualityNotes": "시각 검수 완료: 근접 정면, 땋은 머리 전체 보존. 어깨의 다른 사람 손 제거 필요.",
+    "reuseStatus": "license metadata captured; attribution and share-alike required if CC BY-SA",
+    "downloadedAt": "2026-09-12",
+    "originalSourceImageUrl": "https://upload.wikimedia.org/wikipedia/commons/b/bc/20180602_FIFA_Friendly_Match_Austria_vs._Germany_Leroy_San%C3%A9_850_0668.jpg?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=original",
+    "visualQa": true
+  }
+]

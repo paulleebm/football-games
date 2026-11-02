@@ -1,0 +1,1040 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#1d2b4a">
+  <title>고군분투</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="../favicon-32.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; background: #10182b; color: #fff; font-family: "Jua", sans-serif; overflow: hidden; }
+    body { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+    /* 세로 화면 폰에서는 게임 전체를 90도 돌려서 가로로 보여준다 (폰을 옆으로 돌려 잡게) */
+    #wrap { position: fixed; left: 0; top: 0; overflow: hidden; touch-action: none; }
+    #wrap.rot { transform-origin: 0 0; transform: rotate(90deg) translateY(-100%); }
+    canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+    .hud { position: absolute; left: 0; right: 0; top: 0; display: flex; align-items: center; gap: 14px; padding: 10px 16px; pointer-events: none; text-shadow: 0 2px 0 rgba(0, 0, 0, .35); }
+    .hud a, .hud button { pointer-events: auto; }
+    #home { color: #fff; text-decoration: none; font-size: 15px; background: rgba(0, 0, 0, .25); padding: 5px 10px; border-radius: 10px; }
+    #score { font-size: 26px; min-width: 80px; }
+    #stageLbl { flex: 1; text-align: center; font-size: 18px; opacity: .95; }
+    #best { font-size: 14px; opacity: .85; }
+    #mute { background: rgba(0, 0, 0, .25); border: 0; border-radius: 10px; font-size: 17px; padding: 4px 8px; cursor: pointer; color: #fff; }
+    #dist { font-size: 15px; opacity: .9; }
+    #banner { position: absolute; left: 0; right: 0; top: 30%; text-align: center; font-size: 40px; pointer-events: none; opacity: 0; transition: opacity .25s; text-shadow: 0 3px 0 rgba(0, 0, 0, .35); }
+    #banner.show { opacity: 1; }
+    #banner small { display: block; font-size: 18px; margin-top: 4px; }
+    .screen { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(8, 14, 30, .55); }
+    .screen.show { display: flex; }
+    .card { background: #fff; color: #1d2b4a; border-radius: 18px; padding: 20px 26px; text-align: center; box-shadow: 0 6px 0 #d0102a; width: min(360px, calc(100% - 32px)); }
+    .card h1 { font-size: 40px; color: #d0102a; letter-spacing: 2px; }
+    .card h2 { font-size: 28px; margin-bottom: 4px; }
+    .card p { font-size: 16px; margin: 6px 0; color: #4a5672; }
+    .card .big { font-size: 34px; color: #1d2b4a; margin: 2px 0 6px; }
+    .card button { font-family: inherit; font-size: 20px; border: 0; border-radius: 12px; padding: 11px 34px; margin-top: 10px; background: #d0102a; color: #fff; cursor: pointer; }
+    .keys { font-size: 13px !important; color: #8a93a8 !important; }
+    .tip { font-size: 14px !important; background: #fff6d6; border-radius: 10px; padding: 6px 10px; }
+    .tip b { color: #c08a00; }
+    /* 결과 화면: 가로로 왼쪽 결과·등록, 오른쪽 랭킹 (가로 화면 높이가 낮아서) */
+    .card.over { width: min(660px, calc(100% - 24px)); max-height: calc(100% - 20px); overflow: auto; display: flex; gap: 18px; padding: 16px 18px; text-align: center; }
+    .card.over .col { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
+    .card.over .lb-col { border-left: 2px solid #eef0f5; padding-left: 16px; justify-content: flex-start; }
+    .card.over h3 { font-size: 17px; margin-bottom: 6px; color: #d0102a; }
+    .over-btns { display: flex; gap: 8px; justify-content: center; align-items: center; margin-top: 10px; }
+    .over-btns button { margin-top: 0; }
+    #homeBtn { font-size: 20px; border-radius: 12px; padding: 11px 22px; background: #eef0f5; color: #1d2b4a; text-decoration: none; }
+    .lb-form { display: flex; gap: 6px; justify-content: center; margin-top: 8px; }
+    .lb-form input { font-family: inherit; font-size: 16px; padding: 8px 10px; border: 2px solid #dfe3ec; border-radius: 10px; width: 130px; min-width: 0; color: #1d2b4a; }
+    .lb-form button { font-size: 16px !important; padding: 8px 12px !important; margin-top: 0 !important; background: #1d2b4a !important; }
+    .lb-form button:disabled { opacity: .45; cursor: default; }
+    .lb-msg { min-height: 20px; font-size: 13px; color: #6a7590; margin-top: 4px; }
+    table.lb { width: 100%; border-collapse: collapse; font-size: 14px; }
+    table.lb th { color: #8a93a8; font-weight: normal; padding: 2px 4px; }
+    table.lb td { padding: 3px 4px; border-top: 1px solid #eef0f5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
+    table.lb tr.me td { background: #ffe9ec; }
+    /* 회전된 화면에서는 기기 폭이 아니라 게임 화면 폭으로 판단해야 해서 미디어쿼리 대신 클래스로 */
+    #wrap.narrow .card.over { flex-direction: column; }
+    #wrap.narrow .card.over .lb-col { border-left: 0; padding-left: 0; }
+  </style>
+  <script src="/points.js"></script>
+</head>
+<body>
+  <div id="wrap">
+    <canvas id="cv"></canvas>
+    <div class="hud">
+      <a id="home" href="../">← 홈</a>
+      <div id="score">0</div>
+      <div id="dist">0m</div>
+      <div id="stageLbl">1단계</div>
+      <div id="best"></div>
+      <button id="mute" aria-label="효과음 켜기/끄기">🔊</button>
+    </div>
+    <div id="banner"></div>
+    <div class="screen show" id="title"><div class="card">
+      <h1>고군분투</h1>
+      <p>경기장 지붕 위를 끝없이 달려라</p>
+      <p>누르면 점프 · 공중에서 한 번 더 누르면 와이어<br>누르고 있으면 매달리고, 떼면 날아간다</p>
+      <p class="tip">줄이 <b>노랗게</b> 바뀐 뒤 떼면 공중제비!<br>공중제비를 돌아야 다음 와이어를 쓸 수 있다</p>
+      <p class="keys">마우스 · 터치 · 스페이스바</p>
+      <button id="startBtn">시작</button>
+    </div></div>
+    <div class="screen" id="over"><div class="card over">
+      <div class="col">
+        <h2 id="overTitle">게임 오버</h2>
+        <div class="big" id="final">0</div>
+        <p id="overInfo"></p>
+        <div class="lb-form"><input id="nick" maxlength="20" placeholder="닉네임" autocomplete="off"><button id="submitBtn">랭킹 등록</button></div>
+        <div class="lb-msg" id="lbMsg"></div>
+        <div class="over-btns"><a id="homeBtn" href="../">홈으로</a><button id="againBtn">다시 하기</button></div>
+      </div>
+      <div class="col lb-col"><h3>랭킹 TOP 10</h3><div id="lbBox"></div></div>
+    </div></div>
+  </div>
+
+<script src="sim.js"></script>
+<script src="course.js"></script>
+<script>
+(() => {
+  const S = window.GogunSim, C = S.C, DATA = window.GOGUN_COURSE;
+  const params = new URLSearchParams(location.search);
+  const DEMO = params.has('demo'); // 개발용: 기준 플레이 재생 (?demo&ff=8 이면 8배속)
+  const FF = Math.max(0.02, Math.min(20, +params.get('ff') || 1));
+  const VIEW_H = +params.get('view') || 18; // 개발용: 화면 높이에 보이는 단위 수 (작을수록 확대)
+  // 단계 색: 원작 순서에서 앞 두 단계(파랑 하늘)를 뺀 초록 노랑 주황 빨강, 그 뒤는 보라 남색 밤하늘을 돌아가며
+  const STAGE_COL = ['#3cae5c', '#e7bd2c', '#f0852a', '#e04545', '#8e4fd6', '#3a3f9e', '#26304a'];
+  const stageCol = (s) => STAGE_COL[s < STAGE_COL.length ? s : 4 + ((s - 4) % 3)];
+  const $ = (id) => document.getElementById(id);
+  const wrap = $('wrap'), cv = $('cv'), ctx = cv.getContext('2d');
+
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch (_) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch (_) {} },
+  };
+  let best = +store.get('gogun-best') || 0;
+
+  // ------------------------------------------------------------ 화면 크기 / 회전
+  let W = 0, H = 0, dpr = 1;
+  function layout() {
+    const coarse = matchMedia('(pointer: coarse)').matches;
+    const rot = coarse && innerHeight > innerWidth;
+    W = rot ? innerHeight : innerWidth;
+    H = rot ? innerWidth : innerHeight;
+    wrap.classList.toggle('rot', rot);
+    wrap.classList.toggle('narrow', W < 520);
+    wrap.style.width = W + 'px';
+    wrap.style.height = H + 'px';
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+    cv.width = Math.round(W * dpr);
+    cv.height = Math.round(H * dpr);
+  }
+  addEventListener('resize', layout);
+  addEventListener('orientationchange', () => setTimeout(layout, 150));
+  layout();
+
+
+  // ------------------------------------------------------------ 소리 (WebAudio로 직접 만든 짧은 효과음)
+  let ac = null, muted = store.get('gogun-mute') === '1';
+  $('mute').textContent = muted ? '🔇' : '🔊';
+  function audio() {
+    if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (_) {} }
+    if (ac && ac.state === 'suspended') ac.resume();
+  }
+  function tone(f0, f1, dur, type, vol, delay = 0) {
+    if (muted || !ac) return;
+    const t = ac.currentTime + delay;
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(f0, t);
+    o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g).connect(ac.destination);
+    o.start(t);
+    o.stop(t + dur + 0.02);
+  }
+  const sfx = {
+    jump: () => tone(330, 620, 0.12, 'square', 0.05),
+    wire: () => { tone(900, 300, 0.08, 'sawtooth', 0.04); tone(1500, 1200, 0.05, 'triangle', 0.04, 0.05); },
+    whiff: () => tone(500, 260, 0.1, 'sawtooth', 0.03),
+    flip: () => tone(520, 1040, 0.15, 'triangle', 0.05),
+    silver: () => { tone(1320, 1320, 0.06, 'square', 0.035); tone(1760, 1760, 0.1, 'square', 0.035, 0.05); },
+    gold: () => { tone(1568, 1568, 0.06, 'square', 0.04); tone(2093, 2093, 0.16, 'square', 0.04, 0.05); },
+    land: () => tone(180, 90, 0.07, 'triangle', 0.05),
+    dead: () => { tone(500, 70, 0.7, 'sawtooth', 0.06); },
+    stage: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, f, 0.14, 'square', 0.045, i * 0.09)),
+    bonus: () => [784, 988, 1175, 1568].forEach((f, i) => tone(f, f, 0.12, 'triangle', 0.06, i * 0.07)),
+  };
+  $('mute').addEventListener('click', (e) => {
+    e.stopPropagation();
+    muted = !muted;
+    store.set('gogun-mute', muted ? '1' : '0');
+    $('mute').textContent = muted ? '🔇' : '🔊';
+  });
+
+  // ------------------------------------------------------------ 게임 상태
+  let world, p, score, stage, mode = 'title', frameNo = 0, held = false;
+  let fx = [], pops = [], spin = null, hangTh = 0, hangOm = 0, deadT = 0, landDust = 0, runPhase = 0, whiff = null, wireT = 0, refIdx = 0;
+  let camX = 0, camY = 2.7, bannerT = 0;
+  // 무한 구간: 선수 앞쪽으로 늘 충분히 코스가 붙어 있게 한다
+  const AHEAD = 200;
+  const keepAhead = () => { if (world.roofs[world.roofs.length - 1].x1 < p.x + AHEAD) S.extendWorld(world, p.x + AHEAD * 2); };
+
+  function reset() {
+    world = S.makeWorld(DATA);
+    p = S.spawn(world);
+    keepAhead();
+    score = 0; stage = 0; frameNo = 0; refIdx = 0;
+    fx = []; pops = []; spin = null; deadT = 0; whiff = null; wireT = 0;
+    camX = p.x - viewW() * 0.28; camY = 2.7;
+    $('best').textContent = best ? '최고 ' + best.toLocaleString() : '';
+    updateHud();
+  }
+
+  let played = false;
+  function start() {
+    audio();
+    reset();
+    mode = 'play';
+    held = false;
+    played = false;
+    if (!DEMO) window.dispatchEvent(new Event('gogun:start')); // 랭킹 위조 방지용 판 세션
+    $('title').classList.remove('show');
+    $('over').classList.remove('show');
+    banner('1단계', '');
+  }
+
+  function banner(text, sub) {
+    $('banner').innerHTML = text + (sub ? `<small>${sub}</small>` : '');
+    $('banner').classList.add('show');
+    bannerT = 1.3;
+  }
+
+  function updateHud() {
+    $('score').textContent = score.toLocaleString();
+    $('stageLbl').textContent = `${stage + 1}단계`;
+    $('dist').textContent = Math.max(0, Math.floor(p.x)).toLocaleString() + 'm';
+  }
+
+  // 단계가 끝날 때 금화를 전부 먹었으면 보너스 200점 (원작 규칙). 함정 금화는 빼고 센다
+  function finishStage(s) {
+    const x0 = world.stages[s], x1 = s + 1 < world.stages.length ? world.stages[s + 1] : Infinity;
+    const golds = world.coins.filter((c) => c.g && !c.t && c.x >= x0 && c.x < x1);
+    const all = golds.length > 0 && golds.every((c) => c.got);
+    if (all) {
+      score += 200;
+      pops.push({ x: p.x, y: p.y + 3, text: '금화 전부! +200', t: 0, big: true });
+      sfx.bonus();
+    }
+    return all;
+  }
+
+  let finalStage = 1; // 랭킹에 올리는 도달 단계
+  function end() {
+    mode = 'dead';
+    deadT = 0;
+    finalStage = stage + 1;
+    const isBest = score > best;
+    if (isBest) { best = score; store.set('gogun-best', String(best)); }
+    // 사이트 포인트: 점수 + 통과한 단계 + 최고 기록 (게임 화면에는 띄우지 않는다)
+    const passed = stage;
+    if (!DEMO && (score > 0 || passed > 0)) {
+      const pts = Math.min(40, Math.floor(score / 100)) + Math.min(60, passed * 5) + (isBest ? 30 : 0);
+      window.FSPoints?.earn('gogun', pts, `${score.toLocaleString()}점 · ${finalStage}단계${isBest ? ' · 최고기록' : ''}`);
+    }
+    const dist = Math.max(0, Math.floor(p.x)).toLocaleString();
+    setTimeout(() => {
+      $('overTitle').textContent = '게임 오버';
+      $('final').textContent = score.toLocaleString() + '점';
+      $('overInfo').textContent = `${stage + 1}단계 · ${dist}m에서 떨어짐` + (isBest ? ' · 최고 기록!' : ` · 최고 ${best.toLocaleString()}`);
+      $('nick').value = store.get('gogunNickname') || store.get('jellyNickname') || store.get('bjNickname') || '';
+      $('lbMsg').textContent = score > 0 && !DEMO ? '닉네임을 입력하고 기록을 등록하세요' : '';
+      $('submitBtn').disabled = score <= 0 || DEMO;
+      $('over').classList.add('show');
+      overAt = performance.now();
+      renderLeaderboard();
+    }, 700);
+  }
+  let overAt = 0;
+
+  // ------------------------------------------------------------ 랭킹
+  const escapeHtml = (v) => String(v ?? '').replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+  const medal = (i) => (i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : String(i + 1));
+  async function renderLeaderboard() {
+    const rank = window.gogunRank, box = $('lbBox');
+    if (!rank) { box.innerHTML = '<div class="lb-msg">랭킹 서버에 연결할 수 없어요.</div>'; return; }
+    box.innerHTML = '<div class="lb-msg">랭킹 불러오는 중…</div>';
+    try {
+      const rows = await rank.top(10);
+      const me = rank.deviceId();
+      box.innerHTML = rows.length
+        ? `<table class="lb"><tr><th>#</th><th>닉네임</th><th>점수</th><th>단계</th></tr>${rows.map((r, i) =>
+            `<tr class="${r.id === me ? 'me' : ''}"><td>${medal(i)}</td><td>${escapeHtml(r.nickname)}</td><td>${Number(r.score).toLocaleString()}</td><td>${escapeHtml(r.stage)}</td></tr>`).join('')}</table>`
+        : '<div class="lb-msg">아직 등록된 기록이 없어요. 첫 기록을 남겨보세요!</div>';
+    } catch (e) {
+      console.error(e);
+      box.innerHTML = '<div class="lb-msg">랭킹을 불러오지 못했어요.</div>';
+    }
+  }
+  async function submitScore() {
+    const nick = $('nick').value.trim().slice(0, 20);
+    if (!nick) { $('lbMsg').textContent = '닉네임을 입력해 주세요'; $('nick').focus(); return; }
+    const rank = window.gogunRank;
+    if (!rank) { $('lbMsg').textContent = '랭킹 서버에 연결할 수 없어요.'; return; }
+    store.set('gogunNickname', nick);
+    $('submitBtn').disabled = true;
+    $('lbMsg').textContent = '등록 중…';
+    try {
+      const res = await rank.submit(nick, score, finalStage);
+      $('lbMsg').textContent = res.ok ? '랭킹에 등록됐어요!' : `내 최고 기록(${res.best.toLocaleString()}점)이 더 높아서 유지돼요`;
+      renderLeaderboard();
+      if (res.ok && window.FSPoints) {
+        const rows = await rank.top(10).catch(() => []);
+        const pos = rows.findIndex((r) => r.id === rank.deviceId()) + 1;
+        if (pos > 0) window.FSPoints.rankBonus('gogun', pos);
+      }
+    } catch (e) {
+      console.error(e);
+      $('lbMsg').textContent = '등록에 실패했어요. 잠시 후 다시 시도해 주세요.';
+      $('submitBtn').disabled = false;
+    }
+  }
+  $('submitBtn').addEventListener('click', submitScore);
+  $('nick').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); submitScore(); } });
+
+  function refHeld(f) {
+    const R = DATA.ref;
+    while (refIdx < R.length && R[refIdx + 1] <= f) refIdx += 2;
+    return refIdx < R.length && R[refIdx] <= f;
+  }
+
+  function tick() {
+    const h = DEMO ? refHeld(frameNo) : held;
+    if (p.st === 'hang') { hangTh = p.hang.slack ? 0 : p.hang.th; hangOm = p.hang.om; }
+    const ev = S.step(p, world, h);
+    if (spin) { spin.t += C.DT; if (spin.t >= spin.T) spin = null; }
+    frameNo++;
+    for (const e of ev) {
+      if (e === 'jump') {
+        sfx.jump();
+        // 실제로 한 번이라도 뛰었을 때만 플레이 로그를 남긴다
+        if (!played && !DEMO) { played = true; window.dispatchEvent(new Event('gogun:play')); }
+      }
+      else if (e === 'wire') { sfx.wire(); wireT = 0; spin = null; }
+      else if (e === 'whiff') { sfx.whiff(); whiff = { x: p.x, y: p.y + C.HAND, t: 0 }; }
+      else if (e === 'flip') {
+        // 와이어에 매달려 몸이 젖혀진 각도에서 그대로 이어서 뒤로 한 바퀴 (오른쪽을 보고 있으니 반시계 방향)
+        sfx.flip();
+        const left = Math.PI * 2 - hangTh;
+        spin = { a0: hangTh, a1: Math.PI * 2, t: 0, T: Math.max(0.3, Math.min(0.65, left / Math.max(hangOm, 6) * 1.6)) };
+      } else if (e === 'release' && !spin) spin = { a0: hangTh, a1: 0, t: 0, T: 0.18 };
+      else if (e === 'ready') fx.push({ kind: 'ring', x: p.x, y: p.y + 1, t: 0 });
+      else if (e === 'land') { landDust = 0.25; sfx.land(); }
+      else if (e === 'dead') { sfx.dead(); end(); }
+    }
+    if (p.st === 'run') runPhase += p.vx * C.DT * 2.1;
+    const picked = S.pickCoins(p, world, []);
+    for (const c of picked) {
+      const v = S.coinValue(c.g, S.stageAt(world, c.x));
+      score += v;
+      (c.g ? sfx.gold : sfx.silver)();
+      pops.push({ x: c.x, y: c.y + 0.4, text: '+' + v, t: 0, gold: c.g });
+      for (let k = 0; k < 6; k++) fx.push({ kind: 'spark', x: c.x, y: c.y, vx: Math.cos(k) * 3, vy: Math.sin(k * 1.7) * 3 + 2, t: 0, gold: c.g });
+    }
+    // 단계 넘어감: 새 단계 지붕에 내려섰을 때
+    if (p.st === 'run') {
+      const s = world.roofs[p.roof].s;
+      if (s > stage) {
+        const bonus = finishStage(stage);
+        stage = s;
+        sfx.stage();
+        banner(`${stage + 1}단계`, bonus ? '금화 보너스 +200' : '');
+      }
+    }
+    keepAhead();
+    if (picked.length || ev.length || frameNo % 12 === 0) updateHud();
+  }
+
+  // ------------------------------------------------------------ 입력
+  function down() {
+    audio();
+    if (mode === 'title') { start(); return; }
+    if (mode === 'dead' && $('over').classList.contains('show')) {
+      if (performance.now() - overAt > 350) start();
+      return;
+    }
+    held = true;
+  }
+  function up() { held = false; }
+  wrap.addEventListener('pointerdown', (e) => {
+    const t = e.target;
+    if (t.closest('a,button,input')) return; // 버튼·입력칸은 원래대로 동작
+    if (mode !== 'title' && t.closest('#over .card')) return; // 결과 카드 안을 누른 건 다시 시작이 아니다
+    e.preventDefault();
+    down();
+  });
+  addEventListener('pointerup', up);
+  addEventListener('pointercancel', up);
+  addEventListener('blur', up);
+  wrap.addEventListener('contextmenu', (e) => e.preventDefault());
+  addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'INPUT') return;
+    if (e.code !== 'Space' && e.code !== 'ArrowUp' && e.code !== 'Enter') return;
+    e.preventDefault();
+    if (!e.repeat) down();
+  });
+  addEventListener('keyup', (e) => { if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'Enter') up(); });
+  $('startBtn').addEventListener('click', start);
+  $('againBtn').addEventListener('click', start);
+
+  // ------------------------------------------------------------ 그리기
+  let scale = 40;
+  const viewW = () => W / scale;
+  const sx = (x) => (x - camX) * scale;
+  const sy = (y) => H / 2 - (y - camY) * scale;
+
+  function mix(a, b, t) {
+    const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16);
+    const r = ((pa >> 16) & 255) * (1 - t) + ((pb >> 16) & 255) * t;
+    const g = ((pa >> 8) & 255) * (1 - t) + ((pb >> 8) & 255) * t;
+    const bl = (pa & 255) * (1 - t) + (pb & 255) * t;
+    return '#' + ((1 << 24) | (Math.round(r) << 16) | (Math.round(g) << 8) | Math.round(bl)).toString(16).slice(1);
+  }
+  const shade = (c, t) => (t < 0 ? mix(c, '#000000', -t) : mix(c, '#ffffff', t));
+
+  // 지금 위치의 단계 색 (단계 경계 앞뒤 15칸에서 섞는다)
+  function stageColor(x) {
+    const s = S.stageAt(world, x);
+    const nx = s + 1 < world.stages.length ? world.stages[s + 1] : Infinity;
+    const t = Math.max(0, Math.min(1, (x - (nx - 15)) / 15));
+    return t > 0 ? mix(stageCol(s), stageCol(s + 1), t) : stageCol(s);
+  }
+  // x 순서로 정렬된 배열에서 화면에 들어올 만한 것부터 (무한 구간은 계속 길어진다)
+  function fromX(arr, key, x) {
+    let lo = 0, hi = arr.length;
+    while (lo < hi) { const m = (lo + hi) >> 1; if (arr[m][key] < x) lo = m + 1; else hi = m; }
+    return lo;
+  }
+
+  const hash = (n) => { const s = Math.sin(n * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); };
+
+  function drawBackground(col) {
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, shade(col, -0.35));
+    g.addColorStop(0.65, shade(col, 0.25));
+    g.addColorStop(1, shade(col, 0.45));
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+    // 먼 경기장들 (조명탑 달린 관중석 실루엣)
+    const far = shade(col, -0.18);
+    ctx.fillStyle = far;
+    const par = 0.18, seg = 34;
+    const bx = camX * par;
+    for (let i = Math.floor(bx / seg) - 1; i <= Math.floor((bx + viewW()) / seg) + 1; i++) {
+      const cx = (i * seg - bx) * scale, w0 = (14 + hash(i) * 10) * scale, h0 = (3 + hash(i + 9) * 2.5) * scale;
+      const base = sy(-2.5);
+      ctx.beginPath();
+      ctx.moveTo(cx - w0 / 2, base);
+      ctx.lineTo(cx - w0 / 2, base - h0 * 0.75);
+      ctx.quadraticCurveTo(cx, base - h0 * 1.25, cx + w0 / 2, base - h0 * 0.75);
+      ctx.lineTo(cx + w0 / 2, base);
+      ctx.fill();
+      for (const side of [-1, 1]) {
+        const lx = cx + side * w0 * 0.42, ly = base - h0 * 1.45;
+        ctx.fillRect(lx - 0.06 * scale, ly, 0.12 * scale, h0 * 0.7);
+        ctx.fillRect(lx - 0.55 * scale, ly - 0.3 * scale, 1.1 * scale, 0.45 * scale);
+      }
+    }
+    // 가까운 관중석 덩어리
+    ctx.fillStyle = shade(col, -0.32);
+    const par2 = 0.45, seg2 = 9;
+    const bx2 = camX * par2;
+    for (let i = Math.floor(bx2 / seg2) - 1; i <= Math.floor((bx2 + viewW()) / seg2) + 1; i++) {
+      const x0 = (i * seg2 - bx2) * scale, w0 = (5 + hash(i * 3.1) * 4) * scale, h0 = (2 + hash(i * 7.7) * 3) * scale;
+      const base = sy(-3.2);
+      ctx.beginPath();
+      ctx.moveTo(x0, base);
+      ctx.lineTo(x0 + w0 * 0.15, base - h0);
+      ctx.lineTo(x0 + w0, base - h0 * 0.7);
+      ctx.lineTo(x0 + w0, base);
+      ctx.fill();
+    }
+  }
+
+  // 지붕 = 밖에서 눈높이로 본 큰 경기장 건물. 선수는 이 경기장 지붕 위를 달린다.
+  // 위에서부터: 흰 지붕(밟는 면, 정확히 x0~x1, 양 끝이 살짝 얇아지고 건물보다 튀어나옴)
+  //  → 지붕 아래로 새어 나오는 경기장 안 조명 띠 (관중석, 흰 V자 지지대, 대형 전광판)
+  //  → 불 켜진 유리 외벽 + 빨간 조명 간판(글자 없음) → 출입구가 있는 아래층 → 화면 아래까지 이어지는 기단.
+  const CROWD = ['#f2c9a0', '#c98a5c', '#8d5a3b', '#ffffff', '#ffd400', '#d0102a', '#1d4ed8', '#111111'];
+  function drawRoof(r, col, t, idx) {
+    const x0 = sx(r.x0), x1 = sx(r.x1), y0 = sy(r.top);
+    if (x1 < -10 || x0 > W + 10) return;
+    const u = scale, w = x1 - x0, bottom = H + 4, cx = (x0 + x1) / 2;
+    const over = Math.min(0.32 * u, w * 0.06); // 지붕이 건물보다 튀어나온 폭
+    const bx0 = x0 + over, bx1 = x1 - over, bw = bx1 - bx0;
+    const yRoofB = y0 + 0.34 * u; // 지붕 아랫면
+    const yGlow = y0 + 1.55 * u; // 조명 띠 아래 = 외벽 위
+    const yFacade = yGlow + 1.25 * u; // 유리 외벽 아래
+    const yPodium = yFacade + 0.85 * u; // 아래층 아래
+
+    // 지붕 위로 번지는 경기장 조명
+    ctx.save();
+    ctx.translate(cx, y0);
+    ctx.scale(1, 0.35);
+    const halo = ctx.createRadialGradient(0, 0, 0, 0, 0, w * 0.6);
+    halo.addColorStop(0, 'rgba(225,255,235,.35)');
+    halo.addColorStop(1, 'rgba(225,255,235,0)');
+    ctx.fillStyle = halo;
+    ctx.fillRect(-w * 0.65, -w * 0.65, w * 1.3, w * 0.65);
+    ctx.restore();
+
+    // 기단 (화면 아래까지)
+    const base = ctx.createLinearGradient(0, yPodium, 0, yPodium + 4 * u);
+    base.addColorStop(0, shade(col, -0.62));
+    base.addColorStop(1, shade(col, -0.8));
+    ctx.fillStyle = base;
+    ctx.fillRect(bx0 - 0.05 * u, yPodium - 1, bw + 0.1 * u, bottom - yPodium);
+
+    // 조명 띠: 경기장 안 (밝은 빛 + 건너편 관중석)
+    const glow = ctx.createLinearGradient(0, yRoofB, 0, yGlow);
+    glow.addColorStop(0, '#f4fff6');
+    glow.addColorStop(0.35, '#c9f2d3');
+    glow.addColorStop(1, '#7cc28d');
+    ctx.fillStyle = glow;
+    ctx.fillRect(bx0, yRoofB - 2, bw, yGlow - yRoofB + 2);
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(bx0, yRoofB, bw, yGlow - yRoofB);
+    ctx.clip();
+    // 건너편 관중석 줄 + 관중
+    const standTop = yRoofB + 0.45 * u, row = 0.26 * u, head = Math.max(1, 0.065 * u), step = 0.22 * u;
+    for (let k = 0; standTop + k * row < yGlow; k++) {
+      const ry = standTop + k * row;
+      ctx.fillStyle = k % 2 ? shade(col, -0.05) : shade(col, -0.2);
+      ctx.globalAlpha = 0.85;
+      ctx.fillRect(bx0, ry + row * 0.5, bw, row * 0.45);
+      ctx.globalAlpha = 1;
+      for (let c = Math.floor((r.x0 * u) / step); c * step < r.x1 * u; c++) {
+        const hsh = hash(idx * 7919 + k * 131 + c);
+        if (hsh < 0.3) continue;
+        const px = c * step - camX * u + (k % 2) * step * 0.5;
+        const jump = hsh > 0.86 ? Math.max(0, Math.sin(t * 9 + hsh * 40)) * 0.05 * u : 0;
+        ctx.fillStyle = CROWD[Math.floor(hash(c * 3.7 + k + idx) * CROWD.length)];
+        ctx.beginPath();
+        ctx.arc(px, ry + row * 0.42 - jump, head, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    // 지붕 안쪽 갈비뼈 (지붕 아랫면에서 비스듬히 내려오는 흰 선)
+    ctx.strokeStyle = 'rgba(255,255,255,.55)';
+    ctx.lineWidth = Math.max(1, 0.03 * u);
+    ctx.beginPath();
+    const rib = 0.55 * u;
+    for (let c = Math.floor((r.x0 * u) / rib); c * rib < r.x1 * u + rib; c++) {
+      const px = c * rib - camX * u;
+      const lean = ((px - cx) / (w / 2)) * 0.35 * u;
+      ctx.moveTo(px, yRoofB);
+      ctx.lineTo(px + lean, yRoofB + 0.45 * u);
+    }
+    ctx.stroke();
+    ctx.restore();
+    // 대형 전광판 (넓은 경기장만)
+    if (bw > 6 * u) {
+      const sw = Math.min(1.6 * u, bw * 0.16);
+      ctx.fillStyle = '#1b2232';
+      ctx.fillRect(cx - sw / 2, yRoofB + 0.12 * u, sw, 0.62 * u);
+      ctx.fillStyle = 'rgba(120,200,255,.25)';
+      ctx.fillRect(cx - sw / 2 + 0.06 * u, yRoofB + 0.18 * u, sw - 0.12 * u, 0.5 * u);
+    }
+    // 흰 V자 지지대 (외벽 위에서 지붕을 받친다)
+    ctx.strokeStyle = '#f5f7fb';
+    ctx.lineWidth = Math.max(1.5, 0.07 * u);
+    ctx.beginPath();
+    const sup = 3.2 * u;
+    for (let c = Math.floor((r.x0 * u) / sup); c * sup < r.x1 * u + sup; c++) {
+      const px = c * sup - camX * u + sup * 0.5;
+      if (px < bx0 + 0.5 * u || px > bx1 - 0.5 * u) continue;
+      ctx.moveTo(px - 0.4 * u, yRoofB);
+      ctx.lineTo(px, yGlow);
+      ctx.lineTo(px + 0.4 * u, yRoofB);
+    }
+    ctx.stroke();
+
+    // 유리 외벽: 따뜻한 불빛 창 격자
+    ctx.fillStyle = '#1c2840';
+    ctx.fillRect(bx0, yGlow, bw, yFacade - yGlow);
+    const colW = 0.42 * u;
+    for (let c = Math.floor((r.x0 * u) / colW); c * colW < r.x1 * u; c++) {
+      const px = c * colW - camX * u;
+      if (px < bx0 + 0.05 * u || px + colW * 0.8 > bx1 - 0.05 * u) continue;
+      for (let k = 0; k < 3; k++) {
+        const hsh = hash(idx * 53 + c * 7 + k);
+        ctx.fillStyle = hsh > 0.25 ? (hsh > 0.85 ? '#cfe6ff' : '#ffe2a2') : '#33415e';
+        ctx.fillRect(px + colW * 0.12, yGlow + 0.12 * u + k * 0.36 * u, colW * 0.76, 0.27 * u);
+      }
+    }
+    // 빨간 조명 간판 (글자 없는 빛 띠) 두 개
+    if (bw > 3 * u) {
+      for (const f of [0.22, 0.78]) {
+        const sgx = bx0 + bw * f, sgw = Math.min(2.2 * u, bw * 0.22);
+        ctx.fillStyle = 'rgba(255,60,60,.25)';
+        ctx.fillRect(sgx - sgw / 2 - 0.1 * u, yGlow + 0.02 * u, sgw + 0.2 * u, 0.36 * u);
+        ctx.fillStyle = '#ff4d4d';
+        ctx.fillRect(sgx - sgw / 2, yGlow + 0.1 * u, sgw, 0.18 * u);
+      }
+    }
+    // 아래층: 기둥 사이로 불 켜진 출입구
+    ctx.fillStyle = '#2b3549';
+    ctx.fillRect(bx0 - 0.05 * u, yFacade, bw + 0.1 * u, yPodium - yFacade);
+    ctx.fillStyle = '#3a4660';
+    ctx.fillRect(bx0 - 0.05 * u, yFacade, bw + 0.1 * u, 0.08 * u);
+    const door = 1.1 * u;
+    for (let c = Math.floor((r.x0 * u) / door); c * door < r.x1 * u; c++) {
+      const px = c * door - camX * u;
+      if (px < bx0 + 0.1 * u || px + door * 0.7 > bx1 - 0.1 * u) continue;
+      ctx.fillStyle = hash(idx * 97 + c) > 0.4 ? '#ffd889' : '#56627d';
+      ctx.fillRect(px + door * 0.15, yFacade + 0.25 * u, door * 0.55, yPodium - yFacade - 0.3 * u);
+    }
+
+    // 지붕 (밟는 면): 위가 살짝 둥근 흰 지붕, 양 끝이 얇아진다
+    const tip = 0.1 * u; // 끝에서 내려가는 정도
+    const roof = new Path2D();
+    roof.moveTo(x0, y0 + tip);
+    roof.quadraticCurveTo(x0 + 0.05 * u, y0, x0 + 0.6 * u, y0);
+    roof.lineTo(x1 - 0.6 * u, y0);
+    roof.quadraticCurveTo(x1 - 0.05 * u, y0, x1, y0 + tip);
+    roof.lineTo(x1 - 0.12 * u, y0 + 0.24 * u);
+    roof.quadraticCurveTo(cx, y0 + 0.44 * u, x0 + 0.12 * u, y0 + 0.24 * u);
+    roof.closePath();
+    const rg = ctx.createLinearGradient(0, y0, 0, yRoofB);
+    rg.addColorStop(0, '#ffffff');
+    rg.addColorStop(1, '#bfc9d8');
+    ctx.fillStyle = rg;
+    ctx.fill(roof);
+    ctx.strokeStyle = 'rgba(70,85,110,.6)';
+    ctx.lineWidth = Math.max(1, 0.03 * u);
+    ctx.stroke(roof);
+    // 지붕 테두리 조명 점선
+    ctx.fillStyle = 'rgba(255,255,240,.9)';
+    for (let c = Math.floor((r.x0 * u) / (0.5 * u)); c * 0.5 * u < r.x1 * u; c++) {
+      const px = c * 0.5 * u - camX * u;
+      if (px < x0 + 0.3 * u || px > x1 - 0.3 * u) continue;
+      ctx.fillRect(px, y0 + 0.2 * u, Math.max(1, 0.06 * u), Math.max(1, 0.04 * u));
+    }
+  }
+
+  // 탑 = 조명탑. 꼭대기 조명판 아래쪽 가운데(t.top)가 와이어 거는 점
+  function drawTower(tw, lit, t) {
+    const x = sx(tw.x), y = sy(tw.top);
+    if (x < -60 || x > W + 60) return;
+    const bottom = H + 4;
+    ctx.strokeStyle = '#3a4560';
+    ctx.lineWidth = Math.max(1.5, 0.07 * scale);
+    const wb = 0.4 * scale, wt = 0.12 * scale;
+    ctx.beginPath();
+    ctx.moveTo(x - wb, bottom); ctx.lineTo(x - wt, y);
+    ctx.moveTo(x + wb, bottom); ctx.lineTo(x + wt, y);
+    // 격자
+    const step = 0.7 * scale;
+    let k = 0;
+    for (let yy = y + step; yy < bottom; yy += step, k++) {
+      const f = (yy - y) / (bottom - y);
+      const half = wt + (wb - wt) * f;
+      const f2 = Math.min(1, (yy + step - y) / (bottom - y));
+      const half2 = wt + (wb - wt) * f2;
+      if (k % 2) { ctx.moveTo(x - half, yy); ctx.lineTo(x + half2, yy + step); }
+      else { ctx.moveTo(x + half, yy); ctx.lineTo(x - half2, yy + step); }
+    }
+    ctx.stroke();
+    // 조명판
+    const pw = 1.7 * scale, ph = 0.95 * scale;
+    if (lit) {
+      ctx.fillStyle = 'rgba(255, 245, 190, .28)';
+      ctx.beginPath();
+      ctx.arc(x, y - ph / 2, 1.6 * scale + Math.sin(t * 10) * 0.08 * scale, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.fillStyle = '#2b3448';
+    ctx.fillRect(x - pw / 2, y - ph, pw, ph);
+    ctx.fillStyle = lit ? '#fffbe0' : '#f3e7a8';
+    const lr = 0.17 * scale;
+    for (let a = 0; a < 4; a++) for (let b = 0; b < 2; b++) {
+      ctx.beginPath();
+      ctx.arc(x - pw / 2 + (a + 0.5) * (pw / 4), y - ph + (b + 0.5) * (ph / 2), lr, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.fillStyle = '#9aa4b8';
+    ctx.beginPath();
+    ctx.arc(x, y, Math.max(2, 0.09 * scale), 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // 동전: 원작처럼 은화와 금화. 빙글빙글 도는 모양
+  function drawCoin(c, t) {
+    const x = sx(c.x), y = sy(c.y);
+    if (x < -20 || x > W + 20) return;
+    const R = 0.36 * scale;
+    const turn = Math.abs(Math.cos(t * 3.2 + c.x * 0.6));
+    const rx = Math.max(R * 0.14, R * turn);
+    const pal = c.g
+      ? { edge: '#b8770c', face: '#ffd23f', ring: '#f0a91a', mark: '#c9850f' }
+      : { edge: '#77818f', face: '#eef1f5', ring: '#c2cad4', mark: '#8f99a6' };
+    ctx.fillStyle = pal.edge;
+    ctx.beginPath(); ctx.ellipse(x + 0.04 * scale, y, rx + 0.05 * scale, R, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = pal.face;
+    ctx.beginPath(); ctx.ellipse(x, y, rx, R * 0.94, 0, 0, Math.PI * 2); ctx.fill();
+    if (turn > 0.35) {
+      ctx.strokeStyle = pal.ring;
+      ctx.lineWidth = Math.max(1, 0.05 * scale);
+      ctx.beginPath(); ctx.ellipse(x, y, rx * 0.7, R * 0.66, 0, 0, Math.PI * 2); ctx.stroke();
+      ctx.fillStyle = pal.mark;
+      ctx.fillRect(x - rx * 0.12, y - R * 0.38, rx * 0.24, R * 0.76);
+      ctx.fillStyle = 'rgba(255,255,255,.75)';
+      ctx.beginPath(); ctx.ellipse(x - rx * 0.35, y - R * 0.4, rx * 0.18, R * 0.16, -0.6, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+
+  // 선수: 머리 큰 2등신, 빨간 7번 유니폼, 구릿빛 피부, 앞머리를 세운 검은 머리
+  const SKIN = '#c98a5c', SKIN_D = '#a86d44', HAIR = '#16110e', KIT = '#d0102a', KIT_D = '#9c0b20', TRIM = '#0b8a3e';
+  function limb(x0, y0, x1, y1, w, col) {
+    ctx.strokeStyle = col;
+    ctx.lineWidth = w;
+    ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+  }
+  function leg(hx, hy, a, bend, back) {
+    const L1 = 0.32, L2 = 0.3;
+    const kx = hx + Math.sin(a) * L1, ky = hy - Math.cos(a) * L1;
+    const a2 = a - bend;
+    const fx1 = kx + Math.sin(a2) * L2, fy1 = ky - Math.cos(a2) * L2;
+    limb(hx, hy, kx, ky, 0.17, back ? SKIN_D : SKIN);
+    limb(kx, ky, fx1, fy1, 0.16, back ? KIT_D : KIT); // 양말
+    ctx.fillStyle = back ? '#cfcfcf' : '#ffffff'; // 축구화
+    ctx.beginPath();
+    ctx.ellipse(fx1 + 0.08, fy1 - 0.02, 0.15, 0.08, a2 * 0.3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  function arm(sx0, sy0, a, back) {
+    const L = 0.42;
+    const ex = sx0 + Math.sin(a) * L, ey = sy0 - Math.cos(a) * L;
+    limb(sx0, sy0, sx0 + Math.sin(a) * 0.16, sy0 - Math.cos(a) * 0.16, 0.16, back ? KIT_D : KIT); // 소매
+    limb(sx0 + Math.sin(a) * 0.12, sy0 - Math.cos(a) * 0.12, ex, ey, 0.13, back ? SKIN_D : SKIN);
+    return [ex, ey];
+  }
+  function drawPlayer(t) {
+    const px = sx(p.x), py = sy(p.y);
+    ctx.save();
+    ctx.translate(px, py);
+    ctx.scale(scale, -scale); // 여기부터 단위 좌표, y 위쪽
+    let rot = 0;
+    if (p.st === 'hang' && p.hang) rot = p.hang.slack ? 0 : p.hang.th; // 와이어 방향으로 몸이 젖혀진다 (느슨할 땐 그대로)
+    else if (spin) { const k = 1 - (1 - spin.t / spin.T) ** 3; rot = spin.a0 + (spin.a1 - spin.a0) * k; }
+    if (p.st === 'dead' || (mode === 'dead')) rot = deadT * 5;
+    if (rot) { ctx.translate(0, 0.9); ctx.rotate(rot); ctx.translate(0, -0.9); }
+
+    const air = p.st !== 'run';
+    const ph = runPhase;
+    let la, lb, ba, bb;
+    if (!air) { la = Math.sin(ph) * 0.85; lb = -la; ba = Math.max(0, Math.cos(ph)) * 1.1 + 0.2; bb = Math.max(0, -Math.cos(ph)) * 1.1 + 0.2; }
+    else if (p.st === 'hang') { la = 0.5; lb = -0.2; ba = 0.9; bb = 0.5; }
+    else { la = 0.7; lb = -0.5; ba = 1.4; bb = 0.9; }
+    const hipY = 0.62;
+    // 뒷다리, 뒷팔
+    leg(-0.04, hipY, lb, bb, true);
+    const armA = air ? (p.st === 'hang' ? Math.PI * 0.95 : -2.2) : -Math.sin(ph) * 0.9;
+    arm(-0.05, 1.12, p.st === 'hang' ? Math.PI * 0.9 : -armA, true);
+    // 반바지
+    ctx.fillStyle = '#f4f4f4';
+    ctx.beginPath();
+    ctx.moveTo(-0.24, hipY + 0.1); ctx.lineTo(0.24, hipY + 0.1); ctx.lineTo(0.26, hipY - 0.14); ctx.lineTo(-0.26, hipY - 0.14);
+    ctx.fill();
+    // 앞다리
+    leg(0.04, hipY, la, ba, false);
+    // 몸통 (유니폼)
+    ctx.fillStyle = KIT;
+    ctx.beginPath();
+    ctx.moveTo(-0.26, hipY + 0.06);
+    ctx.lineTo(0.26, hipY + 0.06);
+    ctx.quadraticCurveTo(0.33, 0.95, 0.24, 1.18);
+    ctx.lineTo(-0.24, 1.18);
+    ctx.quadraticCurveTo(-0.33, 0.95, -0.26, hipY + 0.06);
+    ctx.fill();
+    ctx.fillStyle = TRIM;
+    ctx.fillRect(-0.24, hipY + 0.04, 0.48, 0.05);
+    // 등번호 7
+    ctx.save();
+    ctx.scale(1, -1);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 0.36px Jua, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('7', -0.02, -0.92);
+    ctx.restore();
+    // 목
+    ctx.fillStyle = SKIN;
+    ctx.fillRect(-0.07, 1.12, 0.14, 0.12);
+    ctx.fillStyle = TRIM;
+    ctx.fillRect(-0.12, 1.14, 0.24, 0.05);
+    // 머리
+    const hx = 0.05, hy = 1.55, hr = 0.42;
+    ctx.fillStyle = SKIN;
+    ctx.beginPath();
+    ctx.ellipse(hx, hy, hr * 0.92, hr, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // 턱선 (각진 턱)
+    ctx.beginPath();
+    ctx.moveTo(hx - 0.2, hy - 0.3);
+    ctx.quadraticCurveTo(hx + 0.2, hy - 0.52, hx + 0.36, hy - 0.22);
+    ctx.lineTo(hx + 0.3, hy - 0.05);
+    ctx.fill();
+    // 귀
+    ctx.fillStyle = SKIN_D;
+    ctx.beginPath(); ctx.ellipse(hx - 0.08, hy - 0.02, 0.07, 0.1, 0, 0, Math.PI * 2); ctx.fill();
+    // 머리카락: 옆은 짧게, 앞머리는 위로 세운 스타일
+    ctx.fillStyle = HAIR;
+    ctx.beginPath();
+    ctx.moveTo(hx - 0.36, hy - 0.05);
+    ctx.quadraticCurveTo(hx - 0.42, hy + 0.32, hx - 0.15, hy + 0.42);
+    ctx.quadraticCurveTo(hx + 0.12, hy + 0.5, hx + 0.3, hy + 0.58); // 앞머리 끝 (위로 솟음)
+    ctx.quadraticCurveTo(hx + 0.42, hy + 0.5, hx + 0.36, hy + 0.3);
+    ctx.quadraticCurveTo(hx + 0.2, hy + 0.3, hx + 0.02, hy + 0.24);
+    ctx.quadraticCurveTo(hx - 0.12, hy + 0.2, hx - 0.18, hy + 0.06);
+    ctx.quadraticCurveTo(hx - 0.24, hy - 0.06, hx - 0.36, hy - 0.05);
+    ctx.fill();
+    // 눈썹, 눈, 코, 입
+    ctx.strokeStyle = HAIR;
+    ctx.lineWidth = 0.05;
+    ctx.beginPath(); ctx.moveTo(hx + 0.14, hy + 0.15); ctx.lineTo(hx + 0.34, hy + 0.13); ctx.stroke();
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath(); ctx.ellipse(hx + 0.25, hy + 0.03, 0.065, 0.055, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#2a1a10';
+    ctx.beginPath(); ctx.arc(hx + 0.28, hy + 0.03, 0.035, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = SKIN_D;
+    ctx.beginPath(); ctx.moveTo(hx + 0.37, hy - 0.02); ctx.lineTo(hx + 0.43, hy - 0.1); ctx.lineTo(hx + 0.36, hy - 0.12); ctx.fill();
+    ctx.strokeStyle = '#7a3b22';
+    ctx.lineWidth = 0.035;
+    ctx.beginPath();
+    if (mode === 'dead') { ctx.arc(hx + 0.27, hy - 0.27, 0.06, 0.2, Math.PI - 0.2); }
+    else { ctx.arc(hx + 0.26, hy - 0.16, 0.08, Math.PI + 0.4, Math.PI * 2 - 0.3); }
+    ctx.stroke();
+    // 앞팔 (매달리면 위로 뻗어 와이어를 잡는다)
+    const hand = arm(0.05, 1.12, p.st === 'hang' ? Math.PI * 0.97 : armA, false);
+    ctx.restore();
+    return hand;
+  }
+
+  function render(t, dt) {
+    // 카메라: 선수는 화면 왼쪽 28% 지점, 높이 올라가면 따라 올라간다
+    scale = Math.max(H / VIEW_H, W / (VIEW_H * 2));
+    const targetX = p.x - viewW() * 0.28;
+    camX += (targetX - camX) * Math.min(1, dt * 10);
+    if (mode === 'title') camX = targetX;
+    const targetY = Math.max(2.7, p.y - 4.5);
+    camY += (targetY - camY) * Math.min(1, dt * 4);
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const col = stageColor(p.x);
+    drawBackground(col);
+
+    const x0 = camX - 4, x1 = camX + viewW() + 4;
+    // 탑 (지붕 뒤쪽)
+    const target = (p.st === 'air' && p.wires > 0) ? S.findTower(world, p.x, p.y + C.HAND) : -1;
+    for (let i = fromX(world.towers, 'x', x0 - 2); i < world.towers.length && world.towers[i].x < x1 + 2; i++) {
+      drawTower(world.towers[i], i === target || (p.st === 'hang' && p.hang.tower === i), t);
+    }
+    for (let i = Math.max(0, fromX(world.roofs, 'x0', x0) - 2); i < world.roofs.length && world.roofs[i].x0 < x1; i++) {
+      const r = world.roofs[i];
+      if (r.x1 > x0) drawRoof(r, stageColor(r.x0), t, i);
+    }
+    // 동전
+    for (let i = fromX(world.coins, 'x', x0); i < world.coins.length && world.coins[i].x < x1; i++) {
+      const c = world.coins[i];
+      if (!c.got) drawCoin(c, t);
+    }
+
+    // 와이어
+    if (p.st === 'hang' && p.hang) {
+      const hx = sx(p.x), hy = sy(p.y + C.HAND), ax = sx(p.hang.ax), ay = sy(p.hang.ay);
+      const k = Math.min(1, wireT / 0.06);
+      ctx.strokeStyle = p.flipReady ? '#fff6a8' : '#f2f2f2';
+      ctx.lineWidth = Math.max(2, 0.07 * scale);
+      const ex = hx + (ax - hx) * k, ey = hy + (ay - hy) * k;
+      ctx.beginPath(); ctx.moveTo(hx, hy);
+      if (p.hang.slack) {
+        // 느슨한 줄은 아래로 처진다
+        const sag = Math.max(0, p.hang.L - Math.hypot(p.x - p.hang.ax, p.y + C.HAND - p.hang.ay)) * 0.5 * scale + 0.15 * scale;
+        ctx.quadraticCurveTo((hx + ex) / 2, Math.max(hy, ey) + sag, ex, ey);
+      } else ctx.lineTo(ex, ey);
+      ctx.stroke();
+    }
+    if (whiff && whiff.t < 0.25) {
+      const hx = sx(whiff.x), hy = sy(whiff.y), len = Math.min(1, whiff.t / 0.1) * 3.5 * scale;
+      ctx.strokeStyle = `rgba(255,255,255,${1 - whiff.t / 0.25})`;
+      ctx.lineWidth = Math.max(2, 0.06 * scale);
+      ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx + len * 0.6, hy - len * 0.8); ctx.stroke();
+    }
+
+    if (landDust > 0) {
+      ctx.fillStyle = `rgba(255,255,255,${landDust * 1.6})`;
+      for (const d of [-1, 1]) { ctx.beginPath(); ctx.arc(sx(p.x + d * (0.5 - landDust)), sy(p.y + 0.1), 0.12 * scale, 0, Math.PI * 2); ctx.fill(); }
+    }
+    // 속도선: 달리기보다 빠를수록 진하게
+    {
+      // 그냥 점프할 때 위아래 속도는 빼고, 와이어를 탈 때와 앞으로 빨라졌을 때만 보인다
+      const v = Math.hypot(p.vx, p.vy), fast = p.st === 'hang' ? v : p.vx;
+      const k = Math.max(0, Math.min(1, (fast / S.runSpeed(world, p.x) - 1.05) / 0.35));
+      if (k > 0 && p.st !== 'dead') {
+        const ux = p.vx / v, uy = p.vy / v;
+        ctx.strokeStyle = `rgba(255,255,255,${0.55 * k})`;
+        ctx.lineWidth = Math.max(1.5, 0.05 * scale);
+        ctx.beginPath();
+        for (let i = 0; i < 5; i++) {
+          const off = (hash(i * 13 + Math.floor(frameNo / 6)) - 0.5) * 1.6, back = 0.6 + hash(i * 7 + Math.floor(frameNo / 6)) * 1.2;
+          const bx = p.x - ux * back - uy * off, by = p.y + 0.9 - uy * back + ux * off;
+          const len = (1 + k) * 1.1;
+          ctx.moveTo(sx(bx), sy(by));
+          ctx.lineTo(sx(bx - ux * len), sy(by - uy * len));
+        }
+        ctx.stroke();
+      }
+    }
+    drawPlayer(t);
+
+    // 효과
+    for (const f of fx) {
+      if (f.kind === 'spark') {
+        ctx.fillStyle = f.gold ? `rgba(255,214,70,${1 - f.t / 0.5})` : `rgba(255,255,255,${1 - f.t / 0.5})`;
+        ctx.fillRect(sx(f.x + f.vx * f.t) - 2, sy(f.y + f.vy * f.t - 4 * f.t * f.t) - 2, 4, 4);
+      } else if (f.kind === 'ring') {
+        ctx.strokeStyle = `rgba(255,246,168,${1 - f.t / 0.35})`;
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(sx(p.x), sy(p.y + 1), (0.6 + f.t * 3) * scale, 0, Math.PI * 2); ctx.stroke();
+      }
+    }
+    ctx.textAlign = 'center';
+    for (const q of pops) {
+      ctx.globalAlpha = Math.max(0, 1 - q.t / (q.big ? 1.6 : 0.7));
+      ctx.font = `${q.big ? 26 : 16}px Jua, sans-serif`;
+      ctx.fillStyle = q.big || q.gold ? '#ffe066' : '#ffffff';
+      ctx.strokeStyle = 'rgba(0,0,0,.45)';
+      ctx.lineWidth = 3;
+      const y = sy(q.y + q.t * 1.5);
+      ctx.strokeText(q.text, sx(q.x), y);
+      ctx.fillText(q.text, sx(q.x), y);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // ------------------------------------------------------------ 루프
+  let last = performance.now(), acc = 0, clock = 0;
+  function frame(now) {
+    const dt = Math.min(0.1, (now - last) / 1000);
+    last = now;
+    clock += dt;
+    if (mode === 'play' || mode === 'dead') {
+      acc += dt * (DEMO ? FF : 1);
+      let n = 0;
+      while (acc >= C.DT && n < 2400) { if (p.st !== 'dead') tick(); acc -= C.DT; n++; }
+      if (p.st === 'hang') wireT += dt;
+    }
+    if (mode === 'dead') deadT += dt;
+    if (landDust > 0) landDust = Math.max(0, landDust - dt);
+    if (whiff) { whiff.t += dt; if (whiff.t > 0.3) whiff = null; }
+    for (const f of fx) f.t += dt;
+    fx = fx.filter((f) => f.t < 0.5);
+    for (const q of pops) q.t += dt;
+    pops = pops.filter((q) => q.t < (q.big ? 1.6 : 0.7));
+    if (bannerT > 0) { bannerT -= dt; if (bannerT <= 0) $('banner').classList.remove('show'); }
+    render(clock, dt);
+    requestAnimationFrame(frame);
+  }
+  reset();
+  if (DEMO) {
+    start();
+    // 개발용: ?demo&seek=초 로 그 시점까지 바로 감아 둔다
+    const seek = Math.round((+params.get('seek') || 0) / C.DT);
+    for (let i = 0; i < seek && p.st !== 'dead'; i++) tick();
+    camX = p.x - viewW() * 0.28;
+  }
+  requestAnimationFrame(frame);
+  window.__gogun = { get p() { return p; }, get score() { return score; }, get mode() { return mode; }, get stage() { return stage; } };
+})();
+</script>
+<script type="module">
+  // 랭킹 (Firestore). 판 시작마다 세션을 만들고, 점수는 세션을 지우는 같은 배치로 쓴다 (firestore.rules가 검증)
+  const GAME = 'gogun', BOARD = 'allTime';
+  const FB = 'https://www.gstatic.com/firebasejs/10.14.1/';
+  try {
+    const { initializeApp } = await import(FB + 'firebase-app.js');
+    const {
+      getFirestore, doc, getDoc, setDoc, addDoc, serverTimestamp, collection, query, orderBy, limit, getDocs, increment, writeBatch,
+    } = await import(FB + 'firebase-firestore.js');
+    const app = initializeApp({
+      projectId: 'guess-your-player',
+      appId: '1:1068776442781:web:433981863e0c3da178bd74',
+      storageBucket: 'guess-your-player.firebasestorage.app',
+      apiKey: 'AIzaSyA8SG_LbHeqS9gh0CLFaHUhEI1uG1uYLDY',
+      authDomain: 'guess-your-player.firebaseapp.com',
+      messagingSenderId: '1068776442781',
+    });
+    const db = getFirestore(app);
+
+    function deviceId() {
+      let id = localStorage.getItem('quizDeviceId');
+      if (!id) {
+        id = 'd-' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+        localStorage.setItem('quizDeviceId', id);
+      }
+      return id;
+    }
+    const sessionRef = () => doc(db, 'playSessions', `${GAME}_${deviceId()}`);
+    const entryRef = () => doc(db, 'gogunLeaderboard', BOARD, 'entries', deviceId());
+    const todayKeyKST = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul' }).format(new Date());
+
+    async function start() {
+      try { await setDoc(sessionRef(), { startedAt: serverTimestamp() }); } catch (e) { console.warn('gogun session failed', e); }
+    }
+
+    // 첫 점프를 했을 때만 /bymile 플레이 로그를 남긴다 (localhost는 빼고)
+    async function logPlay() {
+      if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') return;
+      try {
+        let ip = 'unknown';
+        try { ip = (await (await fetch('https://api.ipify.org?format=json')).json()).ip; } catch {}
+        await Promise.all([
+          addDoc(collection(db, 'playLogs'), { ts: serverTimestamp(), ip, game: GAME }),
+          setDoc(doc(db, 'statsCounters', 'totals'), { [GAME]: increment(1) }, { merge: true }),
+          setDoc(doc(db, 'statsDaily', todayKeyKST()), { [GAME]: increment(1) }, { merge: true }),
+        ]);
+      } catch (e) {
+        console.warn('gogun play log failed', e);
+      }
+    }
+
+    async function submit(nickname, score, stage) {
+      const prev = await getDoc(entryRef());
+      if (prev.exists() && prev.data().score >= score) return { ok: false, best: prev.data().score };
+      const batch = writeBatch(db);
+      batch.delete(sessionRef());
+      batch.set(entryRef(), { nickname, score: Math.floor(score), stage, updatedAt: new Date() });
+      await batch.commit();
+      return { ok: true };
+    }
+
+    async function top(n) {
+      const snap = await getDocs(query(collection(db, 'gogunLeaderboard', BOARD, 'entries'), orderBy('score', 'desc'), limit(n)));
+      return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    }
+
+    window.gogunRank = { submit, top, deviceId };
+    window.addEventListener('gogun:start', start);
+    window.addEventListener('gogun:play', logPlay);
+  } catch (e) {
+    console.warn('랭킹 모듈을 불러오지 못했어요', e);
+  }
+</script>
+</body>
+</html>

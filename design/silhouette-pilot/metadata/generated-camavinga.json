@@ -1,0 +1,24 @@
+{
+  "id": "camavinga",
+  "mode": "built-in image_gen edit",
+  "tool": "image_gen__imagegen",
+  "sourcePath": "C:/Users/BYMILE/Documents/ChatGPT/축구 선수 맞추기/design/silhouette-pilot/sources/camavinga.jpg",
+  "inputPath": "C:/Users/BYMILE/Documents/ChatGPT/축구 선수 맞추기/design/silhouette-pilot/sources/camavinga.jpg",
+  "outputPath": "C:/Users/BYMILE/Documents/ChatGPT/축구 선수 맞추기/design/silhouette-pilot/silhouettes/camavinga.png",
+  "originalGeneratedPath": "C:\\Users\\BYMILE\\.codex\\generated_images\\01a091f7-04fb-79e0-b9d5-a81e5b42a4ef\\exec-2a0912fa-85df-4426-b962-0a45a759b2a5.png",
+  "actualWidth": 1254,
+  "actualHeight": 1254,
+  "requestedWidth": 1024,
+  "requestedHeight": 1024,
+  "copyOnly": true,
+  "prompt": "Use case: background-extraction / identity-preserve.\nAsset type: source-faithful footballer silhouette quiz image.\nThe attached photo is the EDIT TARGET, not a style reference. Extract ONLY the main footballer into a completely solid opaque pure black (#000000) silhouette on a perfectly plain pure white (#FFFFFF) background. Preserve this exact individual's photographed outside contour, head angle, hair volume, curls/braids/ponytail, ears, nose/chin profile and neck. Do not invent a new portrait, change identity, change hairstyle, beautify, mirror or rotate the head.\nAll parts INSIDE the person's silhouette, including the face, eyes, teeth, mouth, beard, neck and clothes, must be uniformly opaque black with NO facial details, NO white eye/mouth holes, NO clothing lines, NO highlights, NO shading, NO texture. White gaps genuinely OUTSIDE the body or between loose curls/braids may remain. Retain the actual hair edge shape without exaggeration. Remove every background element and all other people/objects.\nSquare 1024 x 1024 composition. Use a head-and-upper-shoulders crop of this source, including the FULL hairstyle and neck, with around 8 percent white margin above the highest hair. Center the subject horizontally. Upper shoulders finish at the bottom edge. Preserve the natural head/neck proportions. No text, names, numbers, labels, watermark, border, gradient, shadow or decorative elements. Clean accurate outer edges, antialiasing only along the outer boundary. Return ONE finished silhouette image.\nSource fidelity warning: Keep exactly the source three-quarter head angle with the ear visible in its original photographed position. Do not render a new strictly side-profile view. Trace the left outline from the actual source, do not introduce a new projecting brow, eye lashes, nose or chin.",
+  "qa": {
+    "status": "needs_review",
+    "inspected": true,
+    "notes": [
+      "Retried with targeted three-quarter pose fidelity instruction.",
+      "Solid fill passed; however result still exaggerates the left-facing nose/brow profile compared with the source.",
+      "Use for pilot comparison only pending source-faithfulness review."
+    ]
+  }
+}

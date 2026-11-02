@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>아이콘 카드 미리보기</title>
+<!-- 로컬 전용(배포 제외: firebase.json ignore). 카드 스타일·마크업은 index.html에서 그대로 가져와 쓴다 -->
+<style id="viewer">
+  html, body { overflow: auto !important; height: auto !important; touch-action: auto !important; }
+  body { margin: 0; padding: 16px 16px 48px; background: #14101f !important; color: #e8ecf4; font-family: system-ui, sans-serif; }
+  body.light { background: #eef0f6 !important; color: #1b2030; }
+  .vbar { position: sticky; top: 0; z-index: 50; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 0 14px; background: inherit; }
+  .vbar h1 { font-size: 17px; margin: 0 8px 0 0; }
+  .vbar button, .vbar label { font: 600 13px system-ui; padding: 7px 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,.2); background: rgba(255,255,255,.08); color: inherit; cursor: pointer; display: flex; gap: 6px; align-items: center; }
+  body.light .vbar button, body.light .vbar label { border-color: rgba(0,0,0,.15); background: #fff; }
+  .vbar input[type=range] { width: 110px; }
+  .vgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--w, 190px), 1fr)); gap: 18px; }
+  .vcard { position: relative; aspect-ratio: 1 / 1.4; container-type: inline-size; perspective: 900px; cursor: pointer; }
+  .vcard .card3d { transition: transform .5s cubic-bezier(.2,.8,.2,1); }
+  .vcard.live .card3d { transition: transform .08s linear; }
+  .vcap { margin-top: 6px; font-size: 12px; opacity: .6; text-align: center; }
+  #vbig { position: fixed; inset: 0; z-index: 100; display: none; place-items: center; background: rgba(5, 4, 12, .82); }
+  #vbig.open { display: grid; }
+  #vbig .vcard { width: min(82vw, 420px, 56vh); cursor: grab; }
+  #vbig .vhint { position: absolute; bottom: 18px; left: 0; right: 0; text-align: center; font-size: 13px; opacity: .6; }
+  #verr { color: #ff8a8a; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<div class="vbar">
+  <h1>아이콘 카드 <span id="vcount"></span></h1>
+  <button id="reload">다시 불러오기</button>
+  <label><input type="checkbox" id="sway"> 자동으로 기울이기</label>
+  <label><input type="checkbox" id="light"> 밝은 배경</label>
+  <label>크기 <input type="range" id="size" min="120" max="340" value="190"></label>
+</div>
+<div id="verr"></div>
+<div class="vgrid" id="vgrid"></div>
+<div id="vbig"><div class="vcard" id="vbigCard"></div><div class="vhint">마우스·손가락으로 기울여 보세요 · 바깥을 누르면 닫혀요</div></div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+let iconHTML, setLight, ICONS = [];
+
+// index.html의 <style>·폰트와 카드 함수들을 그대로 가져온다
+async function load() {
+  $('#verr').textContent = '';
+  try {
+    const src = await fetch('/card/index.html', { cache: 'reload' }).then((r) => r.text());
+    const doc = new DOMParser().parseFromString(src, 'text/html');
+    document.querySelectorAll('[data-from-card]').forEach((n) => n.remove());
+    doc.head.querySelectorAll('link[rel=stylesheet], style').forEach((n) => {
+      const c = document.importNode(n, true); c.dataset.fromCard = '1'; document.head.insertBefore(c, $('#viewer'));
+    });
+    const cut = (a, b) => { const i = src.indexOf(a), j = src.indexOf(b, i + a.length); if (i < 0 || j < 0) throw new Error('index.html에서 못 찾음: ' + a); return src.slice(i, j); };
+    const code = [
+      cut('const clamp =', '\n'), cut('const esc =', '\n'),
+      cut('function iconHTML', 'function heroHTML'),
+      cut('function setLight', '\n}\n') + '\n}',
+    ].join('\n');
+    [iconHTML, setLight] = new Function(code + '\nreturn [iconHTML, setLight];')();
+    ICONS = (await fetch('/card/icons.json', { cache: 'reload' }).then((r) => r.json())).players;
+    render();
+  } catch (e) { $('#verr').textContent = String(e.stack || e); }
+}
+
+function cardHTML(p) { return `<div class="card3d">${iconHTML({ ...p, icon: true, tier: 'icon' }, '')}</div>`; }
+function render() {
+  $('#vcount').textContent = `${ICONS.length}장`;
+  $('#vgrid').innerHTML = ICONS.map((p, i) => `<div><div class="vcard" data-i="${i}">${cardHTML(p)}</div><div class="vcap">${p.ovr} · ${p.nameKo}</div></div>`).join('');
+  $('#vgrid').querySelectorAll('.vcard').forEach((v) => { tilt(v, 0, 0); bindTilt(v); v.addEventListener('click', () => openBig(ICONS[v.dataset.i])); });
+}
+
+function tilt(v, yaw, pitch) {
+  v.querySelector('.card3d').style.transform = `rotateY(${yaw}deg) rotateX(${pitch}deg)`;
+  setLight(v, yaw, pitch);
+}
+function bindTilt(v, strong) {
+  const amp = strong ? 32 : 24;
+  const move = (x, y) => {
+    const r = v.getBoundingClientRect();
+    tilt(v, ((x - r.left) / r.width - .5) * amp * 2, -((y - r.top) / r.height - .5) * amp * 2);
+  };
+  v.addEventListener('pointermove', (e) => { if (swaying) return; v.classList.add('live'); move(e.clientX, e.clientY); });
+  v.addEventListener('pointerleave', () => { if (swaying) return; v.classList.remove('live'); tilt(v, 0, 0); });
+  v.addEventListener('touchmove', (e) => { if (strong) e.preventDefault(); }, { passive: false });
+}
+
+function openBig(p) {
+  const v = $('#vbigCard'); v.innerHTML = cardHTML(p); tilt(v, 0, 0);
+  if (!v.dataset.bound) { bindTilt(v, true); v.dataset.bound = '1'; }
+  $('#vbig').classList.add('open');
+}
+$('#vbig').addEventListener('click', (e) => { if (e.target.id === 'vbig') $('#vbig').classList.remove('open'); });
+addEventListener('keydown', (e) => { if (e.key === 'Escape') $('#vbig').classList.remove('open'); });
+
+// 자동으로 기울이기: 손대지 않아도 홀로그램이 각도에 따라 바뀌는 걸 볼 수 있게
+let swaying = false, raf = 0;
+$('#sway').addEventListener('change', (e) => {
+  swaying = e.target.checked; cancelAnimationFrame(raf);
+  const all = () => document.querySelectorAll('.vcard');
+  if (!swaying) { all().forEach((v) => { v.classList.remove('live'); tilt(v, 0, 0); }); return; }
+  const t0 = performance.now();
+  const step = (t) => {
+    const s = (t - t0) / 1000;
+    all().forEach((v, i) => { v.classList.add('live'); tilt(v, Math.sin(s * .9 + i * .35) * 24, Math.cos(s * .7 + i * .35) * 14); });
+    raf = requestAnimationFrame(step);
+  };
+  raf = requestAnimationFrame(step);
+});
+$('#light').addEventListener('change', (e) => document.body.classList.toggle('light', e.target.checked));
+$('#size').addEventListener('input', (e) => $('#vgrid').style.setProperty('--w', e.target.value + 'px'));
+$('#reload').addEventListener('click', load);
+load();
+</script>
+</body>
+</html>

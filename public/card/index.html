@@ -1,0 +1,2287 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>카드깡</title>
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;1,700;1,800&family=Gothic+A1:wght@700;800&family=Jua&display=swap" rel="stylesheet">
+<script type="importmap">
+{ "imports": {
+  "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+} }
+</script>
+<style>
+  :root {
+    /* 헤더 아래 ~ 건너뛰기 버튼 위 사이에 팩(카드 폭의 약 1.85배 높이)이 다 들어가게 */
+    --vh: 100vh;
+    --top: calc(env(safe-area-inset-top, 0px) + 72px);
+    --bot: calc(env(safe-area-inset-bottom, 0px) + 78px);
+    --avail: calc(var(--vh) - var(--top) - var(--bot));
+    --cw: min(60vw, 280px, calc(var(--avail) / 1.95));
+    --ch: calc(var(--cw) * 1.4);
+    --cy: calc(var(--top) + var(--avail) / 2);
+    --font: -apple-system, "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    --ink: #2b3152;
+  }
+  @supports (height: 100dvh) { :root { --vh: 100dvh; } }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; height: 100%; overflow: hidden; color: var(--ink); font-family: var(--font);
+    background: #eef0fb; -webkit-user-select: none; user-select: none; touch-action: none;
+  }
+  /* 카드 수집 게임 배경: 밝은 파스텔 + 빛줄기 + 경기장 라인 + 떠다니는 반짝이 */
+  body::before {
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: -2;
+    background:
+      radial-gradient(55% 38% at 50% 52%, rgba(255,255,255,1), rgba(255,255,255,0) 72%),
+      conic-gradient(from 200deg at 50% -10%, rgba(255,255,255,0) 0deg, rgba(255,255,255,.55) 8deg, rgba(255,255,255,0) 16deg, rgba(255,255,255,0) 30deg, rgba(255,255,255,.45) 36deg, rgba(255,255,255,0) 44deg, rgba(255,255,255,0) 60deg, rgba(255,255,255,.4) 66deg, rgba(255,255,255,0) 74deg, rgba(255,255,255,0) 360deg),
+      radial-gradient(60% 40% at 10% 8%, rgba(170, 196, 255, .9), transparent 70%),
+      radial-gradient(60% 40% at 95% 100%, rgba(210, 186, 255, .85), transparent 70%),
+      radial-gradient(50% 30% at 100% 30%, rgba(160, 235, 220, .55), transparent 70%),
+      linear-gradient(180deg, #dfe6ff 0%, #f3f0ff 50%, #e3edff 100%);
+  }
+  body::after {
+    content: ""; position: fixed; inset: 0; pointer-events: none; opacity: .55; z-index: -1;
+    background:
+      radial-gradient(circle at 50% 52%, transparent 0 21vmin, rgba(120, 135, 210, .16) 21vmin calc(21vmin + 2px), transparent calc(21vmin + 3px)),
+      radial-gradient(circle at 1px 1px, rgba(90, 100, 170, .14) 1px, transparent 1.6px) 0 0 / 22px 22px;
+    -webkit-mask: radial-gradient(80% 70% at 50% 52%, #000, transparent); mask: radial-gradient(80% 70% at 50% 52%, #000, transparent);
+  }
+  .sparkles { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+  .sparkles i {
+    position: absolute; width: 6px; height: 6px; border-radius: 50%; background: #fff; opacity: 0;
+    box-shadow: 0 0 10px 3px rgba(150, 180, 255, .8); animation: floatUp linear infinite;
+  }
+  @keyframes floatUp { 0% { transform: translateY(0) scale(.6); opacity: 0; } 15% { opacity: .9; } 85% { opacity: .7; } 100% { transform: translateY(-38vh) scale(1.1); opacity: 0; } }
+  #pedestal {
+    position: fixed; left: 50%; top: calc(var(--cy) + var(--ch) * .62); width: calc(var(--cw) * 1.9); height: calc(var(--cw) * .34);
+    transform: translate(-50%, -50%); pointer-events: none; z-index: 1; border-radius: 50%;
+    transition: opacity .4s;
+    background: radial-gradient(closest-side, rgba(110, 120, 220, .28), rgba(140, 150, 230, .12) 55%, rgba(255,255,255,0));
+  }
+  #pedestal::after {
+    content: ""; position: absolute; inset: 12% 8%; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,.75); box-shadow: 0 0 22px rgba(130, 160, 255, .55), inset 0 0 18px rgba(130, 160, 255, .4);
+  }
+  img { -webkit-user-drag: none; }
+
+  /* 상단 바 */
+  header {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 30;
+    display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px;
+    padding: max(12px, env(safe-area-inset-top)) 14px 10px;
+  }
+  .ibtn {
+    width: 42px; height: 42px; border-radius: 14px; display: grid; place-items: center; border: 0; cursor: pointer;
+    background: linear-gradient(180deg, #ffffff, #eef1ff); color: #3a4378; text-decoration: none;
+    box-shadow: 0 3px 0 #c9cfee, 0 8px 18px rgba(70, 80, 160, .18);
+  }
+  .ibtn:active { transform: translateY(2px); box-shadow: 0 1px 0 #c9cfee, 0 4px 10px rgba(70, 80, 160, .18); }
+  .ibtn svg { width: 22px; height: 22px; }
+  .brand { text-align: center; line-height: 1; }
+  .brand b {
+    display: block; font: 400 clamp(17px, 5.6vw, 22px)/1 'Anton', sans-serif; letter-spacing: 1.5px; white-space: nowrap;
+    background: linear-gradient(180deg, #2c4fd8, #1a2a7a); -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .brand b em { font-style: normal; background: linear-gradient(180deg, #ffcf4a, #e08a12); -webkit-background-clip: text; background-clip: text; }
+  .brand small { display: block; margin-top: 3px; font: italic 800 11px 'Barlow Condensed', sans-serif; letter-spacing: 3px; color: #7a82b8; white-space: nowrap; }
+  /* 제목은 떠 있는 버튼이 아니라 헤더: 결과 화면에선 내용과 같이 스크롤되고, 버튼 사이에 자리가 없으면 생략 */
+  body.in-sum header .brand { visibility: hidden; }
+  #summary .brand { align-self: stretch; min-height: 42px; display: grid; place-content: center; margin-bottom: -6px; }
+  @media (max-width: 359px) { .brand { visibility: hidden; } }
+  .dexbtn {
+    justify-self: end; display: flex; align-items: center; gap: 8px; border: 0; cursor: pointer; padding: 6px 12px 6px 6px; border-radius: 16px;
+    background: linear-gradient(180deg, #ffffff, #eef1ff); box-shadow: 0 3px 0 #c9cfee, 0 8px 18px rgba(70, 80, 160, .18); color: var(--ink);
+  }
+  .dexbtn:active { transform: translateY(2px); box-shadow: 0 1px 0 #c9cfee; }
+  .dexbtn .ico { width: 30px; height: 30px; border-radius: 10px; display: grid; place-items: center; background: linear-gradient(180deg, #ff8a5c, #f2552c); color: #fff; box-shadow: inset 0 -2px 0 rgba(0,0,0,.15); }
+  .dexbtn .ico svg { width: 18px; height: 18px; }
+  .dexbtn .txt { text-align: left; line-height: 1.05; }
+  .dexbtn .txt b { display: block; font: 800 12px var(--font); }
+  .dexbtn .txt span { display: block; font: italic 800 13px 'Barlow Condensed', sans-serif; color: #5a62a0; letter-spacing: .5px; }
+  .dexbtn .bar { display: block; width: 54px; height: 4px; border-radius: 4px; background: #dfe3f6; margin-top: 3px; overflow: hidden; }
+  .dexbtn .bar i { display: block; height: 100%; background: linear-gradient(90deg, #ffb347, #ff6a3d); border-radius: 4px; width: var(--p, 0%); transition: width .6s; }
+  .dexbtn.bump { animation: bump .5s; }
+  @keyframes bump { 40% { transform: scale(1.12); } }
+
+  #stage { position: fixed; inset: 0; perspective: 1400px; }
+  #stage.shake { animation: shake .5s cubic-bezier(.36,.07,.19,.97); }
+  @keyframes shake {
+    10%, 90% { transform: translate(-2px, 1px); } 20%, 80% { transform: translate(4px, -2px); }
+    30%, 50%, 70% { transform: translate(-6px, 3px); } 40%, 60% { transform: translate(6px, -3px); }
+  }
+  #gl { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
+
+  /* 레어 이상 빛. --gc는 등급 색, 흰빛과 섞어 부드럽게 쓴다.
+     열릴 때(#packGlow)는 팩 뒤에서 입구 위로만 새어 나오고, 입구 선(#packLip)은 팩 위에서 빛난다 */
+  #packGlow, #packLip { position: fixed; left: 0; top: 0; width: 0; height: 0; pointer-events: none; display: none; }
+  #packGlow { z-index: 1; }
+  #packLip { z-index: 3; }
+  #packGlow.on, #packLip.on { display: block; }
+  #packGlow .rays {
+    position: absolute; left: calc(var(--gs) * -.5); top: calc(var(--gs) * -.5); width: var(--gs); height: var(--gs);
+    -webkit-mask: linear-gradient(to bottom, #000 50%, transparent 50%), radial-gradient(closest-side, #000 0, rgba(0,0,0,.55) 40%, transparent 100%);
+    -webkit-mask-composite: source-in; mask-composite: intersect;
+    mask: linear-gradient(to bottom, #000 50%, transparent 50%), radial-gradient(closest-side, #000 0, rgba(0,0,0,.55) 40%, transparent 100%);
+    animation: glowIn 1s cubic-bezier(.2,.8,.2,1) both;
+  }
+  #packGlow .rays i {
+    position: absolute; inset: 0; filter: blur(7px); animation: sway 7s ease-in-out infinite alternate;
+    background: conic-gradient(from -58deg,
+      transparent 0deg, color-mix(in srgb, var(--gc) 30%, transparent) 14deg, transparent 26deg,
+      color-mix(in srgb, var(--gc) 50%, transparent) 38deg, transparent 49deg,
+      color-mix(in srgb, var(--gc) 35%, rgba(255,255,255,.85)) 58deg, transparent 67deg,
+      color-mix(in srgb, var(--gc) 50%, transparent) 78deg, transparent 90deg,
+      color-mix(in srgb, var(--gc) 30%, transparent) 102deg, transparent 116deg, transparent 360deg);
+  }
+  @keyframes sway { from { transform: rotate(-4deg); } to { transform: rotate(4deg); } }
+  #packGlow .core {
+    position: absolute; left: calc(var(--gs) * -.24); top: calc(var(--gs) * -.07); width: calc(var(--gs) * .48); height: calc(var(--gs) * .14);
+    border-radius: 50%; filter: blur(5px);
+    background: radial-gradient(closest-side, #fff 0, color-mix(in srgb, var(--gc) 55%, #fff) 35%, color-mix(in srgb, var(--gc) 35%, transparent) 65%, transparent);
+    animation: glowIn .6s ease-out both, breathe 2.6s .6s ease-in-out infinite;
+  }
+  #packGlow .motes { left: calc(var(--gs) * -.16); width: calc(var(--gs) * .32); top: calc(var(--gs) * -.3); height: calc(var(--gs) * .3); }
+  @keyframes glowIn { from { opacity: 0; transform: scale(.4); } }
+  @keyframes breathe { 50% { transform: scale(1.08); opacity: .85; } }
+  #packLip .lip {
+    position: absolute; left: calc(var(--lw) * -.5); top: -3px; width: var(--lw); height: 6px; border-radius: 50%;
+    background: radial-gradient(closest-side, #fff 0, #fff 45%, color-mix(in srgb, var(--gc) 60%, #fff) 70%, transparent);
+    box-shadow: 0 0 14px 3px color-mix(in srgb, var(--gc) 55%, transparent);
+    animation: lipFlash .4s ease-out both;
+  }
+  /* 입구 선은 뜯기는 순간 번쩍하고 바로 사라진다 */
+  @keyframes lipFlash { from { opacity: 0; transform: scaleX(.6); } 20% { opacity: 1; transform: none; } to { opacity: 0; } }
+  #packGlow.off, #packLip.off { animation: glowOut .7s forwards; }
+  @keyframes glowOut { to { opacity: 0; } }
+
+  /* 떠오르는 빛가루 */
+  .motes {
+    position: absolute; pointer-events: none;
+    background:
+      radial-gradient(circle, #fff 0 1px, transparent 2px) 0 0 / 37px 53px,
+      radial-gradient(circle, color-mix(in srgb, var(--gc) 50%, #fff) 0 1.2px, transparent 2.4px) 18px 21px / 61px 71px;
+    -webkit-mask: linear-gradient(to top, #000 10%, transparent), linear-gradient(90deg, transparent, #000 25%, #000 75%, transparent);
+    -webkit-mask-composite: source-in; mask-composite: intersect;
+    mask: linear-gradient(to top, #000 10%, transparent), linear-gradient(90deg, transparent, #000 25%, #000 75%, transparent);
+    animation: rise 3.2s linear infinite;
+  }
+  @keyframes rise { to { background-position: 0 -53px, 18px -50px; } }
+
+  /* 뜯는 중: 찢어진 구간에서만 빛이 샌다. --p는 뜯은 비율 */
+  #packLeak { position: fixed; left: 0; top: 0; height: 0; z-index: 3; pointer-events: none; display: none; transform-origin: 0 0; }
+  #packLeak.on { display: block; }
+  #packLeak .seam {
+    position: absolute; left: 0; right: 0; top: -1.5px; height: 3px; border-radius: 2px; overflow: hidden;
+    background: linear-gradient(90deg, transparent, #fff 10%, #fff 90%, transparent);
+    box-shadow: 0 0 6px 1px color-mix(in srgb, var(--gc) 60%, #fff), 0 0 calc(10px + 24px * var(--p)) calc(2px + 5px * var(--p)) color-mix(in srgb, var(--gc) 55%, transparent);
+    opacity: calc(.55 + .45 * var(--p));
+  }
+  #packLeak .seam::after {
+    content: ''; position: absolute; top: 0; bottom: 0; width: 40%; left: -40%;
+    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--gc) 40%, #fff), transparent);
+    animation: glint 1.6s ease-in-out infinite;
+  }
+  @keyframes glint { to { left: 100%; } }
+  #packLeak .curtain {
+    position: absolute; left: 4%; right: 4%; bottom: 0; height: calc(var(--bh) * (.3 + .7 * var(--p)));
+    background: linear-gradient(to top, color-mix(in srgb, var(--gc) 45%, rgba(255,255,255,.6)), color-mix(in srgb, var(--gc) 15%, transparent) 45%, transparent);
+    -webkit-mask: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent); mask: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
+    filter: blur(6px); opacity: calc(.4 + .6 * var(--p));
+  }
+  #packLeak .motes { left: 0; right: 0; bottom: 0; height: calc(var(--bh) * .8); opacity: var(--p); }
+  #packLeak.off { animation: glowOut .2s forwards; }
+
+  /* 카드 뒤 빛: 팩이 빠질 때 잠깐 남았다가 사라지고, 레어 이상 카드 뒷면이 맨 위에 오면 다시 켜진다 */
+  #cardGlow {
+    position: absolute; left: 50%; top: var(--cy); width: var(--cw); height: var(--ch); transform: translate(-50%, -50%);
+    z-index: 2; pointer-events: none; opacity: 0; transition: opacity .45s ease-out;
+  }
+  #cardGlow.on { opacity: 1; }
+  #cardGlow.fade { transition: opacity 1.8s ease-in; }
+  #cardGlow .halo {
+    position: absolute; inset: -12% -16%; border-radius: 28%; filter: blur(16px);
+    background: radial-gradient(closest-side, color-mix(in srgb, var(--gc) 65%, #fff) 0, color-mix(in srgb, var(--gc) 45%, transparent) 55%, transparent);
+    animation: breathe 2.8s ease-in-out infinite;
+  }
+  #cardGlow .motes { left: -12%; right: -12%; top: -28%; height: 70%; }
+  @keyframes glowOut { to { opacity: 0; } }
+
+  /* 하단 좌우: 소리, 포인트 / 가운데: 5팩 버튼 */
+  .mute, .pts {
+    position: fixed; bottom: max(22px, env(safe-area-inset-bottom)); z-index: 22; height: 40px; border: 0; border-radius: 14px;
+    background: linear-gradient(180deg, #ffffff, #eef1ff); box-shadow: 0 3px 0 #c9cfee, 0 8px 18px rgba(70, 80, 160, .18); color: #3a4378;
+  }
+  .mute { left: 14px; width: 40px; display: grid; place-items: center; cursor: pointer; padding: 0; }
+  .mute svg { width: 20px; height: 20px; }
+  .mute .off { display: none; }
+  .mute.muted .on { display: none; }
+  .mute.muted .off { display: block; }
+  .pts { right: 14px; display: flex; align-items: center; gap: 6px; padding: 0 12px 0 7px; font: italic 800 17px 'Barlow Condensed', sans-serif; letter-spacing: .3px; }
+  .pts i {
+    width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font: normal 900 12px var(--font); color: #fff; font-style: normal;
+    background: linear-gradient(180deg, #ffcf3a, #f0a020); box-shadow: inset 0 -2px 0 rgba(0,0,0,.15);
+  }
+  .pts.deny { animation: deny .45s; background: linear-gradient(180deg, #fff, #ffe3e3); color: #e5484d; }
+  @keyframes deny { 20%, 60% { transform: translateX(-5px); } 40%, 80% { transform: translateX(5px); } }
+  .pts.gain { animation: gain .5s; }
+  @keyframes gain { 40% { transform: scale(1.15); } }
+  .multi-btn { position: fixed; left: 50%; bottom: max(22px, env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 21; display: none; }
+  .multi-btn.btn { position: fixed; }
+  .multi-btn.btn:active { transform: translate(-50%, 3px); }
+  .free {
+    position: fixed; right: 14px; bottom: calc(max(22px, env(safe-area-inset-bottom)) + 48px); z-index: 22; display: none;
+    padding: 4px 10px; border-radius: 10px; background: linear-gradient(180deg, #4fd88a, #22a55b); color: #fff;
+    font: italic 800 14px 'Barlow Condensed', sans-serif; letter-spacing: 1px; box-shadow: 0 3px 0 #16793f;
+  }
+  .pack-count {
+    position: fixed; right: 14px; top: calc(var(--top) - 4px); z-index: 21; display: none; padding: 5px 10px; border-radius: 10px;
+    background: linear-gradient(180deg, #4f7bff, #2a4fd0); color: #fff; font: italic 800 15px 'Barlow Condensed', sans-serif; letter-spacing: 1px;
+    box-shadow: 0 3px 0 #1c3a9a;
+  }
+  .skip {
+    position: fixed; left: 50%; bottom: max(22px, env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 21;
+    display: none; align-items: center; gap: 6px;
+  }
+  .skip svg { width: 16px; height: 16px; }
+  .skip.btn { position: fixed; }
+  .skip.btn:active { transform: translate(-50%, 3px); }
+
+  /* 뜯는 선 가이드 */
+  #tearGuide { position: fixed; z-index: 5; height: 0; pointer-events: none; display: none; }
+  #tearGuide .line {
+    position: absolute; left: 0; right: 0; top: -1.5px; height: 3px; border-radius: 3px;
+    background: repeating-linear-gradient(90deg, rgba(255,255,255,.95) 0 8px, transparent 8px 14px);
+    filter: drop-shadow(0 0 3px rgba(60, 120, 255, .9)) drop-shadow(0 0 8px rgba(60, 120, 255, .6));
+    animation: guideFlow .8s linear infinite;
+  }
+  @keyframes guideFlow { to { background-position: 14px 0; } }
+  #tearGuide .finger {
+    position: absolute; top: -6px; left: 0; width: 34px; height: 34px; margin-left: -10px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,.95) 0 30%, rgba(120, 170, 255, .55) 45%, rgba(120,170,255,0) 70%);
+    animation: swipeHint 2s cubic-bezier(.4,0,.3,1) infinite;
+  }
+  @keyframes swipeHint { 0% { left: -4%; opacity: 0; transform: scale(.6); } 15% { opacity: 1; transform: scale(1); } 75% { left: 100%; opacity: 1; } 100% { left: 100%; opacity: 0; } }
+  #tearGuide.nudge .line { animation: guideFlow .8s linear infinite, guidePulse .45s 2; }
+  @keyframes guidePulse { 50% { transform: scaleY(2.4); } }
+
+
+  #rays {
+    position: absolute; left: 50%; top: 50%; width: 170vmax; height: 170vmax; margin: -85vmax 0 0 -85vmax;
+    background: repeating-conic-gradient(from 0deg, rgba(255, 196, 60, 0) 0deg 7deg, rgba(255, 190, 60, .32) 9deg 11deg, rgba(255,196,60,0) 13deg 20deg);
+    -webkit-mask: radial-gradient(circle, #000 0, rgba(0,0,0,.6) 18%, transparent 45%);
+            mask: radial-gradient(circle, #000 0, rgba(0,0,0,.6) 18%, transparent 45%);
+    opacity: 0; transition: opacity .6s; animation: spin 24s linear infinite; pointer-events: none;
+  }
+  #rays.epic { filter: hue-rotate(230deg) saturate(1.3); }
+  #rays.icon { filter: saturate(.15) brightness(1.35); }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ---------- cards ---------- */
+  #stack {
+    position: absolute; left: 50%; top: var(--cy); width: var(--cw); height: var(--ch); z-index: 3;
+    transform: translate(-50%, -50%);
+  }
+  #stack.hidden { visibility: hidden; }
+  #stack .face { transition: box-shadow .5s; }
+  #stack.fresh .face { box-shadow: none; }
+  .slot { position: absolute; inset: 0; container-type: inline-size; perspective: 1100px; }
+  .card3d { position: absolute; inset: 0; transform-style: preserve-3d; }
+  .face {
+    position: absolute; inset: 0; border-radius: 4.6cqw; overflow: hidden;
+    -webkit-backface-visibility: hidden; backface-visibility: hidden;
+    box-shadow: 0 1.5cqw 5cqw rgba(30, 40, 90, .35);
+    --gx: 50%; --gy: 50%; --go: 0; --hx: 50%; --hy: 50%;
+  }
+  .face.second { transform: rotateY(180deg); }
+  .paper { position: absolute; inset: 0; pointer-events: none; mix-blend-mode: multiply; opacity: .5; background-size: 128px; z-index: 8; background-image: var(--paper); }
+  .glare {
+    position: absolute; inset: 0; pointer-events: none; z-index: 9;
+    background: radial-gradient(circle at var(--gx) var(--gy), rgba(255,255,255,.6), rgba(255,255,255,.1) 16%, rgba(255,255,255,0) 34%);
+    mix-blend-mode: soft-light; opacity: var(--go);
+  }
+  .back .glare { display: none; }
+  .back img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+  .slot.hint-rare .back { box-shadow: 0 0 6cqw 2cqw rgba(60, 140, 255, .7), 0 1.5cqw 5cqw rgba(30,40,90,.35); }
+  .slot.hint-epic .back { animation: glowEpic 1.3s ease-in-out infinite; }
+  .slot.hint-legend .back { animation: glowLegend 1s ease-in-out infinite; }
+  .slot.hint-legend .card3d { animation: rumble 2.4s ease-in-out infinite; }
+  .slot.hint-icon .back { animation: glowIcon 1.1s ease-in-out infinite; }
+  .slot.hint-icon .card3d { animation: rumble 1.8s ease-in-out infinite; }
+  @keyframes glowIcon { 0%,100% { box-shadow: 0 0 8cqw 2cqw rgba(225, 235, 255, .8), 0 0 3cqw 1cqw rgba(255, 230, 160, .6); } 50% { box-shadow: 0 0 20cqw 7cqw rgba(235, 242, 255, 1), 0 0 6cqw 2cqw rgba(255, 230, 160, .9); } }
+  @keyframes glowEpic { 0%,100% { box-shadow: 0 0 6cqw 1.5cqw rgba(170, 90, 255, .6); } 50% { box-shadow: 0 0 12cqw 4cqw rgba(170, 90, 255, .95); } }
+  @keyframes glowLegend { 0%,100% { box-shadow: 0 0 8cqw 2cqw rgba(255, 180, 30, .75); } 50% { box-shadow: 0 0 18cqw 6cqw rgba(255, 190, 40, 1); } }
+  @keyframes rumble { 0%, 70%, 100% { translate: 0 0; } 74% { translate: -1.2cqw 0; } 78% { translate: 1.2cqw 0; } 82% { translate: -.8cqw 0; } 86% { translate: .8cqw 0; } }
+  .slot.dragging .card3d { animation: none; }
+
+  /* ---------- card front (풀블리드 축구 카드) ---------- */
+  .front { background: var(--frame); }
+  .front .frame-holo {
+    position: absolute; inset: 0; pointer-events: none; mix-blend-mode: color-dodge; opacity: calc(var(--holo, 0) * .7); z-index: 1;
+    background: repeating-linear-gradient(115deg, #ff3c8a 0%, #ffb02e 5%, #f9f871 10%, #3dffa4 15%, #3ac8ff 20%, #b35cff 25%, #ff3c8a 30%);
+    background-size: 400% 400%; background-position: var(--hx) var(--hy);
+  }
+  .cf { position: absolute; inset: 2.8cqw; border-radius: 2.8cqw; overflow: hidden; background: var(--c3); z-index: 2; }
+  .cf-bg { position: absolute; inset: 0; background: radial-gradient(130% 85% at 50% 32%, color-mix(in srgb, var(--c1) 70%, #fff) 0%, var(--c1) 42%, color-mix(in srgb, var(--c1) 45%, var(--c3)) 100%); }
+  .t-legend .cf-bg::after { content: ""; position: absolute; inset: 0; mix-blend-mode: hard-light; opacity: .75;
+    background: linear-gradient(160deg, #ffe9a0, #f2b632 45%, #b7790f 75%, #ffd76a); }
+  .t-epic .cf-bg::after { content: ""; position: absolute; inset: 0; mix-blend-mode: soft-light; opacity: .7;
+    background: linear-gradient(160deg, #f0d6ff, #8b4be0 60%, #3b1a8a); }
+  .cf-pat { position: absolute; inset: 0; mix-blend-mode: soft-light; opacity: .95; background: var(--pat); }
+  .cf-holo {
+    position: absolute; inset: 0; pointer-events: none; mix-blend-mode: color-dodge; opacity: var(--holo, 0);
+    background: repeating-linear-gradient(115deg, #ff3c8a 0%, #ffb02e 5%, #f9f871 10%, #3dffa4 15%, #3ac8ff 20%, #b35cff 25%, #ff3c8a 30%);
+    background-size: 400% 400%; background-position: var(--hx) var(--hy);
+  }
+  .cf-big {
+    position: absolute; left: -4cqw; right: -4cqw; top: 14%; text-align: center; white-space: nowrap;
+    font: 400 46cqw/1 'Anton', sans-serif; color: rgba(255,255,255,.16); transform: rotate(-8deg); letter-spacing: -1cqw;
+  }
+  .cf-photo {
+    position: absolute; left: 50%; bottom: 23%; height: 68%; transform: translateX(-50%); z-index: 1;
+    filter: drop-shadow(0 2cqw 3cqw rgba(0,0,0,.45));
+  }
+  .cf-sparkle {
+    position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: var(--spark, 0); mix-blend-mode: screen;
+    background-image: radial-gradient(circle, #fff 0 .35cqw, transparent .6cqw), radial-gradient(circle, #fff 0 .25cqw, transparent .5cqw);
+    background-size: 9cqw 9cqw, 6cqw 6cqw; background-position: 0 0, 3cqw 4cqw;
+    -webkit-mask: radial-gradient(circle at var(--gx) var(--gy), #000, transparent 50%); mask: radial-gradient(circle at var(--gx) var(--gy), #000, transparent 50%);
+  }
+  /* 소속팀 엠블럼 (public/card/crests/{teamId}.webp, FotMob) */
+  .cf-club {
+    position: absolute; left: 4cqw; top: 4cqw; z-index: 3; width: 15cqw; height: 15cqw; object-fit: contain;
+    /* 리버풀처럼 배경과 같은 색 엠블럼도 보이게 흰 테를 두른다 */
+    filter: drop-shadow(0 0 .35cqw #fff) drop-shadow(0 0 .35cqw rgba(255,255,255,.8)) drop-shadow(0 .8cqw 1.4cqw rgba(0,0,0,.45));
+  }
+  .cf-rate {
+    position: absolute; right: 3.4cqw; top: 3.4cqw; z-index: 3; text-align: center; color: #fff;
+    background: color-mix(in srgb, var(--c3) 88%, transparent); border-radius: 1.6cqw; padding: 1.2cqw 2.4cqw 1cqw;
+    border-bottom: .9cqw solid var(--c2); box-shadow: 0 1cqw 3cqw rgba(0,0,0,.3);
+  }
+  .cf-rate b { display: block; font: 400 10.5cqw/1 'Anton', sans-serif; letter-spacing: .2cqw; }
+  .cf-rate span { display: block; font: 800 3.4cqw/1 'Barlow Condensed', sans-serif; letter-spacing: .5cqw; margin-top: .6cqw; opacity: .9; }
+  .cf-plate-wrap {
+    position: absolute; left: 0; right: 0; bottom: 0; height: 29%; z-index: 3;
+    background: var(--c2); clip-path: polygon(0 12%, 100% -1%, 100% 100%, 0 100%);
+  }
+  .cf-plate {
+    position: absolute; inset: 1.3cqw 0 0 0; padding: 5.4cqw 4.2cqw 0;
+    background: linear-gradient(180deg, var(--c3), color-mix(in srgb, var(--c3) 65%, #000));
+    clip-path: polygon(0 12%, 100% 0, 100% 100%, 0 100%);
+  }
+  .cf-first { font: 700 3.8cqw/1 'Barlow Condensed', sans-serif; letter-spacing: .5cqw; text-transform: uppercase; color: rgba(255,255,255,.72); min-height: 3.8cqw; }
+  .cf-last {
+    font: italic 800 var(--lfs, 9.5cqw)/.95 'Barlow Condensed', sans-serif; text-transform: uppercase; color: #fff;
+    letter-spacing: .3cqw; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 1cqw;
+    text-shadow: 0 .3cqw .4cqw rgba(0,0,0,.45);
+  }
+  .cf-meta { margin-top: 1.2cqw; font: 700 3.1cqw 'Gothic A1', var(--font); color: rgba(255,255,255,.72); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cf-foot {
+    position: absolute; left: 4.2cqw; right: 4.2cqw; bottom: 2.6cqw; display: flex; align-items: center; justify-content: space-between;
+    font: 700 3cqw 'Barlow Condensed', sans-serif; letter-spacing: .3cqw; color: rgba(255,255,255,.55);
+  }
+  .cf-tier {
+    font: italic 800 3.1cqw 'Barlow Condensed', sans-serif; letter-spacing: .6cqw; color: #1a1a1a; padding: .3cqw 2cqw; border-radius: .6cqw;
+    background: var(--stamp); transform: skewX(-10deg); box-shadow: 0 .4cqw 1cqw rgba(0,0,0,.3);
+  }
+  /* ---------- 에픽·레전드: 사진을 크게, 아래에 이름만 ---------- */
+  .front.hero { isolation: isolate; }
+  .front.hero .aura {
+    position: absolute; left: 50%; top: 50%; width: 160%; aspect-ratio: 1; translate: -50% -50%; z-index: 0; pointer-events: none;
+    background: conic-gradient(from 0deg, transparent 0 6%, var(--aura1) 14%, #fff 20%, var(--aura2) 26%, transparent 38% 56%, var(--aura1) 64%, #fff 70%, var(--aura2) 76%, transparent 88%);
+    animation: auraSpin 3.2s linear infinite;
+  }
+  @keyframes auraSpin { to { rotate: 360deg; } }
+  .t-legend { --aura1: #ffd34a; --aura2: #ff9a1f; --glow: rgba(255, 196, 50, .85); --stroke: #6b3a00; }
+  .t-epic { --aura1: #c58bff; --aura2: #ff7ad9; --glow: rgba(176, 100, 255, .8); --stroke: #3b1580; }
+  .front.hero .cf { inset: 2.2cqw; }
+  .front.hero .cf::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 38%; z-index: 2; pointer-events: none;
+    background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--c3) 75%, #000) 92%);
+  }
+  .front.hero .cf-photo { bottom: 13%; height: 72%; filter: drop-shadow(0 0 2.4cqw var(--glow)) drop-shadow(0 2cqw 3cqw rgba(0,0,0,.4)); }
+  /* 나무위키 상반신 컷아웃: 카드 아래에 붙여 크게, 이름이 그 위에 얹힌다 */
+  .front.hero .cf-photo.full { bottom: 0; height: 84%; width: auto; max-width: none; }
+  .front.hero .cf-big { top: 8%; opacity: .9; }
+  .front.hero .cf-sparkle { z-index: 0; mask: none; -webkit-mask: none; opacity: calc(var(--spark) * .45); animation: twinkle 2.4s ease-in-out infinite; }
+  @keyframes twinkle { 50% { opacity: calc(var(--spark) * .9); background-position: 2cqw 1cqw, 5cqw 6cqw; } }
+  .front.hero .cf-name {
+    position: absolute; left: 0; right: 0; bottom: 4cqw; z-index: 4; text-align: center; padding: 0 3cqw;
+    font: 400 var(--nfs, 15cqw)/.9 'Anton', sans-serif; text-transform: uppercase; letter-spacing: .7cqw; white-space: nowrap; color: #fff;
+    /* 테두리는 글자 크기에 비례해 얇게: 두꺼우면 긴 이름이 뭉개진다 */
+    -webkit-text-stroke: calc(var(--nfs, 15cqw) * .045) var(--stroke); paint-order: stroke fill;
+    filter: drop-shadow(0 .4cqw .5cqw rgba(0,0,0,.6)) drop-shadow(0 0 2.4cqw var(--glow));
+  }
+  .coach.hero .cf-name { bottom: 3cqw; }
+  .t-legend.hero .cf-name { background: linear-gradient(180deg, #fffbe6 20%, #ffd24a 60%, #f0a51a); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .front.hero .cf-club, .front.hero .cf-rate { z-index: 5; }
+  /* ---------- 아이콘: 흑요석 바탕에 백금 홀로그램. 클럽 엠블럼 없음 ----------
+     무지개 빛은 저절로 움직이지 않고, 기울인 방향(--hx, --hy)과 각도(--go)에 따라 달라진다 */
+  .front.icon {
+    --c1: #2a303c; --c2: #dfe6ef; --c3: #0b0d12; --aura1: #ffffff; --aura2: #c9d8f2; --glow: rgba(214, 228, 255, .85); --stroke: #141821;
+    --pl: linear-gradient(180deg, #ffffff, #c3ccd8 50%, #f2f5f9);
+    --rb: #ffffff, #ffd3ea 8%, #fff1c2 16%, #d2ffe6 24%, #c9e6ff 32%, #e0d2ff 40%, #ffffff 48%, #ffd3ea 56%, #fff1c2 64%, #d2ffe6 72%, #c9e6ff 80%, #e0d2ff 88%, #ffffff 96%;
+    --rbs: #f4f7ff, #ff8fcf 9%, #ffd977 18%, #7dffc4 27%, #7cc4ff 36%, #b98cff 45%, #f4f7ff 50%, #ff8fcf 59%, #ffd977 68%, #7dffc4 77%, #7cc4ff 86%, #b98cff 95%;
+    --frame: linear-gradient(135deg, #ffffff, #c9d1dc 16%, #f6f8fb 32%, #8792a3 50%, #eef2f8 66%, #aab4c3 82%, #ffffff);
+    --pat: repeating-conic-gradient(from 0deg at 50% 30%, rgba(225, 235, 255, .16) 0 1.4deg, rgba(255,255,255,0) 1.4deg 6deg);
+    --spark: 1;
+  }
+  .front.icon .frame-holo {
+    mix-blend-mode: overlay; opacity: calc(.55 + var(--go, 0) * 1.6);
+    background: linear-gradient(115deg, var(--rb)); background-size: 300% 300%; background-position: var(--hx) var(--hy);
+  }
+  .front.icon .cf-bg { background: radial-gradient(115% 72% at 50% 30%, #4a5262 0%, #232834 38%, #0f1218 72%, #050608 100%); }
+  /* 바탕 전체에 은은한 무지개 */
+  .front.icon .cf-bg::after {
+    content: ""; position: absolute; inset: 0; mix-blend-mode: overlay; opacity: calc(.22 + var(--go, 0) * .8);
+    background: linear-gradient(125deg, var(--rb)); background-size: 260% 260%; background-position: var(--hx) var(--hy);
+  }
+  .front.icon .cf-pat { mix-blend-mode: screen; opacity: 1; }
+  /* 빛줄기 무늬만 따라 회절 포일처럼 무지개가 켜진다 */
+  .front.icon .cf-holo {
+    mix-blend-mode: screen; opacity: calc(.4 + var(--go, 0) * 1.2);
+    background: linear-gradient(110deg, var(--rbs)); background-size: 220% 220%; background-position: var(--hx) var(--hy);
+    -webkit-mask: repeating-conic-gradient(from 0deg at 50% 30%, #000 0 1.4deg, transparent 1.4deg 6deg), radial-gradient(90% 70% at 50% 32%, #000 30%, transparent 85%);
+    -webkit-mask-composite: source-in; mask-composite: intersect;
+    mask: repeating-conic-gradient(from 0deg at 50% 30%, #000 0 1.4deg, transparent 1.4deg 6deg), radial-gradient(90% 70% at 50% 32%, #000 30%, transparent 85%);
+  }
+  .front.icon .cf-big {
+    top: 3%; left: -10cqw; right: -10cqw; font-size: 60cqw; letter-spacing: -.5cqw; transform: rotate(-6deg); opacity: .5;
+    color: transparent; -webkit-text-stroke: .4cqw rgba(235, 240, 250, .5);
+    background: linear-gradient(115deg, var(--rbs)); background-size: 300% 300%; background-position: var(--hx) var(--hy);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-mask: linear-gradient(180deg, #000 30%, rgba(0,0,0,.25) 90%); mask: linear-gradient(180deg, #000 30%, rgba(0,0,0,.25) 90%);
+  }
+  .front.icon .cf::after { height: 40%; background: linear-gradient(180deg, transparent, rgba(8, 10, 14, .7) 45%, #050608 92%); }
+  .front.icon .cf-photo.full { height: 90%; filter: drop-shadow(0 0 2.2cqw rgba(210, 225, 255, .75)) drop-shadow(0 2cqw 3cqw rgba(0, 0, 0, .55)); }
+  .icon-deco {
+    position: absolute; inset: 1.8cqw; z-index: 4; pointer-events: none;
+    background:
+      var(--pl) left top / 9cqw .4cqw no-repeat, var(--pl) left top / .4cqw 9cqw no-repeat,
+      var(--pl) right top / 9cqw .4cqw no-repeat, var(--pl) right top / .4cqw 9cqw no-repeat,
+      var(--pl) left bottom / 9cqw .4cqw no-repeat, var(--pl) left bottom / .4cqw 9cqw no-repeat,
+      var(--pl) right bottom / 9cqw .4cqw no-repeat, var(--pl) right bottom / .4cqw 9cqw no-repeat;
+    filter: drop-shadow(0 0 .8cqw rgba(220, 232, 255, .8));
+  }
+  .front.icon .cf-rate {
+    background: linear-gradient(180deg, #ffffff, #d9e0ea 45%, #9ea9b9); border-bottom-color: #5d6878; color: #141821;
+    box-shadow: 0 1cqw 3cqw rgba(0, 0, 0, .45), 0 0 3cqw rgba(214, 228, 255, .5);
+  }
+  .front.icon .cf-rate span { opacity: .75; }
+  /* 이름: 백금 위에 기울기 따라 옅은 무지개 */
+  .front.icon .cf-name {
+    bottom: 5cqw; -webkit-text-stroke-color: #10141c;
+    background:
+      linear-gradient(110deg, rgba(255,211,234,.45), rgba(255,241,194,.45), rgba(210,255,230,.45), rgba(201,230,255,.45), rgba(224,210,255,.45), rgba(255,211,234,.45)) var(--hx) 0 / 300% 100%,
+      linear-gradient(180deg, #ffffff 12%, #e4eaf2 40%, #9aa6b8 58%, #f1f5fa 74%, #c1cad7 92%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 .4cqw .5cqw rgba(0,0,0,.7)) drop-shadow(0 0 2.4cqw rgba(200, 220, 255, .55));
+  }
+  .front.icon .glow-edge { box-shadow: inset 0 0 0 .5cqw rgba(240, 245, 255, .9), inset 0 0 8cqw rgba(190, 210, 245, .45); animation: none; }
+  .front.hero .glow-edge {
+    position: absolute; inset: 0; z-index: 3; pointer-events: none; border-radius: inherit;
+    box-shadow: inset 0 0 0 .6cqw rgba(255,255,255,.75), inset 0 0 6cqw var(--glow);
+    animation: edgePulse 2s ease-in-out infinite;
+  }
+  @keyframes edgePulse { 50% { box-shadow: inset 0 0 0 .6cqw rgba(255,255,255,1), inset 0 0 10cqw var(--glow); } }
+  .face .new {
+    position: absolute; top: 0; left: 50%; transform: translateX(-50%); z-index: 10; padding: 2.4cqw 2.4cqw 1.2cqw; border-radius: 0 0 1.6cqw 1.6cqw;
+    background: linear-gradient(180deg, #ff5d7a, #e11d48); color: #fff; font: italic 800 3.8cqw 'Barlow Condensed', sans-serif; letter-spacing: .4cqw;
+    box-shadow: 0 1cqw 2cqw rgba(0,0,0,.3); display: none;
+  }
+  .face.is-new .new { display: block; }
+
+  .t-common { --frame: linear-gradient(150deg, #ffffff, #e2e0da 50%, #f7f6f2); --stamp: linear-gradient(180deg, #f2f2f2, #b9bec8);
+    --pat: repeating-linear-gradient(118deg, rgba(255,255,255,0) 0 7cqw, rgba(255,255,255,.55) 7cqw 7.5cqw, rgba(255,255,255,0) 7.5cqw 13cqw); }
+  .t-rare { --frame: linear-gradient(135deg, #d6e6ff, #4f86ea 28%, #eef5ff 50%, #2f62cc 72%, #cfe0ff); --stamp: linear-gradient(180deg, #d4e5ff, #6c9ff2); --holo: .22;
+    --pat: repeating-conic-gradient(from 13deg at 28% 38%, rgba(255,255,255,.75) 0 4deg, rgba(255,255,255,0) 4deg 17deg), repeating-conic-gradient(from 51deg at 74% 64%, rgba(255,255,255,.55) 0 3deg, rgba(255,255,255,0) 3deg 21deg); }
+  .t-epic { --frame: linear-gradient(135deg, #f3e2ff, #9a5cf0 28%, #ffe1f6 50%, #6532c6 72%, #ead6ff); --stamp: linear-gradient(180deg, #f1dcff, #b383f5); --holo: .45; --spark: .55;
+    --pat: repeating-linear-gradient(62deg, rgba(255,255,255,0) 0 3cqw, rgba(255,255,255,.6) 3cqw 3.6cqw), repeating-conic-gradient(from 0deg at 50% 40%, rgba(255,255,255,.4) 0 5deg, rgba(255,255,255,0) 5deg 15deg); }
+  .t-legend { --frame: linear-gradient(135deg, #fff5cc, #f2c14e 22%, #b7810f 45%, #ffe9a3 65%, #c9962a 85%, #fff1b8); --stamp: linear-gradient(180deg, #fff3c4, #e9b23a); --holo: .55; --spark: .95;
+    --pat: repeating-conic-gradient(from 7deg at 30% 35%, rgba(255,240,180,.85) 0 4deg, rgba(255,255,255,0) 4deg 14deg), repeating-conic-gradient(from 40deg at 70% 62%, rgba(255,255,255,.6) 0 3deg, rgba(255,255,255,0) 3deg 19deg); }
+
+  /* ---------- summary ---------- */
+  #summary {
+    position: fixed; inset: 0; z-index: 10; display: none; flex-direction: column; align-items: center; justify-content: safe center;
+    padding: max(12px, env(safe-area-inset-top)) 16px max(28px, calc(env(safe-area-inset-bottom) + 20px)); gap: 22px; overflow-y: auto; overscroll-behavior: contain;
+  }
+  #summary h2 {
+    position: relative; margin: 0; padding: 10px 44px 12px; color: #fff; font: italic 400 26px 'Anton', 'Jua', sans-serif; letter-spacing: 1px;
+    background: linear-gradient(180deg, #4f7bff, #2a4fd0); text-shadow: 0 2px 0 rgba(0,0,0,.2);
+    clip-path: polygon(0 0, 100% 0, calc(100% - 18px) 50%, 100% 100%, 0 100%, 18px 50%); filter: drop-shadow(0 6px 10px rgba(40, 60, 160, .3));
+  }
+  #summary h2.legend { background: linear-gradient(180deg, #ffd65a, #e89a12); color: #4a2a00; text-shadow: 0 1px 0 rgba(255,255,255,.5); }
+  #summary h2.icon { background: linear-gradient(180deg, #ffffff, #c9d3e3 55%, #8d9ab0); color: #1d2433; text-shadow: 0 1px 0 rgba(255,255,255,.7); }
+  #summary h2.epic { background: linear-gradient(180deg, #b77cff, #7a3be0); }
+  #summary > * { flex: none; }
+  #summary.many .grid { display: grid; grid-template-columns: repeat(5, auto); gap: 8px; }
+  #summary.many .mini { width: max(48px, min(calc((100vw - 120px) / 5), 118px)); animation-duration: .45s; }
+  @media (max-height: 480px) {
+    #summary { gap: 10px; padding-bottom: 14px; }
+    #summary h2 { padding: 6px 34px 8px; font-size: 20px; }
+    #summary .sub { margin-top: -4px; }
+    #summary .panel { padding: 10px; }
+    #summary .btn { padding: 10px 22px; }
+  }
+  @media (min-width: 760px) and (min-aspect-ratio: 4/3) {
+    #summary .mini { width: max(64px, min(calc((100vw - 140px) / 5), 168px, calc((var(--vh) - 330px) / 1.4))); }
+  }
+  #summary .sub { margin-top: -10px; font: 800 13px var(--font); color: #5a62a0; }
+  #summary .sub b { color: #e8462c; }
+  #summary .panel { padding: 18px; border-radius: 26px; background: rgba(255,255,255,.55); border: 1px solid rgba(255,255,255,.9); box-shadow: 0 20px 50px rgba(70, 80, 160, .15); backdrop-filter: blur(6px); }
+  #summary .actions { display: flex; gap: 12px; }
+  #summary .grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; max-width: 980px; }
+  #summary .mini {
+    /* 3장 + 2장 두 줄이 버튼까지 한 화면에 들어가는 크기. 가로로 넓은 화면은 한 줄 5장 */
+    position: relative; width: max(64px, min(calc((100vw - 92px) / 3), 168px, calc((var(--vh) - 360px) / 2.8))); aspect-ratio: 1 / 1.4; container-type: inline-size; perspective: 800px;
+    cursor: pointer; animation: dealIn .6s cubic-bezier(.2,.9,.25,1.2) both;
+  }
+  @keyframes dealIn { from { opacity: 0; transform: translateY(40px) scale(.8) rotate(-6deg); } }
+  /* 게임 버튼: 두툼한 입체감 + 위쪽 광택 */
+  .btn {
+    position: relative; border: 0; border-radius: 18px; padding: 14px 26px; font: 800 16px var(--font); cursor: pointer; color: #fff;
+    background: linear-gradient(180deg, #62adff, #2f6fe8 60%, #2a62d6); box-shadow: 0 5px 0 #1c48a8, 0 12px 24px rgba(47, 111, 232, .35);
+    text-shadow: 0 1px 0 rgba(0,0,0,.2); overflow: hidden; min-width: 140px;
+  }
+  .btn::before { content: ""; position: absolute; left: 6px; right: 6px; top: 4px; height: 42%; border-radius: 14px; background: linear-gradient(180deg, rgba(255,255,255,.45), rgba(255,255,255,0)); pointer-events: none; }
+  .btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #1c48a8, 0 6px 12px rgba(47, 111, 232, .3); }
+  .btn.gold { color: #4a2a00; text-shadow: 0 1px 0 rgba(255,255,255,.4); background: linear-gradient(180deg, #ffe27a, #ffbf2e 60%, #f5a514); box-shadow: 0 5px 0 #c27a07, 0 12px 24px rgba(240, 160, 20, .35); }
+  .btn.gold:active { box-shadow: 0 2px 0 #c27a07; }
+  .btn.white { color: #3a4378; text-shadow: none; background: linear-gradient(180deg, #ffffff, #e9edff); box-shadow: 0 5px 0 #c3cae8, 0 12px 24px rgba(70, 80, 160, .18); }
+  .btn.white:active { box-shadow: 0 2px 0 #c3cae8; }
+  .btn.small { padding: 9px 16px; font-size: 13px; border-radius: 14px; min-width: 0; }
+  #summary .tip { font-size: 13px; color: rgba(43, 49, 82, .55); font-weight: 600; }
+
+  /* ---------- inspect ---------- */
+  #inspect {
+    position: fixed; inset: 0; z-index: 48; display: none; align-items: center; justify-content: center;
+    background: rgba(18, 22, 48, .72); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  }
+  #inspect.open { display: flex; animation: fadeIn .25s; }
+  @keyframes fadeIn { from { opacity: 0; } }
+  #inspect .big { position: relative; width: min(78vw, 360px, 52vh); aspect-ratio: 1 / 1.4; container-type: inline-size; perspective: 1200px; cursor: grab; animation: popIn .45s cubic-bezier(.2,.9,.25,1.2); }
+  @keyframes popIn { from { transform: scale(.6); opacity: 0; } }
+  #inspect .sell { position: absolute; left: 50%; bottom: max(26px, calc(env(safe-area-inset-bottom) + 14px)); transform: translateX(-50%); display: none; white-space: nowrap; }
+  #inspect .sell.show { display: block; }
+  #inspect .sell:active { transform: translate(-50%, 3px); }
+  #inspect .close {
+    position: absolute; top: max(14px, env(safe-area-inset-top)); right: 16px; width: 40px; height: 40px; border-radius: 50%;
+    border: 1px solid rgba(255,255,255,.25); background: rgba(255,255,255,.12); color: #fff; font-size: 20px; cursor: pointer;
+  }
+  #inspect .tip { position: absolute; bottom: max(26px, env(safe-area-inset-bottom)); left: 0; right: 0; text-align: center; font-size: 13px; color: rgba(255,255,255,.65); }
+
+  #fx { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 25; }
+  #flash { position: fixed; inset: 0; pointer-events: none; z-index: 24; opacity: 0; background: radial-gradient(circle at 50% 50%, #fff, rgba(255,255,255,.7) 40%, rgba(255,255,255,0) 75%); }
+  #flash.gold { background: radial-gradient(circle at 50% 50%, #fff7d6, rgba(255, 210, 90, .75) 40%, rgba(255, 210, 90, 0) 75%); }
+  #flash.platinum { background: radial-gradient(circle at 50% 50%, #ffffff, rgba(220, 232, 255, .85) 40%, rgba(220, 232, 255, 0) 78%); }
+  #flash.purple { background: radial-gradient(circle at 50% 50%, #fff, rgba(190, 130, 255, .7) 40%, rgba(190,130,255,0) 75%); }
+  #flash.go { animation: flash .7s ease-out; }
+  @keyframes flash { 0% { opacity: 0; } 12% { opacity: 1; } 100% { opacity: 0; } }
+  /* ---------- dex ---------- */
+  #dexView {
+    position: fixed; inset: 0; z-index: 45; display: none; flex-direction: column;
+    background: linear-gradient(180deg, #e3e9ff, #f4f1ff 40%, #eaf1ff);
+  }
+  #dexView.open { display: flex; animation: dexIn .35s cubic-bezier(.2,.9,.25,1); }
+  @keyframes dexIn { from { transform: translateY(30px); opacity: 0; } }
+  .dex-top { padding: max(12px, env(safe-area-inset-top)) 14px 10px; display: grid; grid-template-columns: 42px 1fr 42px; align-items: center; gap: 10px; }
+  .dex-title { text-align: center; }
+  .dex-title b { display: block; font: italic 400 22px 'Anton', sans-serif; letter-spacing: 1px; color: #22306f; }
+  .dex-title span { font: 800 12px var(--font); color: #6a72a8; }
+  .dex-prog { margin: 0 16px 10px; padding: 12px 14px; border-radius: 18px; background: #fff; box-shadow: 0 8px 22px rgba(70, 80, 160, .12); display: flex; align-items: center; gap: 12px; }
+  .dex-prog .big { font: 400 26px 'Anton', sans-serif; color: #22306f; line-height: 1; }
+  .dex-prog .big small { font: 700 13px 'Barlow Condensed', sans-serif; color: #8a91c0; letter-spacing: 1px; }
+  .dex-prog .track { flex: 1; height: 12px; border-radius: 12px; background: #e6e9f8; overflow: hidden; box-shadow: inset 0 1px 2px rgba(0,0,0,.08); }
+  .dex-prog .track i { display: block; height: 100%; width: var(--p, 0%); border-radius: 12px; background: linear-gradient(90deg, #ffb347, #ff6a3d); box-shadow: inset 0 -3px 0 rgba(0,0,0,.1); }
+  .dex-prog .pct { font: italic 800 16px 'Barlow Condensed', sans-serif; color: #ff6a3d; }
+  .dex-filters { position: relative; padding: 2px 16px 12px; display: grid; gap: 8px; }
+  .dex-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .club-btn {
+    display: flex; align-items: center; gap: 8px; width: 100%; border: 0; cursor: pointer; padding: 10px 12px; border-radius: 14px;
+    background: #fff; color: #3a4378; font: 800 13px var(--font); box-shadow: 0 3px 0 #d3d8f0; text-align: left;
+  }
+  .club-btn .lbl { color: #8a91c0; font-weight: 700; }
+  .club-btn i { width: 12px; height: 12px; border-radius: 4px; background: var(--c, linear-gradient(135deg, #4f7bff, #ff6a3d)); box-shadow: inset 0 0 0 1.5px rgba(0,0,0,.15); }
+  .club-btn em { margin-left: auto; font: italic 800 13px 'Barlow Condensed', sans-serif; color: #8a91c0; font-style: normal; }
+  .club-btn svg { width: 16px; height: 16px; transition: transform .2s; }
+  .club-btn.open svg { transform: rotate(180deg); }
+  .club-panel {
+    position: absolute; left: 16px; right: 16px; top: calc(100% - 6px); z-index: 5; display: none;
+    background: #fff; border-radius: 18px; padding: 10px; box-shadow: 0 18px 40px rgba(50, 60, 140, .25);
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 6px; max-height: 55vh; overflow-y: auto; touch-action: pan-y;
+  }
+  .club-panel.open { display: grid; animation: fadeIn .15s; }
+  .club-opt {
+    display: flex; align-items: center; gap: 8px; border: 0; cursor: pointer; padding: 10px; border-radius: 12px;
+    background: #f3f5fd; color: #3a4378; font: 800 12.5px var(--font); text-align: left;
+  }
+  .club-opt i { flex: none; width: 12px; height: 12px; border-radius: 4px; background: var(--c); box-shadow: inset 0 0 0 1.5px rgba(0,0,0,.15); }
+  .club-opt span { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .club-opt em { font: italic 800 12px 'Barlow Condensed', sans-serif; color: #8a91c0; font-style: normal; }
+  .club-opt.on { background: linear-gradient(180deg, #4f7bff, #2a4fd0); color: #fff; }
+  .club-opt.on em { color: rgba(255,255,255,.8); }
+  .dex-chip {
+    flex: none; display: flex; align-items: center; gap: 6px; border: 0; cursor: pointer; padding: 8px 12px; border-radius: 12px;
+    background: #fff; color: #3a4378; font: 800 12.5px var(--font); box-shadow: 0 3px 0 #d3d8f0;
+  }
+  .dex-chip i { width: 10px; height: 10px; border-radius: 3px; background: var(--c); box-shadow: inset 0 0 0 1.5px rgba(0,0,0,.15); }
+  .dex-chip em { font: italic 800 12px 'Barlow Condensed', sans-serif; color: #8a91c0; font-style: normal; }
+  .dex-chip.on { background: linear-gradient(180deg, #4f7bff, #2a4fd0); color: #fff; box-shadow: 0 3px 0 #1c3aa0; }
+  .dex-chip.on em { color: rgba(255,255,255,.8); }
+  .dex-grid {
+    flex: 1; overflow-y: auto; padding: 4px 16px 30px; touch-action: pan-y; -webkit-overflow-scrolling: touch;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(min(30%, 120px), 1fr)); gap: 10px; align-content: start;
+  }
+  .dex-cell { position: relative; aspect-ratio: 1 / 1.4; container-type: inline-size; cursor: pointer; content-visibility: auto; contain-intrinsic-size: 120px 168px; }
+  .dex-cell .card3d { transition: transform .2s; }
+  .dex-cell:active .card3d { transform: scale(.96); }
+  .dex-cell .cnt {
+    position: absolute; right: -4px; top: -4px; z-index: 12; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px;
+    background: #ff6a3d; color: #fff; font: italic 800 13px/22px 'Barlow Condensed', sans-serif; text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,.25);
+  }
+  .dex-empty {
+    position: absolute; inset: 0; border-radius: 4.6cqw; overflow: hidden;
+    background: linear-gradient(160deg, #d9def3, #c4cbe8); box-shadow: inset 0 0 0 2.4cqw rgba(255,255,255,.55), inset 0 2cqw 6cqw rgba(60, 70, 140, .15);
+  }
+  .dex-empty img { position: absolute; left: 50%; bottom: 20%; height: 62%; transform: translateX(-50%); filter: brightness(0); opacity: .16; }
+  .dex-empty .no { position: absolute; left: 0; right: 0; bottom: 7%; text-align: center; font: italic 800 9cqw 'Barlow Condensed', sans-serif; color: #7b84b8; letter-spacing: .5cqw; }
+  .dex-empty .q { position: absolute; left: 0; right: 0; top: 30%; text-align: center; font: 400 22cqw 'Anton', sans-serif; color: rgba(255,255,255,.75); }
+  .dex-empty .club { position: absolute; left: 6cqw; top: 6cqw; font: 800 8cqw 'Barlow Condensed', sans-serif; color: #8a91c0; }
+  .dex-cell.shake { animation: shake .4s; }
+  .dex-none { grid-column: 1 / -1; text-align: center; padding: 40px 0; color: #7a82b8; font: 800 14px var(--font); }
+  .toggle { display: flex; align-items: center; gap: 6px; font: 800 12px var(--font); color: #5a62a0; cursor: pointer; }
+  .toggle input { accent-color: #2f6fe8; width: 16px; height: 16px; }
+
+  .loading { position: fixed; inset: 0; display: grid; place-items: center; font: 400 18px 'Jua', sans-serif; color: rgba(43, 49, 82, .6); z-index: 50; }
+</style>
+<script src="/points.js"></script>
+<script type="module" src="/sync.js"></script>
+</head>
+<body>
+<div class="sparkles" id="sparkles"></div>
+<div id="pedestal"></div>
+<header>
+  <a class="ibtn" href="/" aria-label="홈으로"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></a>
+  <div class="brand"><b>FOOTBALL <em>STARS</em></b><small>BOOSTER PACK</small></div>
+  <button class="dexbtn" id="dex" aria-label="도감 열기"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="13" height="17" rx="2"/><path d="M8 3v17M20 7v13a1 1 0 0 1-1 1H8"/></svg></span><span class="txt"><b>도감</b><span id="dexCount">0/0</span><span class="bar"><i id="dexBar"></i></span></span></button>
+</header>
+
+<div id="stage">
+  <div id="rays"></div>
+  <div id="cardGlow"><div class="halo"></div><div class="motes"></div></div>
+  <div id="stack" class="hidden"></div>
+</div>
+<div id="packGlow"><div class="rays"><i></i></div><div class="core"></div><div class="motes"></div></div>
+<canvas id="gl"></canvas>
+<div id="packLip"><div class="lip"></div></div>
+<div id="packLeak"><div class="curtain"></div><div class="motes"></div><div class="seam"></div></div>
+<div id="tearGuide"><div class="line"></div><div class="finger"></div></div>
+<button class="mute" id="mute" aria-label="효과음"><svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg><svg class="off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M17 9l5 6M22 9l-5 6"/></svg></button>
+<div class="pts" id="pts"><i>P</i><span id="ptsBal">0</span></div>
+<div class="free" id="freeCount"></div>
+<button class="multi-btn btn gold small" id="multiBtn">5팩 · 500P</button>
+<div class="pack-count" id="packCount"></div>
+<button class="skip btn white small" id="skip"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 5l9 7-9 7zM13 5l9 7-9 7z"/></svg>모두 뒤집기</button>
+
+<div id="summary">
+  <div class="brand" aria-hidden="true"><b>FOOTBALL <em>STARS</em></b><small>BOOSTER PACK</small></div>
+  <h2>PACK RESULTS</h2>
+  <div class="sub" id="sumSub"></div>
+  <div class="panel"><div class="grid" id="grid"></div></div>
+  <div class="actions">
+    <button class="btn gold" id="again">새 팩 열기</button>
+    <button class="btn white" id="againMulti">5팩 · 500P</button>
+  </div>
+</div>
+
+<div id="dexView">
+  <div class="dex-top">
+    <button class="ibtn" id="dexClose" aria-label="닫기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <div class="dex-title"><b>PLAYER COLLECTION</b><span>선수 도감</span></div>
+    <span></span>
+  </div>
+  <div class="dex-prog"><div class="big" id="dexBig">0<small>/340</small></div><div class="track"><i id="dexTrack"></i></div><div class="pct" id="dexPct">0%</div></div>
+  <div class="dex-filters">
+    <div class="dex-chips" id="dexChips"></div>
+    <button class="club-btn" id="clubBtn"></button>
+    <div class="club-panel" id="clubPanel"></div>
+  </div>
+  <div class="dex-grid" id="dexGrid"></div>
+</div>
+
+<div id="inspect">
+  <button class="close" id="closeInspect" aria-label="닫기">✕</button>
+  <div class="big" id="big"></div>
+  <button class="sell btn gold" id="sellBtn"></button>
+</div>
+
+<div id="flash"></div>
+<canvas id="fx"></canvas>
+<div class="loading" id="loading">카드 불러오는 중…</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+const $ = (s) => document.querySelector(s);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+const smooth = (a, b, v) => { const t = clamp((v - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+const stage = $('#stage'), stackEl = $('#stack'), skipBtn = $('#skip');
+
+const TIERS = {
+  common: { rank: 0, label: 'COMMON' },
+  rare:   { rank: 1, label: 'RARE' },
+  epic:   { rank: 2, label: 'EPIC' },
+  legend: { rank: 3, label: 'LEGEND' },
+  icon:   { rank: 4, label: 'ICON' },
+};
+// 슬롯별 등급 확률 (마지막 슬롯은 레어 이상 보장). 아이콘은 팩당 약 0.61% (5팩에 약 3%)
+const SLOT_ODDS = [
+  { common: 80, rare: 17, epic: 3, legend: 0, icon: 0 },
+  { common: 80, rare: 17, epic: 3, legend: 0, icon: 0 },
+  { common: 75, rare: 20, epic: 4.5, legend: .5, icon: 0 },
+  { common: 54.9, rare: 35, epic: 9, legend: 1, icon: .1 },
+  { common: 0, rare: 67.49, epic: 25, legend: 7, icon: .51 },
+];
+// 클럽별 [약칭, 배경색, 포인트색, 명판색]
+const CLUBS = {
+  'Arsenal': ['ARS', '#e0202a', '#f3c64e', '#5e0910'],
+  'Chelsea': ['CHE', '#1652b0', '#e8b923', '#0b2a63'],
+  'Liverpool': ['LIV', '#d0172f', '#18c2b2', '#5c0614'],
+  'Manchester City': ['MCI', '#6cb4e6', '#ffffff', '#1c2c5b'],
+  'Manchester United': ['MUN', '#da291c', '#fbe122', '#2b0b08'],
+  'Tottenham Hotspur': ['TOT', '#2a3d8f', '#e9edf5', '#0c1338'],
+  'Real Madrid': ['RMA', '#ece6d2', '#febe10', '#1d3c7c'],
+  'Barcelona': ['FCB', '#a50044', '#edbb00', '#06306b'],
+  'Atletico Madrid': ['ATM', '#cb3524', '#f2f2f2', '#272e61'],
+  'Bayern Munich': ['BAY', '#dc052d', '#ffffff', '#0a3a74'],
+  'Borussia Dortmund': ['BVB', '#fde100', '#111111', '#161616'],
+  'Bayer Leverkusen': ['B04', '#e32221', '#111111', '#161616'],
+  'Inter': ['INT', '#0a5fb4', '#111111', '#071b3a'],
+  'AC Milan': ['MIL', '#e3131b', '#111111', '#161616'],
+  'Juventus': ['JUV', '#d9d9d9', '#111111', '#161616'],
+  'Napoli': ['NAP', '#12a0d7', '#ffffff', '#003c82'],
+  'Paris Saint-Germain': ['PSG', '#0b3e7a', '#da291c', '#061f3f'],
+  'ICON': ['ICON', '#d7ac45', '#fff3c8', '#2a1f0f'],
+};
+// 감독 카드의 빅클럽 밖 구단은 엠블럼에서 뽑은 색(coaches.json colors)을 쓴다
+const clubOf = (p) => CLUBS[p.team] || [p.team.slice(0, 3).toUpperCase(), ...(p.colors || ['#3b82f6', '#ffffff', '#0f1a3a'])];
+// 등급은 EA FC 능력치(OVR) 기준 (card/ratings.json)
+const tierOf = (o) => o >= 89 ? 'legend' : o >= 87 ? 'epic' : o >= 81 ? 'rare' : 'common';
+// EA 데이터에 없는 선수는 시장가치로 어림잡는다 (일반 등급 이하로)
+const ovrOf = (v) => Math.round(68 + clamp((Math.log(v) - Math.log(2.5e6)) / (Math.log(1.6e8) - Math.log(2.5e6)), 0, 1) * 26);
+const fmtValue = (v) => '€' + (v >= 1e8 ? (v / 1e6).toFixed(0) : (v / 1e6).toFixed(1)) + 'M';
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const loadImg = (src) => new Promise((res) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = src; });
+
+let PLAYERS = [], POOL = { common: [], rare: [], epic: [], legend: [], icon: [] };
+
+// ---------- collection ----------
+const KEY = 'packs-collection-v1';
+let collection = {};
+try { collection = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { collection = {}; }
+const saveCollection = () => { try { localStorage.setItem(KEY, JSON.stringify(collection)); } catch (e) {} window.FSPoints?.touch(); };
+const updateDex = () => {
+  const n = Object.keys(collection).length;
+  $('#dexCount').textContent = `${n}/${PLAYERS.length}`;
+  $('#dexBar').style.setProperty('--p', (PLAYERS.length ? n / PLAYERS.length * 100 : 0) + '%');
+};
+// 관리자 계정은 도감을 전부 채워 둔다
+const ADMIN_EMAILS = ['bm011011@gmail.com'];
+const isAdmin = () => ADMIN_EMAILS.includes(window.FSSync && FSSync.account().email);
+// 아이콘 공개 스위치. false인 동안은 관리자 계정에만 보이고 팩에서도 관리자만 나온다
+const ICONS_LIVE = true;
+let ICON_LIST = [];
+function enableIcons() {
+  // 감독 아이콘도 같은 풀에 들어가므로 풀이 비었는지 대신 선수 아이콘이 이미 들어갔는지로 본다
+  if (!ICON_LIST.length || POOL.icon.includes(ICON_LIST[0]) || !(ICONS_LIVE || isAdmin())) return;
+  ICON_LIST.forEach((p) => { p.no = PLAYERS.length + 1; PLAYERS.push(p); POOL.icon.push(p); });
+}
+// 감독 카드: 전신=레전드, 상반신=에픽, 은퇴 레전드=아이콘. 같은 등급 풀에 섞여 팩에서 나온다
+const COACH_TIER = { icon: 'icon', full: 'legend', half: 'epic', rare: 'rare', face: 'common' };
+const COACH_OVR = { icon: 95, legend: 90, epic: 87, rare: 82, common: 75 };
+const LEAGUE_KO = { 'Premier League': '프리미어리그', 'LaLiga': '라리가', 'Bundesliga': '분데스리가', 'Serie A': '세리에 A', 'Ligue 1': '리그 1' };
+function addCoaches(list) {
+  // 빅클럽 감독은 선수 데이터의 구단 이름을 그대로 써서 클럽 필터에 같이 묶인다
+  const teamOf = {};
+  PLAYERS.forEach((p) => { if (!p.coach && p.teamId) teamOf[p.teamId] = p; });
+  list.forEach((c) => {
+    const tier = COACH_TIER[c.tier], club = teamOf[String(c.teamId)];
+    const p = { ...c, coach: true, tier, icon: tier === 'icon', ovr: COACH_OVR[tier], teamId: c.teamId == null ? '' : String(c.teamId),
+      team: club ? club.team : c.team, teamKo: club ? club.teamKo : (tier === 'icon' ? '아이콘' : null), leagueKo: LEAGUE_KO[c.league] || '' };
+    p.no = PLAYERS.length + 1; PLAYERS.push(p); POOL[tier].push(p);
+  });
+}
+function fillForAdmin() {
+  if (!PLAYERS.length || !isAdmin()) return;
+  let changed = false;
+  PLAYERS.forEach((p) => { if (!collection[p.id]) { collection[p.id] = 1; changed = true; } });
+  if (changed) { saveCollection(); updateDex(); }
+}
+// 계정 데이터를 받아오면 다시 읽는다
+window.addEventListener('fs-sync', () => {
+  try { collection = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { collection = {}; }
+  if (PLAYERS.length) { enableIcons(); updateDex(); fillForAdmin(); }
+});
+
+// ---------- paper texture ----------
+function makePaper() {
+  const c = document.createElement('canvas'); c.width = c.height = 256;
+  const g = c.getContext('2d'); const img = g.createImageData(256, 256);
+  for (let i = 0; i < img.data.length; i += 4) {
+    const n = 215 + Math.random() * 40;
+    img.data[i] = n; img.data[i + 1] = n - 2; img.data[i + 2] = n - 8; img.data[i + 3] = 255;
+  }
+  g.putImageData(img, 0, 0);
+  for (let i = 0; i < 260; i++) {
+    g.globalAlpha = .05 + Math.random() * .08; g.strokeStyle = Math.random() < .6 ? '#7a6a50' : '#fff'; g.lineWidth = .6;
+    const x = Math.random() * 256, y = Math.random() * 256, a = Math.random() * Math.PI * 2, l = 4 + Math.random() * 14;
+    g.beginPath(); g.moveTo(x, y);
+    g.quadraticCurveTo(x + Math.cos(a + .5) * l / 2, y + Math.sin(a + .5) * l / 2, x + Math.cos(a) * l, y + Math.sin(a) * l); g.stroke();
+  }
+  return c.toDataURL();
+}
+const PAPER = `url(${makePaper()})`;
+document.documentElement.style.setProperty('--paper', PAPER);
+
+// ---------- canvas drawing helpers ----------
+function rrect(g, x, y, w, h, r) { g.beginPath(); g.roundRect(x, y, w, h, r); }
+function drawBall(g, cx, cy, r) {
+  g.save();
+  const gr = g.createRadialGradient(cx - r * .35, cy - r * .4, r * .1, cx, cy, r);
+  gr.addColorStop(0, '#ffffff'); gr.addColorStop(1, '#c9d3e6');
+  g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.fillStyle = gr; g.fill(); g.clip();
+  const pent = (x, y, rr, rot) => { g.beginPath(); for (let i = 0; i < 5; i++) { const a = rot + i * Math.PI * 2 / 5; g.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); } g.closePath(); g.fill(); };
+  g.fillStyle = '#0b1440'; g.strokeStyle = '#0b1440'; g.lineWidth = r * .045;
+  pent(cx, cy, r * .33, -Math.PI / 2);
+  for (let i = 0; i < 5; i++) {
+    const a = -Math.PI / 2 + i * Math.PI * 2 / 5, b = a + Math.PI / 5;
+    g.beginPath(); g.moveTo(cx + Math.cos(a) * r * .33, cy + Math.sin(a) * r * .33); g.lineTo(cx + Math.cos(a) * r * .66, cy + Math.sin(a) * r * .66); g.stroke();
+    pent(cx + Math.cos(b) * r * 1.04, cy + Math.sin(b) * r * 1.04, r * .31, b + Math.PI);
+  }
+  g.restore();
+  g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.lineWidth = r * .06; g.strokeStyle = '#0b1440'; g.stroke();
+}
+function spaced(g, text, x, y, spacing) {
+  // canvas letterSpacing 지원이 없을 때를 대비
+  if ('letterSpacing' in g) { g.letterSpacing = spacing + 'px'; g.fillText(text, x, y); g.letterSpacing = '0px'; return; }
+  g.fillText(text, x, y);
+}
+
+// 카드 뒷면 (DOM 카드와 3D 카드가 같은 이미지를 씀)
+function drawCardBack() {
+  const w = 630, h = 882, c = document.createElement('canvas'); c.width = w; c.height = h;
+  const g = c.getContext('2d'), r = w * .046;
+  rrect(g, 0, 0, w, h, r); g.fillStyle = '#f4f0e6'; g.fill();
+  const ix = 22, iw = w - 44, ih = h - 44;
+  g.save(); rrect(g, ix, ix, iw, ih, r * .55); g.clip();
+  let gr = g.createRadialGradient(w / 2, h * .48, 10, w / 2, h * .5, h * .7);
+  gr.addColorStop(0, '#2f63d8'); gr.addColorStop(.45, '#16307e'); gr.addColorStop(1, '#091238');
+  g.fillStyle = gr; g.fillRect(0, 0, w, h);
+  g.save(); g.translate(w / 2, h * .5);
+  for (let i = 0; i < 48; i++) { g.rotate(Math.PI / 24); g.fillStyle = i % 2 ? 'rgba(255,255,255,.055)' : 'rgba(255,255,255,0)'; g.beginPath(); g.moveTo(0, 0); g.lineTo(-30, -h); g.lineTo(30, -h); g.fill(); }
+  g.restore();
+  g.strokeStyle = 'rgba(255,255,255,.06)'; g.lineWidth = 2;
+  for (let x = -h; x < w + h; x += 16) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x + h * .6, h); g.stroke(); }
+  gr = g.createRadialGradient(w / 2, h / 2, h * .3, w / 2, h / 2, h * .75); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(0,0,20,.45)');
+  g.fillStyle = gr; g.fillRect(0, 0, w, h);
+  g.restore();
+  // 금박 테두리
+  rrect(g, 40, 40, w - 80, h - 80, r * .35); g.lineWidth = 5; g.strokeStyle = '#e9b949'; g.stroke();
+  rrect(g, 52, 52, w - 104, h - 104, r * .25); g.lineWidth = 1.5; g.strokeStyle = 'rgba(233,185,73,.55)'; g.stroke();
+  // 방패 엠블럼
+  const cx = w / 2, cy = h * .5, sw = 250, sh = 290;
+  const shield = (s) => { g.beginPath(); g.moveTo(cx - sw / 2 * s, cy - sh / 2 * s); g.lineTo(cx + sw / 2 * s, cy - sh / 2 * s); g.lineTo(cx + sw / 2 * s, cy + sh * .08 * s); g.quadraticCurveTo(cx + sw / 2 * s, cy + sh * .38 * s, cx, cy + sh / 2 * s); g.quadraticCurveTo(cx - sw / 2 * s, cy + sh * .38 * s, cx - sw / 2 * s, cy + sh * .08 * s); g.closePath(); };
+  g.save(); g.shadowColor = 'rgba(0,0,0,.5)'; g.shadowBlur = 30; g.shadowOffsetY = 10;
+  shield(1); gr = g.createLinearGradient(cx - sw / 2, cy - sh / 2, cx + sw / 2, cy + sh / 2);
+  gr.addColorStop(0, '#fff1b8'); gr.addColorStop(.35, '#f2c14e'); gr.addColorStop(.6, '#b7810f'); gr.addColorStop(1, '#ffe08a'); g.fillStyle = gr; g.fill(); g.restore();
+  shield(.88); g.fillStyle = '#0d1d55'; g.fill();
+  shield(.8); g.lineWidth = 3; g.strokeStyle = 'rgba(242,193,78,.6)'; g.stroke();
+  drawBall(g, cx, cy - 8, 72);
+  g.fillStyle = '#f2c14e';
+  for (let i = -1; i <= 1; i++) {
+    const sx = cx + i * 42, sy = cy - sh / 2 - 26 + Math.abs(i) * 8;
+    g.beginPath(); for (let k = 0; k < 10; k++) { const rr = k % 2 ? 7 : 17; const a = -Math.PI / 2 + k * Math.PI / 5; g.lineTo(sx + Math.cos(a) * rr, sy + Math.sin(a) * rr); } g.closePath(); g.fill();
+  }
+  g.textAlign = 'center'; g.textBaseline = 'alphabetic';
+  g.font = '86px Anton'; gr = g.createLinearGradient(0, h * .12, 0, h * .2); gr.addColorStop(0, '#fff3c4'); gr.addColorStop(1, '#e0a52c');
+  g.fillStyle = gr; spaced(g, 'FOOTBALL', cx, h * .2, 8);
+  g.font = '86px Anton'; g.fillStyle = '#ffffff'; spaced(g, 'STARS', cx, h * .84, 14);
+  g.font = '700 24px "Barlow Condensed"'; g.fillStyle = 'rgba(255,255,255,.6)'; spaced(g, 'OFFICIAL TRADING CARD · SEASON 26', cx, h * .895, 4);
+  return c;
+}
+
+// ---------- sound ----------
+const Sfx = {
+  ctx: null, buf: null,
+  init() {
+    if (this.ctx) { if (this.ctx.state === 'suspended') this.ctx.resume(); return; }
+    try {
+      this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+      this.out = this.ctx.createGain(); this.out.gain.value = this.muted ? 0 : 1; this.out.connect(this.ctx.destination);
+      const len = this.ctx.sampleRate; this.buf = this.ctx.createBuffer(1, len, len);
+      const d = this.buf.getChannelData(0); for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    } catch (e) { this.ctx = null; }
+  },
+  noise(dur, f0, f1, gain, q = 1.2) {
+    const c = this.ctx; if (!c) return; const t = c.currentTime;
+    const s = c.createBufferSource(); s.buffer = this.buf;
+    const bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = q;
+    bp.frequency.setValueAtTime(f0, t); bp.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    const g = c.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(gain, t + .01); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+    s.connect(bp).connect(g).connect(this.out); s.start(t, Math.random() * .5); s.stop(t + dur + .05);
+  },
+  tone(freq, delay, dur, type = 'triangle', gain = .12) {
+    const c = this.ctx; if (!c) return; const t = c.currentTime + delay;
+    const o = c.createOscillator(); o.type = type; o.frequency.value = freq;
+    const g = c.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(gain, t + .015); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+    o.connect(g).connect(this.out); o.start(t); o.stop(t + dur + .05);
+  },
+  rip() { this.noise(.06, 3800 + Math.random() * 1500, 2200, .16, 2.5); },
+  bigRip() { this.noise(.3, 5000, 1200, .32, 1); },
+  crinkle() { this.noise(.12, 5200 + Math.random() * 2000, 3000, .05, 3); },
+  whoosh() { this.noise(.28, 600, 2600, .16, .8); },
+  swipe() { this.noise(.22, 1800, 500, .1, .8); },
+  coin() { [1319, 1760, 2093].forEach((f, i) => this.tone(f, i * .06, .35, 'triangle', .09)); },
+  deny() { this.tone(180, 0, .22, 'square', .05); this.tone(140, .09, .25, 'square', .05); },
+  setMuted(m) { this.muted = m; if (this.out) this.out.gain.value = m ? 0 : 1; },
+  reveal(tier) {
+    const seqs = {
+      common: [[660, 0]], rare: [[660, 0], [880, .07]],
+      epic: [[523, 0], [659, .07], [784, .14], [1047, .21]],
+      legend: [[523, 0], [659, .08], [784, .16], [1047, .24], [1319, .32], [1568, .4]],
+      icon: [[392, 0], [523, .09], [659, .18], [784, .27], [1047, .36], [1319, .45], [1568, .54], [2093, .63]],
+    };
+    const big = tier === 'legend' || tier === 'icon';
+    seqs[tier].forEach(([f, d]) => this.tone(f, d, big ? .9 : .5, 'triangle', tier === 'common' ? .07 : .11));
+    if (big) { this.tone(130.8, 0, 1.4, 'sine', .25); [2093, 2637, 3136].forEach((f, i) => this.tone(f, .5 + i * .09, .6, 'sine', .04)); }
+    if (tier === 'epic') this.tone(196, 0, .8, 'sine', .15);
+  },
+};
+const buzz = (p) => { try { navigator.vibrate && navigator.vibrate(p); } catch (e) {} };
+
+// ---------- particles ----------
+const fx = $('#fx'), fg = fx.getContext('2d'); let parts = [], fxRunning = false;
+function resizeFx() { const d = Math.min(2, devicePixelRatio || 1); fx.width = innerWidth * d; fx.height = innerHeight * d; fg.setTransform(d, 0, 0, d, 0, 0); }
+resizeFx(); addEventListener('resize', resizeFx);
+function burst(x, y, colors, n, power = 1) {
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * Math.PI * 2, s = (2 + Math.random() * 7) * power;
+    parts.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 2, life: 1, decay: .008 + Math.random() * .014,
+      size: 3 + Math.random() * 5, rot: Math.random() * 6, vr: (Math.random() - .5) * .4, color: colors[i % colors.length], star: Math.random() < .35 });
+  }
+  if (!fxRunning) { fxRunning = true; requestAnimationFrame(tickFx); }
+}
+function drawStar(x, y, r) {
+  fg.beginPath();
+  for (let i = 0; i < 8; i++) { const rr = i % 2 ? r * .4 : r; const a = i * Math.PI / 4; fg.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); }
+  fg.closePath(); fg.fill();
+}
+function tickFx() {
+  fg.clearRect(0, 0, innerWidth, innerHeight);
+  parts = parts.filter((p) => p.life > 0);
+  for (const p of parts) {
+    p.vy += .12; p.vx *= .985; p.vy *= .985; p.x += p.vx; p.y += p.vy; p.rot += p.vr; p.life -= p.decay;
+    fg.globalAlpha = clamp(p.life, 0, 1); fg.fillStyle = p.color;
+    if (p.star) drawStar(p.x, p.y, p.size * 1.3);
+    else { fg.save(); fg.translate(p.x, p.y); fg.rotate(p.rot); fg.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2); fg.restore(); }
+  }
+  fg.globalAlpha = 1;
+  if (parts.length) requestAnimationFrame(tickFx); else { fxRunning = false; fg.clearRect(0, 0, innerWidth, innerHeight); }
+}
+function flash(kind = '') { const f = $('#flash'); f.className = kind; void f.offsetWidth; f.classList.add('go'); }
+function shake() { stage.classList.remove('shake'); void stage.offsetWidth; stage.classList.add('shake'); }
+
+// ---------- card markup ----------
+let BACK_URL = '';
+// 전신 사진이 준비된 선수 (public/card/full/{id}.webp)
+const FULL = new Set([
+  '29e74468beeb3384f576','a9f23b894264435e7182','e9740d7c7bfb229668d6','99093ec5cb412b70ef8e','29bcf199cfe0a35b2625','fcd4cd697041d446a53a','7639e084ff5f950089f7','5ae5dbe52e105a315cd2','154bdcbdba3dbd1a0af8','2e042363fc61a17e6937','a8c141afa7bb6addb58d','c3c1a8e1349a454d12b1','be67a6a0fc0c15cd2392','395da46444416a73a8b5','f2006337b26778e1c36a','1f1efe27207bdf142735','c7e5c4ae57bedf57b3a5','6e364877e79a3032154e','e971f700c60970df8630','999ede016f441903cdc2','bb9b2bf1a29a55d9a1f9','ed7f9b6cd7a3b01f03a4','99f19568d49437ecfe6b','b4075d3b889205bdc464','d63c88a1b8a3080e8aef','fef6b60d60ee6076bb48','c4e56af03835d6133ce1','4e38534c811332b915a3','c43293687ad2f89a866d','2ed102b2b4b9d82d6159','2e3ea92b8d53f33c3f12','04893c1428472983d6a8','039c283bf4b877634f56','04cfcd51e65c9680c810','e3fd7f5d7aeccc871f5e','2cb6dcf687d53703d7c7','b08136cc92a9eb1afc8b','e3b25c94e1c729f73781','66f8dd657c48b050aea3','9a15b12fe5e4f5b2bde5','4828611805af9d8f09e1','7210eab9141e76522fb2','c650142f65a4970bc3a6','980bb1c3147409be08f5','5dc341f800bf50836bae','93debaa223a4453e7962','368ace84689cec6aa072','9fc60364c1067e4d86d4','ab0f80f412fbe8406c6f','b8e5f4caa0e3538cbf7e','96962353f95dfd542d15','2aec27fb967b33592f21','632bd51bd0516ef404b5','9e6aec7d5564941802be','d8dc992439b3a06428dd','5824f6b3ca98e3f41e45','6aca4d586fd9a5077cf2','6d4c495a0f46262c7685','f38315f8529e2efb0c86','a117a8b72952aa29efd0','94a677cf344b2182fea9','8bdf34a817b85bd48e60','8046e6bd14f1e29cb609',
+  // card/extra_players.json 에픽·레전드 (반 다이크, 쿠르투아, 라야, 살라, 레반도프스키, 좀머, 오시멘)
+  '284057f9b1cbc80b51f1','8429a119358dc02c4c25','deaa69320ead20422c78','50cc0e14c7e15555086e','4e57e17523ad498f1254','8db8350c17eb4e044ecf','5489f6fe600315ac48cb',
+]);
+// 감독 카드(card/coaches.json): 선수 카드와 같은 틀에 능력치 배지 없이 이름을 크게, 포지션 자리는 COACH
+const COACH_SHORT = { 'Luis Enrique': 'LUIS ENRIQUE', 'Hans-Dieter Flick': 'FLICK', 'Quique Sánchez Flores': 'S. FLORES', 'Beñat San José': 'SAN JOSÉ', 'Vicente del Bosque': 'DEL BOSQUE' };
+function coachHTML(p, extra) {
+  // 데 로시, 데 제르비, 르 브리처럼 성 앞 관사는 성에 붙인다
+  const words = p.name.split(' ');
+  if (words.length > 2 && /^(De|Di|Le|La|San|Da|Van|Von|Del)$/i.test(words[words.length - 2])) words.splice(-2, 2, words.slice(-2).join(' '));
+  const sur = COACH_SHORT[p.name] || words[words.length - 1].toUpperCase();
+  const photo = `<img class="cf-photo${p.tier === 'common' || p.tier === 'rare' ? '' : ' full'}" src="/${esc(p.photo)}" alt="" draggable="false">`;
+  if (p.tier === 'icon') {
+    return `<div class="face front t-icon hero icon coach ${extra}">
+      <div class="aura"></div><div class="frame-holo"></div>
+      <div class="cf">
+        <div class="cf-bg"></div><div class="cf-pat"></div><div class="cf-holo"></div>
+        <div class="cf-big">ICON</div>${photo}<div class="cf-sparkle"></div>
+        <div class="cf-name" style="--nfs:${Math.min(21, 140 / sur.length).toFixed(1)}cqw">${esc(sur)}</div>
+        <div class="icon-deco"></div><div class="glow-edge"></div>
+      </div>
+      <div class="glare"></div><div class="new">NEW</div>
+    </div>`;
+  }
+  const [code, c1, c2, c3] = clubOf(p);
+  const crest = `<img class="cf-club" src="/card/crests/${esc(p.teamId)}.webp" alt="${esc(code)}" draggable="false">`;
+  if (p.tier === 'legend' || p.tier === 'epic') {
+    return `<div class="face front t-${p.tier} hero coach ${extra}" style="--c1:${c1};--c2:${c2};--c3:${c3}">
+      <div class="aura"></div><div class="frame-holo"></div>
+      <div class="cf">
+        <div class="cf-bg"></div><div class="cf-pat"></div><div class="cf-holo"></div>
+        <div class="cf-big">COACH</div>${photo}<div class="cf-sparkle"></div>${crest}
+        <div class="cf-name" style="--nfs:${Math.min(22, 150 / sur.length).toFixed(1)}cqw">${esc(sur)}</div>
+        <div class="glow-edge"></div>
+      </div>
+      <div class="glare"></div><div class="new">NEW</div>
+    </div>`;
+  }
+  const last = words.length > 1 ? words.pop() : p.name, first = words.join(' ');
+  const lfs = last.length > 12 ? 8.5 : last.length > 9 ? 10.5 : 12.5;
+  return `<div class="face front t-${p.tier} coach ${extra}" style="--c1:${c1};--c2:${c2};--c3:${c3}">
+    <div class="frame-holo"></div>
+    <div class="cf">
+      <div class="cf-bg"></div><div class="cf-pat"></div><div class="cf-holo"></div>
+      <div class="cf-big">HC</div>${photo}<div class="cf-sparkle"></div>${crest}
+      <div class="cf-plate-wrap"><div class="cf-plate">
+        <div class="cf-first">${esc(first)}</div>
+        <div class="cf-last" style="--lfs:${lfs}cqw">${esc(last)}</div>
+        <div class="cf-meta">${esc(p.nameKo)} · ${esc(p.teamKo || p.team)}</div>
+        <div class="cf-foot"><span>${esc(p.leagueKo || '')}</span><span class="cf-tier">${TIERS[p.tier].label}</span><span>${String(p.no).padStart(3, '0')}/${PLAYERS.length}</span></div>
+      </div></div>
+    </div>
+    <div class="glare"></div>
+    <div class="new">NEW</div>
+  </div>`;
+}
+function frontHTML(p, extra = '') {
+  if (p.coach) return coachHTML(p, extra);
+  const [code, c1, c2, c3] = clubOf(p);
+  if (p.tier === 'legend' || p.tier === 'epic' || p.tier === 'icon') return heroHTML(p, extra);
+  const words = p.name.split(' ');
+  const last = words.length > 1 ? words.pop() : p.name, first = words.length && last !== p.name ? words.join(' ') : '';
+  const lfs = last.length > 12 ? 7 : last.length > 9 ? 8.2 : 9.6;
+  const pos = p.positionDetail || p.positionGroup;
+  return `<div class="face front t-${p.tier} ${extra}" style="--c1:${c1};--c2:${c2};--c3:${c3}">
+    <div class="frame-holo"></div>
+    <div class="cf">
+      <div class="cf-bg"></div><div class="cf-pat"></div><div class="cf-holo"></div>
+      <div class="cf-big">${esc(pos)}</div>
+      <img class="cf-photo" src="/${esc(p.photo)}" alt="" draggable="false">
+      <div class="cf-sparkle"></div>
+      <img class="cf-club" src="/card/crests/${esc(p.teamId)}.webp" alt="${esc(code)}" draggable="false">
+      <div class="cf-rate"><b>${p.ovr}</b><span>${esc(pos)}</span></div>
+      <div class="cf-plate-wrap"><div class="cf-plate">
+        <div class="cf-first">${esc(first)}</div>
+        <div class="cf-last" style="--lfs:${lfs}cqw">${esc(last)}</div>
+        <div class="cf-meta">${esc(p.teamKo || p.team)} · ${esc(p.countryKo || p.country)} · ${esc(p.positionDetailKo || p.positionKo)}</div>
+        <div class="cf-foot"><span>${fmtValue(p.transferValue)}</span><span class="cf-tier">${TIERS[p.tier].label}</span><span>${String(p.no).padStart(3, '0')}/${PLAYERS.length}</span></div>
+      </div></div>
+    </div>
+    <div class="glare"></div>
+    <div class="new">NEW</div>
+  </div>`;
+}
+// 아이콘 카드: 흑요석·백금 홀로그램, 엠블럼·국적 없이 이름만
+function iconHTML(p, extra) {
+  const name = p.short || p.name.split(' ').pop();
+  const nfs = Math.min(15, 104 / name.length).toFixed(1);
+  const pos = p.positionDetail || p.positionGroup;
+  return `<div class="face front t-icon hero icon ${extra}">
+    <div class="aura"></div>
+    <div class="frame-holo"></div>
+    <div class="cf">
+      <div class="cf-bg"></div><div class="cf-pat"></div><div class="cf-holo"></div>
+      <div class="cf-big">ICON</div>
+      <img class="cf-photo full" src="/${esc(p.photo)}" alt="" draggable="false">
+      <div class="cf-sparkle"></div>
+      <div class="cf-rate"><b>${p.ovr}</b><span>${esc(pos)}</span></div>
+      <div class="cf-name" style="--nfs:${nfs}cqw">${esc(name)}</div>
+      <div class="icon-deco"></div>
+      <div class="glow-edge"></div>
+    </div>
+    <div class="glare"></div>
+    <div class="new">NEW</div>
+  </div>`;
+}
+function heroHTML(p, extra) {
+  if (p.icon) return iconHTML(p, extra);
+  const [code, c1, c2, c3] = clubOf(p);
+  // 성이 너무 길면(크바라츠헬리아) 글자가 작아져 안 보이니 이름으로 쓴다
+  const words = p.name.split(' '), sur = words.length > 1 ? words[words.length - 1] : p.name;
+  const last = sur.length > 12 && words.length > 1 ? words[0] : sur;
+  const nfs = Math.min(16, 112 / last.length).toFixed(1);
+  const pos = p.positionDetail || p.positionGroup, full = FULL.has(p.id);
+  return `<div class="face front t-${p.tier} hero ${extra}" style="--c1:${c1};--c2:${c2};--c3:${c3}">
+    <div class="aura"></div>
+    <div class="frame-holo"></div>
+    <div class="cf">
+      <div class="cf-bg"></div><div class="cf-pat"></div><div class="cf-holo"></div>
+      <div class="cf-big">${esc(pos)}</div>
+      <img class="cf-photo${full ? ' full' : ''}" src="${full ? `/card/full/${esc(p.id)}.webp` : `/${esc(p.photo)}`}" alt="" draggable="false">
+      <div class="cf-sparkle"></div>
+      <img class="cf-club" src="/card/crests/${esc(p.teamId)}.webp" alt="${esc(code)}" draggable="false">
+      <div class="cf-rate"><b>${p.ovr}</b><span>${esc(pos)}</span></div>
+      <div class="cf-name" style="--nfs:${nfs}cqw">${esc(last)}</div>
+      <div class="glow-edge"></div>
+    </div>
+    <div class="glare"></div>
+    <div class="new">NEW</div>
+  </div>`;
+}
+function backHTML(extra = '') {
+  return `<div class="face back ${extra}"><img src="${BACK_URL}" alt="" draggable="false"><div class="glare"></div></div>`;
+}
+function setLight(root, yaw, pitch) {
+  const gx = 50 - Math.sin(yaw * Math.PI / 180) * 70, gy = 45 + pitch * 1.6;
+  const go = clamp(Math.abs(Math.sin(yaw * Math.PI / 180)) * .6 + Math.abs(pitch) / 60 - .05, 0, .5);
+  root.querySelectorAll('.face').forEach((f) => {
+    f.style.setProperty('--gx', gx + '%'); f.style.setProperty('--gy', gy + '%'); f.style.setProperty('--go', go);
+    f.style.setProperty('--hx', (50 + yaw * 1.6) + '%'); f.style.setProperty('--hy', (50 + pitch * 2.2) + '%');
+  });
+}
+
+// ---------- 기울기 센서 (휴대폰을 기울이면 팩/카드가 따라 움직임) ----------
+const Gyro = {
+  on: false, x: 0, y: 0, sx: 0, sy: 0, base: null,
+  init() {
+    if (!('DeviceOrientationEvent' in window)) return;
+    const start = () => { if (!this.on) { addEventListener('deviceorientation', (e) => this.read(e)); this.on = true; } };
+    if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+      // iOS는 사용자의 터치 직후에만 권한을 물을 수 있음
+      // 실패(터치 직후가 아님)하면 다음 터치에서 다시 물어봄
+      let asking = false;
+      const ask = (e) => {
+        if (this.on || asking || (e && !e.isTrusted)) return;
+        asking = true;
+        DeviceOrientationEvent.requestPermission()
+          .then((r) => { asking = false; if (r === 'granted') start(); if (r !== 'default') removeEventListener('pointerup', ask); })
+          .catch(() => { asking = false; });
+      };
+      addEventListener('pointerup', ask);
+    } else start();
+  },
+  read(e) {
+    if (e.beta == null || e.gamma == null) return;
+    const b = clamp(e.beta, -90, 90), g = clamp(e.gamma, -90, 90);
+    if (!this.base) this.base = { b, g };
+    // 기준 자세를 천천히 따라가서, 들고 있는 각도가 바뀌어도 다시 가운데로 돌아옴
+    this.base.b += (b - this.base.b) * .006; this.base.g += (g - this.base.g) * .006;
+    this.x = clamp((b - this.base.b) / 22, -1, 1); this.y = clamp((g - this.base.g) / 22, -1, 1);
+  },
+  tick() { this.sx += (this.x - this.sx) * .18; this.sy += (this.y - this.sy) * .18; },
+  get active() { return this.on && this.base !== null; },
+};
+Gyro.init();
+
+// =====================================================================
+// 3D 비닐 팩: 앞/뒤 두 장의 비닐이 위아래 실링에서 붙어 있고 가운데가 부푼 형태
+// =====================================================================
+const P = { W: 1, H: 1.62, C: .085, T: .085 };
+P.tearY = P.H / 2 - P.C - .075;          // 뜯는 선 (위쪽 실링 바로 아래, 일직선)
+P.stripH = P.H / 2 - P.tearY;
+
+class Spring {
+  constructor(k = 110, d = 9) { this.v = 0; this.t = 0; this.vel = 0; this.k = k; this.d = d; }
+  step(dt) { const a = (this.t - this.v) * this.k - this.vel * this.d; this.vel += a * dt; this.v += this.vel * dt; }
+}
+
+const Pack3D = (() => {
+  const canvas = $('#gl');
+  let renderer, scene, camera, packG, stripG, light;
+  let sheets = [], cards = [], tweens = [];
+  let ppu = 300, baseY = 0, CW = .89, CH = 1.25;
+  let running = false, lastT = 0, time = 0, drop = 0;
+  const S = {}; ['rx', 'ry', 'rz', 'cx', 'cy', 'tw', 'px', 'py'].forEach((k) => (S[k] = new Spring()));
+  const tear = { dir: 0, front: 0, R: .55, liftZ: .1, open: 0, done: false, active: false, lift: 0, x: 0, y0: 0, id: null, rip: 0 };
+  let grab = null, frontCanvas, backCanvas, frontTex, backTex, cardTex, mats = {};
+  const ray = new THREE.Raycaster(), plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0), v3 = new THREE.Vector3();
+
+  const bulgeFx = (x) => { const u = Math.min(1, Math.abs(2 * x / P.W)); return Math.sqrt(Math.max(0, 1 - u ** 4)); };
+  const bulgeFy = (y) => Math.min(smooth(0, .24, (P.H / 2 - P.C) - y), smooth(0, .24, y - (-P.H / 2 + P.C)));
+  const flex = (x, y) => S.cx.v * x * x + S.cy.v * y * y + S.tw.v * x * y;
+  function surfZ(x, y, side) {
+    const fy = bulgeFy(y);
+    // 실링 근처에 생기는 부채꼴 주름
+    const rip = fy * (1 - fy) * 4 * .007 * Math.sin(x * 44 + (y > 0 ? 0 : 2.1)) * Math.sin(x * 9 + 1);
+    return side * (P.T * bulgeFx(x) * fy + rip) + flex(x, y);
+  }
+  const tornAt = (x) => tear.done ? 1 : tear.dir ? clamp((tear.front - x) * tear.dir / .06, 0, 1) : 0;
+
+  // ---- textures ----
+  function makeNormal() {
+    const w = 512, h = 830, c = document.createElement('canvas'); c.width = w; c.height = h;
+    const g = c.getContext('2d');
+    g.fillStyle = '#808080'; g.fillRect(0, 0, w, h);
+    for (let i = 0; i < 90; i++) {
+      const x = Math.random() * w, y = Math.random() * h, r = 20 + Math.random() * 110, v = Math.random() < .5 ? 0 : 255;
+      const gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, `rgba(${v},${v},${v},.13)`); gr.addColorStop(1, `rgba(${v},${v},${v},0)`);
+      g.fillStyle = gr; g.fillRect(x - r, y - r, r * 2, r * 2);
+    }
+    const cz = P.C / P.H * h;
+    // 실링에서 뻗어 나오는 구김
+    for (let i = 0; i < 70; i++) {
+      const top = i % 2 === 0, x0 = Math.random() * w, y0 = top ? cz : h - cz, len = 15 + Math.random() * 120;
+      const a = (Math.random() - .5) * 1.2 + (top ? Math.PI / 2 : -Math.PI / 2), x1 = x0 + Math.cos(a) * len, y1 = y0 + Math.sin(a) * len;
+      g.lineCap = 'round'; g.lineWidth = 1 + Math.random() * 2.5;
+      g.strokeStyle = `rgba(255,255,255,${.2 + Math.random() * .35})`; g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke();
+      g.strokeStyle = `rgba(0,0,0,${.2 + Math.random() * .3})`; g.beginPath(); g.moveTo(x0 + 2, y0); g.lineTo(x1 + 2, y1); g.stroke();
+    }
+    // 몸통의 길고 약한 구김
+    for (let i = 0; i < 10; i++) {
+      const x0 = Math.random() * w, y0 = Math.random() * h, a = Math.random() * Math.PI, len = 80 + Math.random() * 260;
+      g.lineWidth = 3; g.strokeStyle = 'rgba(255,255,255,.12)'; g.beginPath(); g.moveTo(x0, y0); g.lineTo(x0 + Math.cos(a) * len, y0 + Math.sin(a) * len); g.stroke();
+      g.strokeStyle = 'rgba(0,0,0,.12)'; g.beginPath(); g.moveTo(x0 + 3, y0); g.lineTo(x0 + 3 + Math.cos(a) * len, y0 + Math.sin(a) * len); g.stroke();
+    }
+    // 실링 톱니 결
+    for (let x = 0; x < w; x += 6) {
+      g.fillStyle = 'rgba(255,255,255,.75)'; g.fillRect(x, 0, 2, cz); g.fillRect(x, h - cz, 2, cz);
+      g.fillStyle = 'rgba(0,0,0,.7)'; g.fillRect(x + 3, 0, 2, cz); g.fillRect(x + 3, h - cz, 2, cz);
+    }
+    const src = g.getImageData(0, 0, w, h).data, out = g.createImageData(w, h), o = out.data, k = 2.6;
+    const H = (x, y) => src[((clamp(y, 0, h - 1)) * w + clamp(x, 0, w - 1)) * 4] / 255;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const nx = -(H(x + 1, y) - H(x - 1, y)) * k, ny = (H(x, y + 1) - H(x, y - 1)) * k, l = Math.hypot(nx, ny, 1), i = (y * w + x) * 4;
+      o[i] = (nx / l * .5 + .5) * 255; o[i + 1] = (ny / l * .5 + .5) * 255; o[i + 2] = (1 / l * .5 + .5) * 255; o[i + 3] = 255;
+    }
+    g.putImageData(out, 0, 0);
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
+    return t;
+  }
+
+  function crimp(g, w, h, y0, y1) {
+    const gr = g.createLinearGradient(0, y0, 0, y1);
+    gr.addColorStop(0, '#eef2f9'); gr.addColorStop(.5, '#a7b2c9'); gr.addColorStop(1, '#d9dfeb');
+    g.fillStyle = gr; g.fillRect(0, y0, w, y1 - y0);
+    for (let x = 0; x < w; x += 12) { g.fillStyle = 'rgba(255,255,255,.55)'; g.fillRect(x, y0, 4, y1 - y0); g.fillStyle = 'rgba(40,50,80,.18)'; g.fillRect(x + 6, y0, 3, y1 - y0); }
+  }
+  function zigCut(g, w, h, teeth = 26, d = 16) {
+    g.save(); g.globalCompositeOperation = 'destination-out';
+    const tw = w / teeth;
+    for (let i = 0; i < teeth; i++) {
+      g.beginPath(); g.moveTo(i * tw, 0); g.lineTo((i + 1) * tw, 0); g.lineTo((i + .5) * tw, d); g.fill();
+      g.beginPath(); g.moveTo(i * tw, h); g.lineTo((i + 1) * tw, h); g.lineTo((i + .5) * tw, h - d); g.fill();
+    }
+    g.restore();
+  }
+  function photoFaded(img, size) {
+    const c = document.createElement('canvas'); c.width = c.height = size; const g = c.getContext('2d');
+    if (img) g.drawImage(img, 0, 0, size, size);
+    g.globalCompositeOperation = 'destination-in';
+    const gr = g.createLinearGradient(0, 0, 0, size); gr.addColorStop(0, '#000'); gr.addColorStop(.72, '#000'); gr.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = gr; g.fillRect(0, 0, size, size);
+    return c;
+  }
+
+  // 팩 앞면 아트: 은박 바탕 + 선수 3명 + 로고 + 리본 (실제 부스터 팩 구성)
+  function drawFront(c, heroes) {
+    const w = c.width, h = c.height, g = c.getContext('2d'), cz = P.C / P.H * h;
+    g.clearRect(0, 0, w, h);
+    let gr = g.createLinearGradient(0, 0, w, h);
+    gr.addColorStop(0, '#fbfcff'); gr.addColorStop(.5, '#dfe5f2'); gr.addColorStop(1, '#f4f6fb');
+    g.fillStyle = gr; g.fillRect(0, 0, w, h);
+    g.save(); g.translate(w / 2, h * .33);
+    for (let i = 0; i < 40; i++) { g.rotate(Math.PI / 20); g.fillStyle = i % 2 ? 'rgba(255,255,255,.7)' : 'rgba(120,145,200,.12)'; g.beginPath(); g.moveTo(0, 0); g.lineTo(-50, -h); g.lineTo(50, -h); g.fill(); }
+    g.restore();
+    // 아래쪽 에너지 띠
+    g.save();
+    g.beginPath(); g.moveTo(0, h * .5); g.lineTo(w, h * .36); g.lineTo(w, h); g.lineTo(0, h); g.closePath();
+    gr = g.createLinearGradient(0, h * .4, w, h); gr.addColorStop(0, '#12c6a4'); gr.addColorStop(.45, '#1663d6'); gr.addColorStop(1, '#251f86');
+    g.fillStyle = gr; g.fill();
+    g.globalAlpha = .25; g.strokeStyle = '#fff'; g.lineWidth = 3;
+    for (let i = 0; i < 14; i++) { g.beginPath(); g.moveTo(-50, h * (.58 + i * .035)); g.lineTo(w + 50, h * (.44 + i * .035)); g.stroke(); }
+    g.globalAlpha = 1;
+    gr = g.createLinearGradient(0, 0, w, 0); gr.addColorStop(0, '#fff3c4'); gr.addColorStop(.5, '#f2b632'); gr.addColorStop(1, '#ffe08a');
+    g.fillStyle = gr; g.beginPath(); g.moveTo(0, h * .485); g.lineTo(w, h * .345); g.lineTo(w, h * .372); g.lineTo(0, h * .512); g.fill();
+    g.restore();
+    // 선수들
+    const sizes = [[w * .23, h * .47, 430], [w * .77, h * .47, 430], [w * .5, h * .53, 600]];
+    [heroes[1], heroes[2], heroes[0]].forEach((img, i) => {
+      const [x, by, s] = sizes[i];
+      g.save(); g.shadowColor = 'rgba(10,20,60,.35)'; g.shadowBlur = 30; g.shadowOffsetY = 14;
+      if (i < 2) g.globalAlpha = .96;
+      g.drawImage(photoFaded(img, s), x - s / 2, by - s); g.restore();
+    });
+    // 로고
+    const ly = h * .6;
+    g.save(); g.translate(w / 2, ly); g.rotate(-.06);
+    g.shadowColor = 'rgba(0,0,40,.4)'; g.shadowBlur = 24; g.shadowOffsetY = 10;
+    gr = g.createLinearGradient(0, -110, 0, 110); gr.addColorStop(0, '#13246b'); gr.addColorStop(1, '#0a1240');
+    g.fillStyle = gr; rrect(g, -w * .4, -100, w * .8, 210, 26); g.fill();
+    g.shadowColor = 'transparent';
+    g.lineWidth = 6; g.strokeStyle = '#f2c14e'; rrect(g, -w * .4 + 10, -90, w * .8 - 20, 190, 20); g.stroke();
+    g.textAlign = 'center';
+    g.font = '96px Anton'; g.fillStyle = '#fff'; spaced(g, 'FOOTBALL', 0, -12, 6);
+    g.font = '132px Anton'; gr = g.createLinearGradient(0, -10, 0, 100); gr.addColorStop(0, '#fff6c9'); gr.addColorStop(.5, '#ffc93a'); gr.addColorStop(.55, '#d9861a'); gr.addColorStop(1, '#ffe08a');
+    g.lineWidth = 10; g.strokeStyle = '#3a1f00'; g.lineJoin = 'round'; g.strokeText('STARS', 0, 100); g.fillStyle = gr; spaced(g, 'STARS', 0, 100, 4);
+    g.restore();
+    // 리본
+    g.save(); g.translate(w / 2, h * .755); g.rotate(-.06);
+    g.fillStyle = '#ffffff'; g.beginPath(); g.moveTo(-w * .42, -36); g.lineTo(w * .44, -36); g.lineTo(w * .4, 36); g.lineTo(-w * .46, 36); g.fill();
+    g.fillStyle = '#0d1d55'; g.font = 'italic 800 52px "Barlow Condensed"'; g.textAlign = 'center'; g.textBaseline = 'middle'; spaced(g, 'TRADING CARD COLLECTION', 0, 3, 3);
+    g.restore();
+    // 5장 뱃지 / 시즌
+    g.save(); g.translate(w * .2, h * .865);
+    gr = g.createRadialGradient(-25, -30, 10, 0, 0, 92); gr.addColorStop(0, '#ff8a98'); gr.addColorStop(.6, '#e11d48'); gr.addColorStop(1, '#9f1239');
+    g.beginPath(); g.arc(0, 0, 88, 0, Math.PI * 2); g.fillStyle = gr; g.fill(); g.lineWidth = 8; g.strokeStyle = '#fff'; g.stroke();
+    g.fillStyle = '#fff'; g.textAlign = 'center'; g.font = '92px Anton'; g.fillText('5', 0, 22); g.font = '800 30px "Barlow Condensed"'; spaced(g, 'CARDS', 0, 58, 2);
+    g.restore();
+    g.textAlign = 'right'; g.fillStyle = '#fff'; g.font = 'italic 800 58px "Barlow Condensed"'; spaced(g, 'SEASON 26', w * .92, h * .875, 2);
+    g.font = '700 28px "Barlow Condensed"'; g.fillStyle = 'rgba(255,255,255,.75)'; spaced(g, 'BOOSTER PACK', w * .92, h * .91, 4);
+    // 실링 + 톱니 + 뜯는 홈
+    crimp(g, w, h, 0, cz); crimp(g, w, h, h - cz, h);
+    const ty = (P.H / 2 - P.tearY) / P.H * h;
+    g.save(); g.globalCompositeOperation = 'destination-out';
+    g.beginPath(); g.moveTo(0, ty - 14); g.lineTo(22, ty); g.lineTo(0, ty + 14); g.fill();
+    g.beginPath(); g.moveTo(w, ty - 14); g.lineTo(w - 22, ty); g.lineTo(w, ty + 14); g.fill();
+    g.restore();
+    zigCut(g, w, h);
+  }
+  // 팩 뒷면 아트: 가운데 세로 실링(합지선) + 안내 문구
+  function drawBack(c, cardBack) {
+    const w = c.width, h = c.height, g = c.getContext('2d'), cz = P.C / P.H * h;
+    g.clearRect(0, 0, w, h);
+    let gr = g.createLinearGradient(0, 0, w, h); gr.addColorStop(0, '#f6f8fd'); gr.addColorStop(.5, '#d6ddeb'); gr.addColorStop(1, '#eef1f8');
+    g.fillStyle = gr; g.fillRect(0, 0, w, h);
+    g.fillStyle = '#13246b'; g.fillRect(0, h * .62, w, h * .38);
+    g.drawImage(cardBack, w * .1, h * .16, w * .32, w * .32 * 1.4);
+    g.fillStyle = '#13246b'; g.textAlign = 'left'; g.font = '84px Anton'; spaced(g, 'FOOTBALL STARS', w * .1, h * .12, 3);
+    g.font = '800 40px "Gothic A1"'; g.fillStyle = '#2b3152';
+    const tx = w * .5;
+    g.fillText('선수 카드 5장 랜덤', tx, h * .2);
+    g.font = '700 30px "Gothic A1"'; g.fillStyle = '#5a6080';
+    [['COMMON', '#9aa3b5', '일반'], ['RARE', '#3d7bd9', '레어'], ['EPIC', '#8b4be0', '에픽'], ['LEGEND', '#d4a017', '레전드']].forEach(([k, col, ko], i) => {
+      const y = h * (.27 + i * .055); g.fillStyle = col; g.beginPath(); g.arc(tx + 16, y - 10, 13, 0, Math.PI * 2); g.fill();
+      g.fillStyle = '#2b3152'; g.font = 'italic 800 38px "Barlow Condensed"'; g.fillText(k, tx + 44, y); g.font = '700 26px "Gothic A1"'; g.fillStyle = '#6a7090'; g.fillText(ko, tx + 200, y);
+    });
+    g.fillStyle = '#5a6080'; g.font = '700 24px "Gothic A1"'; g.fillText('마지막 카드는 레어 이상 보장', tx, h * .52);
+    g.fillStyle = '#fff'; g.font = 'italic 800 54px "Barlow Condensed"'; spaced(g, 'COLLECT THEM ALL', w * .1, h * .7, 3);
+    g.font = '700 26px "Gothic A1"'; g.fillStyle = 'rgba(255,255,255,.7)'; g.fillText('17개 클럽 · 340명의 선수 카드', w * .1, h * .745);
+    g.fillStyle = '#fff'; g.fillRect(w * .62, h * .8, w * .28, h * .08);
+    for (let x = w * .64; x < w * .88; x += 4 + Math.random() * 6) { g.fillStyle = '#111'; g.fillRect(x, h * .81, 2 + Math.random() * 4, h * .055); }
+    // 가운데 합지선
+    gr = g.createLinearGradient(w * .46, 0, w * .54, 0);
+    gr.addColorStop(0, 'rgba(0,0,0,.18)'); gr.addColorStop(.2, 'rgba(255,255,255,.6)'); gr.addColorStop(.5, 'rgba(150,160,190,.4)'); gr.addColorStop(.8, 'rgba(255,255,255,.6)'); gr.addColorStop(1, 'rgba(0,0,0,.18)');
+    g.fillStyle = gr; g.fillRect(w * .46, 0, w * .08, h);
+    crimp(g, w, h, 0, cz); crimp(g, w, h, h - cz, h);
+    const ty = (P.H / 2 - P.tearY) / P.H * h;
+    g.save(); g.globalCompositeOperation = 'destination-out';
+    g.beginPath(); g.moveTo(0, ty - 14); g.lineTo(22, ty); g.lineTo(0, ty + 14); g.fill();
+    g.beginPath(); g.moveTo(w, ty - 14); g.lineTo(w - 22, ty); g.lineTo(w, ty + 14); g.fill();
+    g.restore();
+    zigCut(g, w, h);
+  }
+
+  // ---- geometry ----
+  function makeSheet(y0, y1, sx, sy, side, strip) {
+    const geo = new THREE.PlaneGeometry(P.W, y1 - y0, sx, sy);
+    geo.translate(0, (y0 + y1) / 2, 0);
+    const pos = geo.attributes.position, uv = geo.attributes.uv, base = new Float32Array(pos.count * 2);
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i), y = pos.getY(i);
+      uv.setXY(i, x / P.W + .5, y / P.H + .5);
+      // 뒷장은 x를 뒤집어 바깥면이 -z를 향하게 (그림도 뒤에서 보면 바르게 보임)
+      base[i * 2] = side > 0 ? x : -x; base[i * 2 + 1] = y;
+    }
+    const outer = new THREE.Mesh(geo, side > 0 ? (strip ? mats.stripFront : mats.front) : (strip ? mats.stripBack : mats.back));
+    const inner = new THREE.Mesh(geo, strip ? mats.stripInner : mats.inner);
+    const sh = { geo, base, side, strip, outer, inner };
+    (strip ? stripG : packG).add(outer, inner);
+    return sh;
+  }
+  function peel(x, y, z, side) {
+    const s = (tear.front - x) * tear.dir;
+    if (!tear.dir || s <= 0) return [x, y, z];
+    const R = tear.R, dir = tear.dir, dy = y - P.tearY, phiMax = 1.9;
+    let phi = s / R, ax, ay;
+    if (phi <= phiMax) { ax = tear.front - dir * R * Math.sin(phi); ay = P.tearY + R * (1 - Math.cos(phi)); }
+    else {
+      const e = s - phiMax * R; phi = phiMax;
+      ax = tear.front - dir * (R * Math.sin(phiMax) + e * Math.cos(phiMax)); ay = P.tearY + R * (1 - Math.cos(phiMax)) + e * Math.sin(phiMax);
+    }
+    const nx = dir * Math.sin(phi), ny = Math.cos(phi);
+    // 찢긴 쪽 끝으로 갈수록 두 장이 벌어지고(위쪽 실링에서는 붙어 있음) 화면 쪽으로 말려 나옴
+    const openK = (1 - clamp(dy / P.stripH, 0, 1));
+    return [ax + dy * nx, ay + dy * ny, z + s * tear.liftZ + side * Math.min(s, .25) * .14 * openK];
+  }
+  function updateSheet(sh) {
+    const p = sh.geo.attributes.position.array, b = sh.base;
+    for (let i = 0, n = b.length / 2; i < n; i++) {
+      const bx = b[2 * i]; let y = b[2 * i + 1];
+      // 가장자리만 안쪽으로 오므려서 가운데 그림(선수 얼굴)은 비율 그대로
+      let x = bx - Math.sign(bx) * .03 * bulgeFy(y) * smooth(.62, 1, Math.abs(2 * bx / P.W)), z = surfZ(bx, y, sh.side);
+      if (sh.strip) [x, y, z] = peel(x, y, z, sh.side);
+      else if (y > P.tearY - .22) z += sh.side * tear.open * smooth(P.tearY - .22, P.tearY, y) * tornAt(x) * bulgeFx(x);
+      p[3 * i] = x; p[3 * i + 1] = y; p[3 * i + 2] = z;
+    }
+    sh.geo.attributes.position.needsUpdate = true;
+    sh.geo.computeVertexNormals();
+  }
+  function makeCards() {
+    cards.forEach((c) => { c.mesh.removeFromParent(); c.mesh.geometry.dispose(); });
+    cards = [];
+    for (let i = 0; i < 5; i++) {
+      const geo = new THREE.PlaneGeometry(CW, CH, 6, 10), base = Float32Array.from(geo.attributes.position.array);
+      const mesh = new THREE.Mesh(geo, mats.card); mesh.add(new THREE.Mesh(geo, mats.cardBack));
+      const c = { mesh, geo, base, y: 0, z: (2 - i) * .0045, flexK: 1 };
+      mesh.position.set(0, 0, c.z); mesh.renderOrder = 1;
+      packG.add(mesh); cards.push(c);
+    }
+  }
+  function updateCard(c) {
+    const p = c.geo.attributes.position.array, b = c.base;
+    for (let i = 0; i < p.length; i += 3) { p[i] = b[i]; p[i + 1] = b[i + 1]; p[i + 2] = c.flexK * flex(b[i], b[i + 1] + c.y); }
+    c.geo.attributes.position.needsUpdate = true; c.geo.computeVertexNormals();
+    if (c.mesh.parent === packG) c.mesh.position.y = c.y;
+  }
+
+  // ---- setup ----
+  function init(cardBackCanvas) {
+    renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(2, devicePixelRatio || 1));
+    renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
+    scene = new THREE.Scene();
+    const pm = new THREE.PMREMGenerator(renderer);
+    scene.environment = pm.fromScene(new RoomEnvironment(renderer), .04).texture;
+    camera = new THREE.PerspectiveCamera(30, 1, .1, 100);
+    light = new THREE.DirectionalLight(0xffffff, 2.2); scene.add(light, new THREE.AmbientLight(0xffffff, .25));
+    const rim = new THREE.DirectionalLight(0xcfe0ff, 1.2); rim.position.set(-3, 1, 2); scene.add(rim);
+    packG = new THREE.Group(); stripG = new THREE.Group(); packG.add(stripG); scene.add(packG);
+
+    frontCanvas = document.createElement('canvas'); frontCanvas.width = 1024; frontCanvas.height = Math.round(1024 * P.H);
+    backCanvas = document.createElement('canvas'); backCanvas.width = 1024; backCanvas.height = Math.round(1024 * P.H);
+    const aniso = renderer.capabilities.getMaxAnisotropy();
+    frontTex = new THREE.CanvasTexture(frontCanvas); backTex = new THREE.CanvasTexture(backCanvas);
+    cardTex = new THREE.CanvasTexture(cardBackCanvas);
+    [frontTex, backTex, cardTex].forEach((t) => { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = aniso; });
+    const normal = makeNormal();
+    // 안쪽 면도 톱니 실링 모양대로 잘리도록 알파 맵
+    const am = document.createElement('canvas'); am.width = 512; am.height = Math.round(512 * P.H);
+    const ag = am.getContext('2d'); ag.fillStyle = '#fff'; ag.fillRect(0, 0, am.width, am.height); zigCut(ag, am.width, am.height, 26, 8);
+    ag.globalCompositeOperation = 'destination-over'; ag.fillStyle = '#000'; ag.fillRect(0, 0, am.width, am.height);
+    const alphaTex = new THREE.CanvasTexture(am);
+    const foil = (map) => new THREE.MeshPhysicalMaterial({
+      map, normalMap: normal, normalScale: new THREE.Vector2(.55, .55), roughness: .3, metalness: .45, envMapIntensity: 1.25,
+      clearcoat: 1, clearcoatRoughness: .06, alphaTest: .5, side: THREE.FrontSide,
+    });
+    mats.front = foil(frontTex); mats.back = foil(backTex);
+    mats.inner = new THREE.MeshStandardMaterial({ color: 0xe3e8f0, metalness: .9, roughness: .28, normalMap: normal, normalScale: new THREE.Vector2(.4, .4), side: THREE.BackSide, alphaMap: alphaTex, alphaTest: .5 });
+    mats.stripFront = mats.front.clone(); mats.stripBack = mats.back.clone(); mats.stripInner = mats.inner.clone();
+    [mats.stripFront, mats.stripBack, mats.stripInner].forEach((m) => { m.transparent = true; });
+    mats.card = new THREE.MeshBasicMaterial({ map: cardTex, toneMapped: false });
+    mats.cardBack = new THREE.MeshStandardMaterial({ color: 0xf1eee6, roughness: .8, side: THREE.BackSide });
+
+    // 몸통(앞/뒤) + 뜯기는 띠(앞/뒤)
+    sheets = [
+      makeSheet(-P.H / 2, P.tearY, 40, 64, 1, false), makeSheet(-P.H / 2, P.tearY, 40, 64, -1, false),
+      makeSheet(P.tearY, P.H / 2, 64, 8, 1, true), makeSheet(P.tearY, P.H / 2, 64, 8, -1, true),
+    ];
+    resize(); addEventListener('resize', resize);
+    addEventListener('pointerdown', onDown); addEventListener('pointermove', onMove);
+    addEventListener('pointerup', onUp); addEventListener('pointercancel', onUp);
+  }
+  function resize() {
+    if (!renderer) return;
+    renderer.setSize(innerWidth, innerHeight, false);
+    const cwPx = stackEl.offsetWidth, chPx = stackEl.offsetHeight;
+    ppu = cwPx * 1.12; CW = cwPx / ppu; CH = chPx / ppu;
+    camera.aspect = innerWidth / innerHeight;
+    camera.position.set(0, 0, innerHeight / (ppu * 2 * Math.tan(THREE.MathUtils.degToRad(15))));
+    camera.updateProjectionMatrix();
+    const r = stackEl.getBoundingClientRect();
+    baseY = -((r.top + r.height / 2) - innerHeight / 2) / ppu;
+  }
+
+  // ---- pointer ----
+  function toLocal(e) {
+    ray.setFromCamera(new THREE.Vector2(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1), camera);
+    ray.ray.intersectPlane(plane, v3);
+    return packG.worldToLocal(v3.clone());
+  }
+  function onDown(e) {
+    if (phase !== 'pack' || tear.done || tear.active) return;
+    Sfx.init();
+    const L = toLocal(e), slop = 70 / ppu;
+    const inX = Math.abs(L.x) < P.W / 2 + slop, inTop = L.y > P.tearY - .28 && L.y < P.H / 2 + slop;
+    if (inX && inTop) {
+      if (hooks.beforeTear && !hooks.beforeTear()) { S.rz.vel += .9; S.px.vel -= .4; return; }
+      tear.active = true; tear.x = L.x; tear.y0 = e.clientY; tear.id = e.pointerId;
+      $('#tearGuide').style.display = 'none';
+      return;
+    }
+    if (Math.abs(L.x) < P.W / 2 && Math.abs(L.y) < P.H / 2) {
+      grab = { x0: e.clientX, y0: e.clientY, id: e.pointerId, moved: 0 };
+    }
+  }
+  function onMove(e) {
+    if (phase !== 'pack') return;
+    const nx = e.clientX / innerWidth - .5, ny = e.clientY / innerHeight - .5;
+    light.position.set(nx * 5, 2.5 - ny * 5, 3);
+    if (tear.active && e.pointerId === tear.id) return tearMove(e);
+    if (grab && e.pointerId === grab.id) {
+      // 팩을 잡고 흔들면 비닐이 휘청임
+      const dx = (e.clientX - grab.x0) / ppu, dy = (e.clientY - grab.y0) / ppu;
+      grab.moved = Math.max(grab.moved, Math.hypot(dx, dy) * ppu);
+      S.ry.t = clamp(dx * .9, -.7, .7); S.rx.t = clamp(dy * .7, -.5, .5);
+      S.cx.t = clamp(-dx * .5, -.35, .35); S.tw.t = clamp(dx * dy * 1.2, -.3, .3); S.cy.t = clamp(dy * .25, -.15, .15);
+      if (Math.random() < .06) Sfx.crinkle();
+      return;
+    }
+    if (e.pointerType === 'mouse' && !tear.active) { S.ry.t = nx * .5; S.rx.t = ny * .35; }
+  }
+  function tearMove(e) {
+    const L = toLocal(e), dx = L.x - tear.x;
+    if (!tear.dir) {
+      if (Math.abs(dx) * ppu < 6) return;
+      tear.dir = dx > 0 ? 1 : -1; tear.front = -tear.dir * P.W / 2;
+    }
+    const step = Math.max(0, tear.dir * dx), fx = clamp(L.x, -P.W / 2, P.W / 2);
+    tear.x = L.x;
+    tear.lift = clamp((tear.y0 - e.clientY) / ppu, 0, .6);
+    tear.R = clamp(.6 - tear.lift * .8, .14, .6); tear.liftZ = .08 + tear.lift * .4;
+    if (step > 0) {
+      // 손가락보다 앞서 찢어지지는 않게
+      tear.front = tear.dir > 0 ? Math.min(tear.front + step * 1.05, Math.max(tear.front, fx)) : Math.max(tear.front - step * 1.05, Math.min(tear.front, fx));
+      const prog = progress();
+      S.tw.t = tear.dir * .35 * prog; S.cx.t = .18; S.rz.t = -tear.dir * .05 * prog; S.px.t = tear.dir * .025;
+      S.ry.t = tear.dir * .12; S.rx.t = -.08;
+      tear.rip += step * ppu;
+      if (tear.rip > 7) { Sfx.rip(); tear.rip = 0; if (Math.random() < .35) buzz(4); }
+      if (prog > .92) complete();
+    }
+  }
+  function onUp(e) {
+    if (tear.active && e.pointerId === tear.id) {
+      tear.active = false; tear.lift = 0; tear.R = .6; tear.liftZ = .08;
+      if (!tear.done) { ['tw', 'cx', 'rz', 'px', 'ry', 'rx'].forEach((k) => (S[k].t = 0)); }
+    }
+    if (grab && e.pointerId === grab.id) {
+      if (grab.moved < 6) { const tg = $('#tearGuide'); tg.classList.remove('nudge'); void tg.offsetWidth; tg.classList.add('nudge'); }
+      grab = null; ['ry', 'rx', 'cx', 'tw', 'cy'].forEach((k) => (S[k].t = 0));
+    }
+  }
+  const progress = () => tear.dir > 0 ? (tear.front + P.W / 2) / P.W : (P.W / 2 - tear.front) / P.W;
+
+  // ---- tween ----
+  const ease = { out: (t) => 1 - (1 - t) ** 3, in: (t) => t * t * t, inOut: (t) => t < .5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2 };
+  const tween = (dur, fn, e = ease.out) => new Promise((res) => tweens.push({ t: 0, dur, fn, e, res }));
+
+  async function complete() {
+    tear.done = true; tear.active = false; phase = 'opening';
+    if (hooks.onTorn) hooks.onTorn();
+    if (hooks.glow) glowOn(hooks.glow);
+    leakOff();
+    // 카드가 비닐을 뚫고 나와 보이지 않게: 여기부터는 앞쪽 비닐을 항상 카드 위에 그린다
+    mats.front.depthTest = false; frontOuters().forEach((m) => (m.renderOrder = 2));
+    const dir = tear.dir;
+    tear.front = dir * (P.W / 2 + .02);
+    Sfx.bigRip(); buzz([10, 30, 20]);
+    // 띠가 손 방향으로 툭 떨어져 나감
+    const vel = { x: dir * 1.6, y: 2.4, rz: -dir * 3.5, ry: dir * 2 };
+    let op = 1;
+    tweens.push({ t: 0, dur: 1.4, e: (t) => t, fn: (t, dt) => {
+      vel.y -= 7 * dt; stripG.position.x += vel.x * dt; stripG.position.y += vel.y * dt;
+      stripG.rotation.z += vel.rz * dt; stripG.rotation.y += vel.ry * dt; op = Math.max(0, 1 - t * 1.2);
+      [mats.stripFront, mats.stripBack, mats.stripInner].forEach((m) => (m.opacity = op));
+    }, res: () => (stripG.visible = false) });
+    S.rz.vel += dir * 1.5; S.cx.vel -= 2.5; S.tw.vel -= dir * 2;
+    ['tw', 'cx', 'rz', 'px', 'ry', 'rx', 'cy'].forEach((k) => (S[k].t = 0));
+    const o = screenOf(0, P.tearY);
+    await wait(260);
+    // 두 장의 비닐 사이로 카드가 밀려 올라옴
+    burst(o.x, o.y, ['#ffd34a', '#7fb2ff', '#ff8fb1'], 16, .45);
+    Sfx.whoosh();
+    S.rx.t = .32;   // 입구가 보이도록 팩 윗부분을 살짝 앞으로
+    await tween(.75, (t) => {
+      cards.forEach((c, i) => { c.y = t * (.8 - i * .015); });
+      tear.open = t * .055;
+    }, ease.out);
+    S.rx.t = 0;
+    await wait(120);
+    // 팩은 아래로 빠지고 카드는 제자리로
+    const finals = cards.map((c, i) => {
+      packG.updateMatrixWorld(); scene.attach(c.mesh);
+      return { c, p0: c.mesh.position.clone(), q0: c.mesh.quaternion.clone(), s0: c.mesh.scale.x,
+        p1: new THREE.Vector3(0, baseY - i * 7 / ppu, (4 - i) * .004),
+        q1: new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, -THREE.MathUtils.degToRad(i ? (i % 2 ? 1.5 : -1.2) : 0))), s1: 1 - i * .03 };
+    });
+    glowOff();
+    if (hooks.onDrop) hooks.onDrop();
+    tween(.6, (t) => { drop = t * 3.2; }, ease.in);
+    await tween(.6, (t) => {
+      finals.forEach((f) => {
+        f.c.flexK = 1 - t;
+        f.c.mesh.position.lerpVectors(f.p0, f.p1, t); f.c.mesh.quaternion.slerpQuaternions(f.q0, f.q1, t);
+        f.c.mesh.scale.setScalar(f.s0 + (f.s1 - f.s0) * t);
+      });
+    }, ease.inOut);
+    await wait(60);
+    onOpened();
+  }
+
+  // 입구 빛 (레어 이상)
+  let glowing = false;
+  function glowOn(color) {
+    const g = $('#packGlow'), l = $('#packLip');
+    [g, l].forEach((el) => { el.style.setProperty('--gc', color); el.classList.remove('off'); el.classList.add('on'); });
+    glowing = true; placeGlow();
+  }
+  function glowOff() {
+    if (!glowing) return;
+    glowing = false;
+    [$('#packGlow'), $('#packLip')].forEach((el) => {
+      el.classList.add('off');
+      setTimeout(() => { if (!glowing) el.classList.remove('on', 'off'); }, 700);
+    });
+  }
+  function placeGlow() {
+    const a = screenOf(-P.W / 2, P.tearY), b = screenOf(P.W / 2, P.tearY), c = screenOf(0, P.tearY);
+    const w = Math.hypot(b.x - a.x, b.y - a.y);
+    for (const el of [$('#packGlow'), $('#packLip')]) {
+      el.style.transform = `translate(${c.x}px, ${c.y}px) rotate(${Math.atan2(b.y - a.y, b.x - a.x)}rad)`;
+      el.style.setProperty('--gs', (w * 3.2) + 'px'); el.style.setProperty('--lw', (w * 1.05) + 'px');
+    }
+  }
+  // 뜯는 중 새어 나오는 빛: 뜯기 시작한 쪽 끝부터 찢어진 곳까지
+  let leaking = false;
+  function placeLeak() {
+    const el = $('#packLeak');
+    if (!leaking) { el.style.setProperty('--gc', hooks.glow); el.classList.remove('off'); el.classList.add('on'); leaking = true; }
+    const start = -tear.dir * P.W / 2;
+    const a = screenOf(Math.min(start, tear.front), P.tearY), b = screenOf(Math.max(start, tear.front), P.tearY);
+    const w = screenOf(P.W / 2, P.tearY).x - screenOf(-P.W / 2, P.tearY).x;
+    el.style.width = Math.hypot(b.x - a.x, b.y - a.y) + 'px';
+    el.style.transform = `translate(${a.x}px, ${a.y}px) rotate(${Math.atan2(b.y - a.y, b.x - a.x)}rad)`;
+    el.style.setProperty('--p', progress().toFixed(3));
+    el.style.setProperty('--bh', (w * .45) + 'px');
+  }
+  function leakOff() {
+    if (!leaking) return;
+    leaking = false;
+    const el = $('#packLeak');
+    el.classList.add('off');
+    setTimeout(() => { if (!leaking) el.classList.remove('on', 'off'); }, 200);
+  }
+  const frontOuters = () => sheets.filter((sh) => !sh.strip && sh.side > 0).map((sh) => sh.outer);
+  function screenOf(x, y) {
+    const v = new THREE.Vector3(x, y, 0); packG.localToWorld(v); v.project(camera);
+    return { x: (v.x * .5 + .5) * innerWidth, y: (-v.y * .5 + .5) * innerHeight };
+  }
+
+  // ---- loop ----
+  function frame(now) {
+    if (!running) return;
+    const dt = Math.min(.033, (now - lastT) / 1000 || .016); lastT = now; time += dt;
+    Object.values(S).forEach((s) => s.step(dt));
+    for (const tw of tweens.slice()) {
+      tw.t += dt; const k = clamp(tw.t / tw.dur, 0, 1); tw.fn(tw.e(k), dt);
+      if (k >= 1) { tweens.splice(tweens.indexOf(tw), 1); tw.res(); }
+    }
+    const breathe = phase === 'pack' && !tear.active && !grab ? Math.sin(time * 1.4) * .02 : 0;
+    if (Gyro.active && phase === 'pack' && !tear.active && !grab) {
+      Gyro.tick();
+      S.ry.t = Gyro.sy * .55; S.rx.t = Gyro.sx * .4; S.cx.t = Gyro.sy * .06;
+      light.position.set(-Gyro.sy * 5, 2.5 + Gyro.sx * 5, 3);
+    }
+    packG.position.set(S.px.v, baseY + Math.sin(time * 1.6) * .012 + S.py.v - drop, 0);
+    packG.rotation.set(S.rx.v, S.ry.v + breathe, S.rz.v + drop * .07);
+    sheets.forEach((sh) => { if (!sh.strip || stripG.visible) updateSheet(sh); });
+    cards.forEach((c) => { if (c.flexK > 0) updateCard(c); });
+    renderer.render(scene, camera);
+    if (glowing) placeGlow();
+    if (hooks.glow && tear.dir && !tear.done) placeLeak();
+    // 가이드 위치
+    if (phase === 'pack' && !tear.active && !tear.done && hooks.guide) {
+      const a = screenOf(-P.W / 2 + .04, P.tearY), b = screenOf(P.W / 2 - .04, P.tearY), tg = $('#tearGuide');
+      tg.style.display = 'block'; tg.style.left = a.x + 'px'; tg.style.top = a.y + 'px'; tg.style.width = (b.x - a.x) + 'px';
+      tg.style.transform = `rotate(${Math.atan2(b.y - a.y, b.x - a.x)}rad)`; tg.style.transformOrigin = '0 0';
+    }
+    requestAnimationFrame(frame);
+  }
+
+  let onOpened = () => {};
+  let hooks = {};
+  async function newPack(heroImgs, cardBackCanvas, h = {}) {
+    hooks = h;
+    if (!renderer) init(cardBackCanvas);
+    drawFront(frontCanvas, heroImgs); drawBack(backCanvas, cardBackCanvas);
+    frontTex.needsUpdate = true; backTex.needsUpdate = true;
+    Object.assign(tear, { dir: 0, front: 0, R: .6, liftZ: .08, open: 0, done: false, active: false, lift: 0, rip: 0 });
+    Object.values(S).forEach((s) => { s.v = s.t = s.vel = 0; });
+    tweens = []; drop = 0; grab = null; glowing = false; leaking = false;
+    [$('#packGlow'), $('#packLip'), $('#packLeak')].forEach((el) => el.classList.remove('on', 'off'));
+    if (mats.front) { mats.front.depthTest = true; frontOuters().forEach((m) => (m.renderOrder = 0)); }
+    stripG.position.set(0, 0, 0); stripG.rotation.set(0, 0, 0); stripG.visible = true;
+    [mats.stripFront, mats.stripBack, mats.stripInner].forEach((m) => (m.opacity = 1));
+    packG.rotation.set(0, 0, 0);
+    makeCards();
+    // 등장: 아래에서 튀어 올라오며 출렁
+    S.py.v = -1.4; S.py.vel = 0; S.rz.v = -.25; S.cx.v = .3;
+    canvas.style.display = 'block';
+    if (!running) { running = true; lastT = performance.now(); requestAnimationFrame(frame); }
+    return new Promise((res) => (onOpened = res));
+  }
+  function stop() {
+    glowOff();
+    running = false; canvas.style.display = 'none'; $('#tearGuide').style.display = 'none';
+    cards.forEach((c) => c.mesh.removeFromParent());
+  }
+  return { newPack, stop };
+})();
+
+// =====================================================================
+// 카드 뒤집기 단계
+// =====================================================================
+let phase = 'loading', pulls = [], slots = [], cur = 0, CARD_BACK = null;
+
+function rollPack() {
+  const used = new Set();
+  const out = SLOT_ODDS.map((odds, i) => {
+    let r = Math.random() * 100, tier = 'common';
+    for (const k of ['common', 'rare', 'epic', 'legend', 'icon']) { if ((r -= odds[k]) < 0) { tier = k; break; } }
+    // 아이콘 비공개 중엔 그 자리를 레어로 (마지막 칸 레어 이상 보장 유지, 레전드 확률은 그대로)
+    if (tier === 'icon' && !POOL.icon.length) tier = 'rare';
+    if (!POOL[tier].length) tier = 'common';
+    let p, guard = 0;
+    do { p = POOL[tier][Math.floor(Math.random() * POOL[tier].length)]; } while (used.has(p.id) && guard++ < 50);
+    used.add(p.id); return { ...p };
+  });
+  return out.sort((a, b) => TIERS[a.tier].rank - TIERS[b.tier].rank || a.ovr - b.ovr);
+}
+
+function buildStack() {
+  stackEl.innerHTML = ''; slots = [];
+  stackEl.classList.add('hidden');
+  pulls.forEach((p) => {
+    const el = document.createElement('div');
+    el.className = 'slot';
+    el.innerHTML = `<div class="card3d">${backHTML()}${frontHTML(p, 'second')}</div>`;
+    stackEl.appendChild(el);
+    slots.push({ p, el, card: el.querySelector('.card3d'), angle: 0, tiltX: 0, tiltY: 0, tx: 0, ty: 0, rot: 0, flipped: false, gone: false });
+  });
+  slots.forEach((s) => { setTrans(s, false); renderSlot(s); });
+}
+function renderSlot(s) {
+  const depth = Math.max(0, slots.indexOf(s) - cur);
+  s.el.style.zIndex = 10 - slots.indexOf(s);
+  s.el.style.transform = `translate(${s.tx}px, ${s.ty + depth * 7}px) rotate(${s.rot + (depth ? (depth % 2 ? 1.5 : -1.2) : 0)}deg) scale(${1 - depth * .03})`;
+  s.card.style.transform = `rotateY(${s.angle + s.tiltY}deg) rotateX(${s.tiltX}deg)`;
+  setLight(s.el, s.angle + s.tiltY + (s.flipped ? (s.angle > 0 ? -180 : 180) : 0), s.tiltX);
+}
+function setTrans(s, on, dur = .45, ease = 'cubic-bezier(.2,.8,.2,1)') {
+  s.el.style.transition = on ? `transform ${dur}s ${ease}, opacity ${dur}s` : 'none';
+  s.card.style.transition = on ? `transform ${dur}s ${ease}` : 'none';
+}
+function layoutStack() { slots.forEach((s) => { if (!s.gone) { setTrans(s, true, .5); renderSlot(s); } }); }
+
+// 카드 뒤 빛. linger(ms)를 주면 그만큼 있다가 천천히 사라진다
+const GLOW = { rare: '#4f9dff', epic: '#b66bff', legend: '#ffc72e', icon: '#dfe9ff' };
+let cardGlowT = 0;
+function cardGlow(tier, linger) {
+  const el = $('#cardGlow');
+  clearTimeout(cardGlowT);
+  if (!GLOW[tier]) { el.classList.remove('on', 'fade'); return; }
+  el.style.setProperty('--gc', GLOW[tier]);
+  el.classList.remove('fade'); el.classList.add('on');
+  if (linger) cardGlowT = setTimeout(cardGlowFade, linger);
+}
+function cardGlowFade() {
+  clearTimeout(cardGlowT);
+  const el = $('#cardGlow');
+  if (el.classList.contains('on')) { el.classList.add('fade'); el.classList.remove('on'); }
+}
+function prepareTop() {
+  const s = slots[cur]; if (!s) return;
+  if (s.p.tier !== 'common') cardGlow(s.p.tier); else cardGlowFade();
+  const rays = $('#rays');
+  rays.className = ''; rays.style.opacity = 0;
+  if (s.p.tier !== 'common') s.el.classList.add('hint-' + s.p.tier);
+  if (s.p.tier === 'legend') rays.style.opacity = .7;
+  if (s.p.tier === 'icon') { rays.className = 'icon'; rays.style.opacity = .85; }
+  if (s.p.tier === 'epic') { rays.className = 'epic'; rays.style.opacity = .4; }
+}
+
+let drag = null;
+stackEl.addEventListener('pointerdown', (e) => {
+  if (phase !== 'reveal') return;
+  // 앞면이 보이기 시작하면 뒤집히는 중이어도 바로 넘길 수 있음
+  const s = slots[cur]; if (!s || (s.busy && !s.flipped)) return;
+  Sfx.init();
+  drag = { s, x0: e.clientX, y0: e.clientY, a0: s.angle, moved: 0, crossed: false };
+  s.el.classList.add('dragging');
+  setTrans(s, false);
+  stackEl.setPointerCapture(e.pointerId);
+});
+stackEl.addEventListener('pointermove', (e) => {
+  const s = slots[cur];
+  if (!drag) {
+    if (phase === 'reveal' && s && s.flipped && !s.busy && e.pointerType === 'mouse') {
+      const r = s.el.getBoundingClientRect();
+      s.tiltY = ((e.clientX - r.left) / r.width - .5) * 22; s.tiltX = -((e.clientY - r.top) / r.height - .5) * 22;
+      setTrans(s, true, .15, 'ease-out'); renderSlot(s);
+    }
+    return;
+  }
+  const dx = e.clientX - drag.x0, dy = e.clientY - drag.y0;
+  drag.moved = Math.max(drag.moved, Math.hypot(dx, dy));
+  const w = s.el.offsetWidth;
+  if (!s.flipped) {
+    const resist = s.p.tier === 'icon' ? .4 : s.p.tier === 'legend' ? .5 : s.p.tier === 'epic' ? .7 : 1;
+    s.angle = clamp(drag.a0 + dx / w * 190 * resist, -200, 200);
+    s.tiltX = clamp(-dy * .06, -12, 12); s.tx = dx * .1; s.ty = dy * .06; s.rot = dx * .01;
+    if (!drag.crossed && Math.abs(s.angle) > 90) { drag.crossed = true; Sfx.whoosh(); }
+    if (s.p.tier !== 'common' && s.p.tier !== 'rare') $('#rays').style.opacity = (s.p.tier === 'epic' ? .4 : .7) + Math.abs(s.angle) / 180 * .3;
+  } else {
+    s.tx = dx; s.ty = dy; s.rot = dx * .05; s.tiltY = clamp(dx * .08, -20, 20); s.tiltX = clamp(-dy * .08, -20, 20);
+  }
+  renderSlot(s);
+});
+const endDrag = () => {
+  if (!drag) return;
+  const { s, moved } = drag; drag = null;
+  s.el.classList.remove('dragging');
+  if (!s.flipped) {
+    if (Math.abs(s.angle) >= 80) flipCard(s, Math.sign(s.angle));
+    else {
+      setTrans(s, true, .5, 'cubic-bezier(.3,1.6,.5,1)');
+      if (moved < 6) {
+        s.angle = 28; s.tx = s.ty = s.rot = s.tiltX = 0; renderSlot(s);
+        setTimeout(() => { if (!s.flipped) { s.angle = 0; renderSlot(s); } }, 220);
+      } else { s.angle = 0; s.tx = s.ty = s.rot = s.tiltX = 0; renderSlot(s); }
+    }
+  } else {
+    const dist = Math.hypot(s.tx, s.ty);
+    if (dist > 80 || moved < 6) dismiss(s, moved < 6 ? 0 : s.tx / (dist || 1), moved < 6 ? -1 : s.ty / (dist || 1));
+    else { setTrans(s, true, .45, 'cubic-bezier(.3,1.5,.5,1)'); s.tx = s.ty = s.rot = s.tiltX = s.tiltY = 0; renderSlot(s); }
+  }
+};
+stackEl.addEventListener('pointerup', endDrag);
+stackEl.addEventListener('pointercancel', endDrag);
+stackEl.addEventListener('pointerleave', () => {
+  const s = slots[cur];
+  if (!drag && s && s.flipped && !s.busy) { setTrans(s, true, .4); s.tiltX = s.tiltY = 0; renderSlot(s); }
+});
+
+function flipCard(s, sign) {
+  s.busy = true;
+  setTrans(s, true, .4, 'cubic-bezier(.2,.9,.3,1.2)');
+  s.angle = sign * 180; s.tx = s.ty = s.rot = s.tiltX = s.tiltY = 0;
+  renderSlot(s);
+  setTimeout(() => onReveal(s), 110);
+  setTimeout(() => { s.busy = false; }, 300);
+}
+function addToCollection(p) {
+  const isNew = !collection[p.id];
+  collection[p.id] = (collection[p.id] || 0) + 1;
+  p._new = isNew;
+  return isNew;
+}
+function commitPulls(list, packs) {
+  list.forEach(addToCollection); saveCollection(); updateDex();
+  packsOpened(packs);
+}
+function onReveal(s, quiet) {
+  s.flipped = true;
+  s.el.classList.remove('hint-rare', 'hint-epic', 'hint-legend', 'hint-icon');
+  if (s.p._new) s.el.querySelector('.front').classList.add('is-new');
+  if (quiet) return;
+  const r = s.el.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+  Sfx.reveal(s.p.tier);
+  const t = s.p.tier;
+  if (t === 'icon') { flash('platinum'); shake(); buzz([40, 50, 80]); burst(cx, cy, ['#ffffff', '#dfe9ff', '#b9c7dd', '#ffe9a8', '#cfe3ff'], 180, 1.6); }
+  else if (t === 'legend') { flash('gold'); shake(); buzz([30, 40, 60]); burst(cx, cy, ['#ffd34a', '#ffb020', '#ffffff', '#ff6fb1', '#4fc3ff'], 140, 1.4); }
+  else if (t === 'epic') { flash('purple'); buzz([20, 30]); burst(cx, cy, ['#b57bff', '#ff8be0', '#6aa8ff', '#ffffff'], 80, 1.1); }
+  else if (t === 'rare') { burst(cx, cy, ['#5c9dff', '#a9cbff'], 36, .8); }
+}
+function dismiss(s, ux, uy) {
+  s.busy = true; s.gone = true;
+  Sfx.swipe();
+  setTrans(s, true, .38, 'cubic-bezier(.4,0,.8,.6)');
+  s.tx = ux * innerWidth * 1.1; s.ty = uy * innerHeight * 1.1; s.rot += ux * 35 || 12;
+  renderSlot(s); s.el.style.opacity = 0;
+  $('#rays').style.opacity = 0; cardGlow(null);
+  setTimeout(() => s.el.remove(), 520);
+  cur++;
+  if (cur >= slots.length) { setTimeout(packDone, 250); return; }
+  layoutStack(); prepareTop();
+}
+skipBtn.addEventListener('click', () => {
+  // 5팩 중에는 뜯기 전 팩에서도 눌러서 남은 팩을 전부 깔 수 있다
+  if (!(phase === 'reveal' || (phase === 'pack' && multi))) return;
+  Sfx.init();
+  if (phase === 'pack') Pack3D.stop();
+  else for (let i = cur; i < slots.length; i++) if (!slots[i].flipped) onReveal(slots[i], true);
+  // 5팩 중이면 남은 팩도 한 번에
+  if (multi) {
+    multi.pulls.push(...pulls);
+    while (multi.n < multi.total) { multi.n++; multi.pulls.push(...multi.packs[multi.n - 1]); }
+    pulls = multi.pulls; multi = null;
+  }
+  Sfx.reveal(bestOf(pulls).tier);
+  showSummary();
+});
+const bestOf = (list) => list.reduce((a, b) => (TIERS[b.tier].rank > TIERS[a.tier].rank ? b : a), list[0]);
+function packDone() {
+  if (multi) {
+    multi.pulls.push(...pulls);
+    if (multi.n < multi.total) { multi.n++; startPack(); return; }
+    pulls = multi.pulls; multi = null;
+  }
+  showSummary();
+}
+
+// ---------- summary ----------
+function showSummary() {
+  phase = 'summary';
+  skipBtn.style.display = 'none';
+  $('#rays').style.opacity = 0; cardGlow(null);
+  stackEl.innerHTML = ''; stackEl.classList.add('hidden');
+  updatePackUI();
+  const grid = $('#grid'); grid.innerHTML = '';
+  $('#summary').classList.toggle('many', pulls.length > 5);
+  pulls.forEach((p, i) => {
+    const m = document.createElement('div');
+    m.className = 'mini'; m.style.animationDelay = (i * (pulls.length > 5 ? .03 : .09)) + 's';
+    m.innerHTML = `<div class="card3d">${frontHTML(p, p._new ? 'is-new' : '')}</div>`;
+    const card = m.querySelector('.card3d');
+    m.addEventListener('pointermove', (e) => {
+      if (e.pointerType !== 'mouse') return;
+      const r = m.getBoundingClientRect();
+      const ty = ((e.clientX - r.left) / r.width - .5) * 26, tx = -((e.clientY - r.top) / r.height - .5) * 26;
+      card.style.transition = 'transform .12s ease-out';
+      card.style.transform = `rotateY(${ty}deg) rotateX(${tx}deg) scale(1.04)`; setLight(m, ty, tx);
+    });
+    m.addEventListener('pointerleave', () => { card.style.transition = 'transform .4s'; card.style.transform = ''; setLight(m, 0, 0); });
+    m.addEventListener('click', () => openInspect(p));
+    grid.appendChild(m);
+    setLight(m, 0, 0);
+  });
+  $('#summary').style.display = 'flex'; document.body.classList.add('in-sum'); $('#summary').scrollTop = 0; fitSumBrand();
+  $('#pedestal').style.opacity = 0;
+  const best = bestOf(pulls), h2 = $('#summary h2');
+  h2.textContent = best.tier === 'icon' ? 'ICON PULL!' : best.tier === 'legend' ? 'LEGEND PULL!' : best.tier === 'epic' ? 'EPIC PULL!' : 'PACK RESULTS';
+  h2.className = best.tier === 'common' || best.tier === 'rare' ? '' : best.tier;
+  const news = pulls.filter((p) => p._new).length;
+  $('#sumSub').innerHTML = news ? `새로운 선수 <b>${news}명</b> 도감 등록!` : '모두 이미 가진 선수예요';
+  if (news) { const d = $('#dex'); d.classList.remove('bump'); void d.offsetWidth; d.classList.add('bump'); }
+}
+// 결과 화면 제목: 떠 있는 두 버튼 사이 가운데에 두고, 자리가 모자라면 숨긴다(줄 높이는 유지)
+function fitSumBrand() {
+  const b = $('#summary .brand'), sr = $('#summary').getBoundingClientRect();
+  const l = $('header .ibtn').getBoundingClientRect().right + 8, r = $('#dex').getBoundingClientRect().left - 8;
+  b.style.paddingLeft = Math.max(0, l - sr.left - 16) + 'px';
+  b.style.paddingRight = Math.max(0, sr.right - 16 - r - (sr.width - $('#summary').clientWidth)) + 'px';
+  b.style.visibility = r - l >= b.firstElementChild.scrollWidth ? '' : 'hidden';
+}
+addEventListener('resize', () => { if (document.body.classList.contains('in-sum')) fitSumBrand(); });
+$('#again').addEventListener('click', () => { Sfx.init(); $('#summary').style.display = 'none'; document.body.classList.remove('in-sum'); startPack(); });
+$('#againMulti').addEventListener('click', () => {
+  Sfx.init();
+  if (!beginMulti()) return;
+  $('#summary').style.display = 'none'; document.body.classList.remove('in-sum'); startPack();
+});
+
+// ---------- inspect ----------
+const insp = $('#inspect'), big = $('#big');
+const iv = { rx: 0, ry: 0, vx: 0, vy: 0, drag: null, raf: 0, lastTap: 0 };
+// 중복 카드 판매가. 한 팩(5장)이 전부 중복일 때 기대 판매액이 약 29P (팩 100P의 3할 정도)
+const SELL = { common: 2, rare: 6, epic: 20, legend: 50, icon: 150 };
+let sellTarget = null;
+function openInspect(p, fromDex) {
+  big.innerHTML = `<div class="card3d">${frontHTML(p)}${backHTML('second')}</div>`;
+  const extra = (collection[p.id] || 0) - 1, btn = $('#sellBtn');
+  sellTarget = fromDex && extra > 0 ? p : null;
+  btn.classList.toggle('show', !!sellTarget);
+  if (sellTarget) btn.textContent = `중복 ${extra}장 팔기 +${extra * SELL[p.tier]}P`;
+  iv.rx = -8; iv.ry = -200; iv.vx = 0; iv.vy = 9;
+  insp.classList.add('open');
+  cancelAnimationFrame(iv.raf); iv.raf = requestAnimationFrame(inspectLoop);
+}
+function closeInspect() { insp.classList.remove('open'); cancelAnimationFrame(iv.raf); }
+$('#sellBtn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  const p = sellTarget; if (!p || !window.FSPoints) return;
+  const extra = (collection[p.id] || 0) - 1; if (extra <= 0) return;
+  const amt = extra * SELL[p.tier];
+  FSPoints.add('card', amt, `${p.name} 중복 ${extra}장 판매`);
+  collection[p.id] = 1; saveCollection(); updateDex();
+  if (dexView.classList.contains('open')) { renderDexChips(); renderDex(); }
+  sellTarget = null; e.currentTarget.classList.remove('show');
+  const r = e.currentTarget.getBoundingClientRect();
+  Sfx.init(); Sfx.coin(); burst(r.left + r.width / 2, r.top, ['#ffd34a', '#ffb020', '#ffffff'], 40, .8);
+  refreshPts(true);
+});
+function inspectLoop() {
+  if (!iv.drag) {
+    iv.ry += iv.vy; iv.rx += iv.vx; iv.vy *= .93; iv.vx *= .9;
+    if (Math.abs(iv.vy) < .6) iv.ry += (Math.round(iv.ry / 180) * 180 - iv.ry) * .08;
+    if (Math.abs(iv.vx) < .6) iv.rx += (0 - iv.rx) * .08;
+  }
+  iv.rx = clamp(iv.rx, -55, 55);
+  const card = big.querySelector('.card3d');
+  const gx = iv.drag ? 0 : Gyro.sx * 18, gy = iv.drag ? 0 : Gyro.sy * 24;
+  if (card) { card.style.transform = `rotateX(${iv.rx + gx}deg) rotateY(${iv.ry + gy}deg)`; setLight(big, ((iv.ry + gy) % 360 + 540) % 360 - 180, iv.rx + gx); }
+  iv.raf = requestAnimationFrame(inspectLoop);
+}
+big.addEventListener('pointerdown', (e) => {
+  iv.drag = { x: e.clientX, y: e.clientY, t: performance.now(), moved: 0 };
+  iv.vx = iv.vy = 0; big.setPointerCapture(e.pointerId); big.style.cursor = 'grabbing';
+});
+big.addEventListener('pointermove', (e) => {
+  if (!iv.drag) return;
+  const dx = e.clientX - iv.drag.x, dy = e.clientY - iv.drag.y, now = performance.now(), dt = Math.max(1, now - iv.drag.t);
+  iv.ry += dx * .55; iv.rx -= dy * .45;
+  iv.vy = dx * .55 * (16 / dt); iv.vx = -dy * .45 * (16 / dt);
+  iv.drag.moved += Math.abs(dx) + Math.abs(dy);
+  iv.drag.x = e.clientX; iv.drag.y = e.clientY; iv.drag.t = now;
+});
+const endBig = () => {
+  if (!iv.drag) return;
+  if (iv.drag.moved < 6) {
+    const now = performance.now();
+    if (now - iv.lastTap < 320) { iv.vy = 22 * (Math.random() < .5 ? -1 : 1); Sfx.whoosh(); }
+    iv.lastTap = now;
+  }
+  iv.drag = null; big.style.cursor = '';
+};
+big.addEventListener('pointerup', endBig);
+big.addEventListener('pointercancel', endBig);
+insp.addEventListener('click', (e) => { if (e.target === insp) closeInspect(); });
+$('#closeInspect').addEventListener('click', closeInspect);
+addEventListener('keydown', (e) => { if (e.key === 'Escape') { if (insp.classList.contains('open')) closeInspect(); else closeDex(); } });
+
+// 카드 뒤집기/결과 화면에서 휴대폰 기울기 반영
+(function gyroLoop() {
+  requestAnimationFrame(gyroLoop);
+  if (!Gyro.active || phase === 'pack' || phase === 'opening') return;
+  Gyro.tick();
+  const ty = Gyro.sy * 22, tx = -Gyro.sx * 22;
+  if (phase === 'reveal' && !insp.classList.contains('open')) {
+    const s = slots[cur];
+    if (s && !s.busy && !(drag && drag.s === s)) { s.tiltY = ty; s.tiltX = tx; setTrans(s, false); renderSlot(s); }
+  } else if (phase === 'summary' && !$('#dexView').classList.contains('open')) {
+    document.querySelectorAll('#grid .mini').forEach((m) => {
+      const c = m.querySelector('.card3d'); c.style.transition = 'none';
+      c.style.transform = `rotateY(${ty}deg) rotateX(${tx}deg)`; setLight(m, ty, tx);
+    });
+  }
+})();
+
+// ---------- dex ----------
+const dexView = $('#dexView');
+let dexTier = 'all', dexClub = 'all', dexOwnedOnly = false;
+const CHEVRON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
+function openDex() {
+  Sfx.init();
+  renderDexChips(); renderDex();
+  dexView.classList.add('open');
+}
+function closeDex() { dexView.classList.remove('open'); $('#clubPanel').classList.remove('open'); }
+const ownCount = (list) => list.filter((p) => collection[p.id]).length;
+const COACH_CLUB = '__coach', OTHER_CLUB = '__other';
+// 빅클럽 밖 선수(card/extra_players.json)는 클럽 목록 대신 '기타 클럽'으로 모아 본다
+const isOther = (p) => !p.coach && !CLUBS[p.team];
+const inDexClub = (p) => dexClub === 'all' || (dexClub === COACH_CLUB ? p.coach : dexClub === OTHER_CLUB ? isOther(p) : p.team === dexClub);
+function renderDexChips() {
+  const n = Object.keys(collection).length, pct = PLAYERS.length ? n / PLAYERS.length * 100 : 0;
+  $('#dexBig').innerHTML = `${n}<small>/${PLAYERS.length}</small>`;
+  $('#dexTrack').style.setProperty('--p', pct + '%');
+  $('#dexPct').textContent = (pct < 10 ? pct.toFixed(1) : Math.round(pct)) + '%';
+  // 1줄: 등급 탭 + 보유만 (모두 한눈에 보이게 줄바꿈)
+  const tiers = [['all', '전체', ''], ...(POOL.icon.length ? [['icon', '아이콘', '#c9d3e3']] : []), ['legend', '레전드', '#e9b23a'], ['epic', '에픽', '#9a5cf0'], ['rare', '레어', '#4f86ea'], ['common', '일반', '#a9b0c2']];
+  const inClub = (list) => list.filter(inDexClub);
+  $('#dexChips').innerHTML = tiers.map(([k, l, c]) => {
+    const list = inClub(k === 'all' ? PLAYERS : POOL[k]);
+    return `<button class="dex-chip ${dexTier === k ? 'on' : ''}" data-k="${k}">${c ? `<i style="--c:${c}"></i>` : ''}${l} <em>${ownCount(list)}/${list.length}</em></button>`;
+  }).join('') + `<label class="dex-chip toggle"><input type="checkbox" id="ownedOnly" ${dexOwnedOnly ? 'checked' : ''}>보유만</label>`;
+  // 2줄: 클럽 선택 버튼 + 펼치는 클럽 목록
+  // 빅클럽 밖 감독은 클럽 목록 대신 '감독' 항목으로 모아 본다
+  const clubs = [...new Set(PLAYERS.filter((p) => !p.coach && !isOther(p)).map((p) => p.team))];
+  const coaches = PLAYERS.filter((p) => p.coach), others = PLAYERS.filter(isOther);
+  const sel = dexClub === 'all' || dexClub === COACH_CLUB || dexClub === OTHER_CLUB ? null : PLAYERS.find((p) => p.team === dexClub);
+  const selList = PLAYERS.filter(inDexClub);
+  const selName = dexClub === COACH_CLUB ? '감독' : dexClub === OTHER_CLUB ? '기타 클럽' : sel ? (sel.teamKo || sel.team) : '전체 클럽';
+  $('#clubBtn').innerHTML = `<span class="lbl">클럽</span><i style="${sel ? `--c:${clubOf(sel)[1]}` : ''}"></i>${esc(selName)}<em>${ownCount(selList)}/${selList.length}</em>${CHEVRON}`;
+  $('#clubPanel').innerHTML = `<button class="club-opt ${dexClub === 'all' ? 'on' : ''}" data-c="all"><i style="--c:linear-gradient(135deg,#4f7bff,#ff6a3d)"></i><span>전체 클럽</span><em>${ownCount(PLAYERS)}/${PLAYERS.length}</em></button>` +
+    (coaches.length ? `<button class="club-opt ${dexClub === COACH_CLUB ? 'on' : ''}" data-c="${COACH_CLUB}"><i style="--c:linear-gradient(135deg,#2b3152,#8a93b8)"></i><span>감독</span><em>${ownCount(coaches)}/${coaches.length}</em></button>` : '') +
+    (others.length ? `<button class="club-opt ${dexClub === OTHER_CLUB ? 'on' : ''}" data-c="${OTHER_CLUB}"><i style="--c:linear-gradient(135deg,#1f8a5b,#d9b44a)"></i><span>기타 클럽</span><em>${ownCount(others)}/${others.length}</em></button>` : '') +
+    clubs.map((t) => {
+      const list = PLAYERS.filter((p) => p.team === t);
+      return `<button class="club-opt ${dexClub === t ? 'on' : ''}" data-c="${esc(t)}"><i style="--c:${clubOf(list[0])[1]}"></i><span>${esc(list[0].teamKo || t)}</span><em>${ownCount(list)}/${list.length}</em></button>`;
+    }).join('');
+  $('#clubBtn').classList.toggle('open', $('#clubPanel').classList.contains('open'));
+}
+function renderDex() {
+  let list = PLAYERS.slice().sort((a, b) => a.no - b.no);
+  list = list.filter(inDexClub);
+  if (dexTier !== 'all') list = list.filter((p) => p.tier === dexTier);
+  if (dexOwnedOnly) list = list.filter((p) => collection[p.id]);
+  const grid = $('#dexGrid');
+  if (!list.length) { grid.innerHTML = '<div class="dex-none">아직 모은 카드가 없어요. 팩을 열어보세요!</div>'; return; }
+  grid.innerHTML = list.map((p) => {
+    const cnt = collection[p.id];
+    if (cnt) return `<div class="dex-cell" data-id="${esc(p.id)}"><div class="card3d">${frontHTML(p).replaceAll('<img class="cf-', '<img loading="lazy" class="cf-')}</div>${cnt > 1 ? `<span class="cnt">×${cnt}</span>` : ''}</div>`;
+    return `<div class="dex-cell locked" data-id="${esc(p.id)}"><div class="dex-empty"><span class="club">${esc(clubOf(p)[0])}</span><img loading="lazy" src="/${esc(p.photo)}" alt=""><span class="q">?</span><span class="no">#${String(p.no).padStart(3, '0')}</span></div></div>`;
+  }).join('');
+  grid.scrollTop = 0;
+}
+$('#dex').addEventListener('click', openDex);
+$('#dexClose').addEventListener('click', closeDex);
+$('#dexChips').addEventListener('click', (e) => {
+  const b = e.target.closest('.dex-chip[data-k]'); if (!b) return;
+  dexTier = b.dataset.k; renderDexChips(); renderDex();
+});
+$('#dexChips').addEventListener('change', (e) => { if (e.target.id === 'ownedOnly') { dexOwnedOnly = e.target.checked; renderDex(); } });
+$('#clubBtn').addEventListener('click', () => { $('#clubPanel').classList.toggle('open'); renderDexChips(); });
+$('#clubPanel').addEventListener('click', (e) => {
+  const b = e.target.closest('.club-opt'); if (!b) return;
+  dexClub = b.dataset.c; $('#clubPanel').classList.remove('open'); renderDexChips(); renderDex();
+});
+// 목록 밖을 누르면 클럽 목록 닫기
+dexView.addEventListener('pointerdown', (e) => {
+  if (!e.target.closest('#clubPanel, #clubBtn') && $('#clubPanel').classList.contains('open')) { $('#clubPanel').classList.remove('open'); renderDexChips(); }
+});
+$('#dexGrid').addEventListener('click', (e) => {
+  const cell = e.target.closest('.dex-cell'); if (!cell) return;
+  const p = PLAYERS.find((x) => x.id === cell.dataset.id); if (!p) return;
+  if (cell.classList.contains('locked')) { cell.classList.remove('shake'); void cell.offsetWidth; cell.classList.add('shake'); return; }
+  openInspect(p, true);
+});
+
+// ---------- flow ----------
+
+const PACK_COST = 100, MULTI_COST = 500, MULTI_PACKS = 5;
+const GUIDE_FLAG = '__cardGuide';
+let multi = null;     // { n, total, pulls } 5팩 진행 중
+let packPaid = false; // 지금 팩 값을 냈는지 (뜯기 시작할 때 낸다)
+const balance = () => (window.FSPoints ? FSPoints.balance() : 0);
+function refreshPts(gain) {
+  $('#ptsBal').textContent = balance().toLocaleString();
+  const free = window.FSPoints ? FSPoints.freePacksLeft() : 0;
+  $('#freeCount').textContent = `FREE ${free}`;
+  $('#freeCount').style.display = free > 0 && phase !== 'summary' ? 'block' : 'none';
+  if (gain) { const el = $('#pts'); el.classList.remove('gain'); void el.offsetWidth; el.classList.add('gain'); }
+  updatePackUI();
+}
+function denyPts() {
+  const el = $('#pts'); el.classList.remove('deny'); void el.offsetWidth; el.classList.add('deny');
+  Sfx.init(); Sfx.deny(); buzz([20, 40, 20]);
+}
+function updatePackUI() {
+  const bal = balance();
+  $('#multiBtn').style.display = phase === 'pack' && !packPaid && !multi && bal >= MULTI_COST ? 'block' : 'none';
+  $('#againMulti').style.display = bal >= MULTI_COST ? '' : 'none';
+  const pc = $('#packCount');
+  pc.style.display = multi && phase !== 'summary' ? 'block' : 'none';
+  if (multi) pc.textContent = `${multi.n} / ${multi.total}`;
+}
+function beginMulti(withCurrent) {
+  if (!window.FSPoints || !FSPoints.spend('card', MULTI_COST, `${MULTI_PACKS}팩`)) { denyPts(); return false; }
+  const packs = Array.from({ length: MULTI_PACKS }, (_, i) => (i === 0 && withCurrent ? pulls : rollPack()));
+  multi = { n: 1, total: MULTI_PACKS, pulls: [], packs };
+  commitPulls(packs.flat(), MULTI_PACKS);
+  packPaid = true;
+  refreshPts();
+  return true;
+}
+// 개봉 수: 계정 요약 + 사이트 전체 통계(statsCounters, statsDaily)
+function packsOpened(n) {
+  if (window.FSPoints) FSPoints.countPacks(n);
+  if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) return;
+  import('https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js').then(async ({ initializeApp, getApps }) => {
+    const { getFirestore, doc, setDoc, increment } = await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js');
+    const app = getApps().find((a) => a.name === 'packs') || initializeApp({ projectId: 'guess-your-player', apiKey: 'AIzaSyA8SG_LbHeqS9gh0CLFaHUhEI1uG1uYLDY', appId: '1:1068776442781:web:433981863e0c3da178bd74' }, 'packs');
+    const db = getFirestore(app), day = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
+    await Promise.all([
+      setDoc(doc(db, 'statsCounters', 'totals'), { 'card-pack': increment(n) }, { merge: true }),
+      setDoc(doc(db, 'statsDaily', day), { 'card-pack': increment(n) }, { merge: true }),
+    ]);
+  }).catch((e) => console.warn('pack stats failed', e));
+}
+$('#multiBtn').addEventListener('click', () => { Sfx.init(); if (beginMulti(true)) { Sfx.coin(); skipBtn.style.display = 'flex'; } });
+window.addEventListener('fs-sync', () => refreshPts());
+
+async function startPack() {
+  phase = 'pack';
+  packPaid = !!multi;
+  skipBtn.style.display = multi ? 'flex' : 'none';
+  updatePackUI();
+  $('#pedestal').style.opacity = 1;
+  pulls = multi ? multi.packs[multi.n - 1] : rollPack();
+  buildStack();
+  // 팩 표지 얼굴은 선수만 (감독 컷아웃은 전신이라 얼굴 자리에 안 맞는다)
+  const heroes = POOL.legend.filter((p) => !p.coach).sort(() => Math.random() - .5).slice(0, 3);
+  const imgs = await Promise.all(heroes.map((h) => loadImg('/' + h.photo)));
+  await Pack3D.newPack(imgs, CARD_BACK, {
+    // 뜯는 선 안내는 계정마다 첫 팩에만
+    guide: !(window.FSPoints && FSPoints.getFlag(GUIDE_FLAG)),
+    beforeTear() {
+      if (packPaid) return true;
+      if (window.FSPoints && (FSPoints.useFreePack() || FSPoints.spend('card', PACK_COST, '1팩'))) {
+        packPaid = true; commitPulls(pulls, 1); refreshPts(); return true;
+      }
+      denyPts();
+      return false;
+    },
+    glow: GLOW[bestOf(pulls).tier] || null,
+    onDrop() { cardGlow(bestOf(pulls).tier, 900); },
+    onTorn() { if (window.FSPoints) FSPoints.setFlag(GUIDE_FLAG); updatePackUI(); },
+  });
+  // 3D 카드가 DOM 카드 자리와 정확히 겹친 순간 교체
+  stackEl.classList.add('fresh'); stackEl.classList.remove('hidden');
+  Pack3D.stop();
+  requestAnimationFrame(() => requestAnimationFrame(() => stackEl.classList.remove('fresh')));
+  phase = 'reveal'; cur = 0; layoutStack(); prepareTop();
+  skipBtn.style.display = 'flex';
+  updatePackUI();
+}
+
+(() => {
+  const box = $('#sparkles');
+  for (let i = 0; i < 18; i++) {
+    const el = document.createElement('i');
+    el.style.left = Math.random() * 100 + '%'; el.style.top = 40 + Math.random() * 60 + '%';
+    const sz = 3 + Math.random() * 5; el.style.width = el.style.height = sz + 'px';
+    el.style.animationDuration = 6 + Math.random() * 8 + 's'; el.style.animationDelay = -Math.random() * 14 + 's';
+    box.appendChild(el);
+  }
+})();
+
+(async () => {
+  try {
+    await Promise.all(['86px Anton', 'italic 800 40px "Barlow Condensed"', '700 24px "Barlow Condensed"', '800 40px "Gothic A1"', '700 26px "Gothic A1"'].map((f) => document.fonts.load(f)));
+  } catch (e) {}
+  CARD_BACK = drawCardBack();
+  BACK_URL = CARD_BACK.toDataURL('image/png');
+  const [d, ic, rt, co, ex] = await Promise.all(['/data/captcha_players.json', '/card/icons.json', '/card/ratings.json', '/card/coaches.json', '/card/extra_players.json'].map((u) => fetch(u).then((r) => r.json()).catch(() => null)));
+  if (!d) { $('#loading').textContent = '선수 데이터를 불러오지 못했어요'; return; }
+  const ratings = rt?.ratings || {};
+  // 카드팩 전용 베테랑(card/extra_players.json): 몸값 상위 20명 컷에 걸려 빠진 유명 선수, OVR은 파일 안에
+  PLAYERS = [...d.players, ...(ex?.players || [])].filter((p) => p.photo && p.transferValue);
+  PLAYERS.forEach((p) => { p.ovr = ratings[p.id] || p.ovr || Math.min(80, ovrOf(p.transferValue)); p.tier = tierOf(p.ovr); });
+  PLAYERS.sort((a, b) => b.ovr - a.ovr || b.transferValue - a.transferValue);
+  PLAYERS.forEach((p, i) => { p.no = i + 1; POOL[p.tier].push(p); });
+  // 아이콘(은퇴·변방 리그 레전드): 따로 아이콘 등급
+  ICON_LIST = (ic?.players || []).map((p) => ({ ...p, icon: true, tier: 'icon' }));
+  enableIcons();
+  addCoaches(co?.coaches || []);
+  $('#loading').remove();
+  updateDex();
+  fillForAdmin();
+  refreshPts();
+  try { Sfx.muted = localStorage.getItem('cardMuted') === '1'; } catch (e) {}
+  $('#mute').classList.toggle('muted', !!Sfx.muted);
+  $('#mute').addEventListener('click', () => {
+    Sfx.setMuted(!Sfx.muted);
+    $('#mute').classList.toggle('muted', Sfx.muted);
+    try { localStorage.setItem('cardMuted', Sfx.muted ? '1' : '0'); } catch (e) {}
+  });
+  startPack();
+})();
+</script>
+</body>
+</html>

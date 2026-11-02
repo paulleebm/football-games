@@ -1,0 +1,88 @@
+{
+  "coordinateSystem": "Original source pixels; xyxy rectangle, right and bottom exclusive. Suggested head/neck/upper-shoulder crop before deterministic masking/padding. Do not stretch aspect ratio.",
+  "method": "Visual inspection of all original photos, dimensions read from System.Drawing without editing image bytes.",
+  "players": [
+    {
+      "id": "david-luiz",
+      "sourceWidth": 648,
+      "sourceHeight": 690,
+      "crop": [
+        0,
+        5,
+        648,
+        555
+      ],
+      "qualityNotes": [
+        "Full curly hair is visible. Thin flyaway hair reaches near top and far left; preserve those edges.",
+        "Other people occupy background behind shoulders and hair; ensure only foreground person selected.",
+        "Source crop already cuts lower shoulder edges; after extraction crop upper chest at555."
+      ]
+    },
+    {
+      "id": "camavinga",
+      "sourceWidth": 2049,
+      "sourceHeight": 2974,
+      "crop": [
+        160,
+        80,
+        2049,
+        1730
+      ],
+      "qualityNotes": [
+        "Full tied dreadlocks visible. Source is three-quarter toward left; deterministic extraction must preserve exact nose silhouette.",
+        "Background contains other faces and cars; isolate the foremost footballer.",
+        "Very low top hair pixels around180; y80 provides safety. Body below1730 can be dropped."
+      ]
+    },
+    {
+      "id": "kounde",
+      "sourceWidth": 1582,
+      "sourceHeight": 2372,
+      "crop": [
+        0,
+        35,
+        1582,
+        1540
+      ],
+      "qualityNotes": [
+        "Full swept-back textured top and rightward dreadlocks visible.",
+        "Main subject well separated from blurred background; small background hand intrudes bottom-left, outside suggested upper crop subject.",
+        "Head and neck source angle should remain; trim jersey lower chest."
+      ]
+    },
+    {
+      "id": "xavi_simons",
+      "sourceWidth": 1052,
+      "sourceHeight": 1599,
+      "crop": [
+        330,
+        65,
+        935,
+        635
+      ],
+      "qualityNotes": [
+        "Source is action photo with smaller head; this crop retains all braids and head with upper shoulders.",
+        "Braids extend to right of head aroundx790; complete hair safely inside crop.",
+        "Arms and body below635 excluded. Cropping shoulders at side boundaries is expected headshot framing.",
+        "Lower face and braids source detail is comparatively soft; adequate for silhouette contour."
+      ]
+    },
+    {
+      "id": "son",
+      "sourceWidth": 1753,
+      "sourceHeight": 2372,
+      "crop": [
+        130,
+        15,
+        1720,
+        1935
+      ],
+      "qualityNotes": [
+        "Full parted hair, head tilt and both ears visible.",
+        "Trophy enters at original bottom-left aroundx0-100; cropx130 helps exclude it, but verify mask doesn't retain it.",
+        "Do not straighten tilted head. The neck is comparatively long in this source; preserve rather than invent shoulders.",
+        "Some very faint top flyaways extend to y15; may be omitted by segmentation without changing recognisable hair bulk."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "id": "cucurella",
+  "sourcePath": "sources/cucurella.jpg",
+  "outputPath": "silhouettes/cucurella.png",
+  "mode": "built-in image_gen",
+  "actualGeneratedPath": "C:\\Users\\BYMILE\\.codex\\generated_images\\01a091f4-afa8-7721-8316-56bb09b72de0\\exec-f6672c69-f143-473e-98a1-ccc3a4b83e0a.png",
+  "prompt": "Use case: background-extraction / identity-preserve.\nAsset type: source-faithful footballer silhouette quiz image.\nThe attached photo is the EDIT TARGET, not a style reference. Extract ONLY the main footballer into a completely solid opaque pure black (#000000) silhouette on a perfectly plain pure white (#FFFFFF) background. Preserve this exact individual's photographed outside contour, head angle, hair volume, curls/braids/ponytail, ears, nose/chin profile and neck. Do not invent a new portrait, change identity, change hairstyle, beautify, mirror or rotate the head.\nAll parts INSIDE the person's silhouette, including the face, eyes, teeth, mouth, beard, neck and clothes, must be uniformly opaque black with NO facial details, NO white eye/mouth holes, NO clothing lines, NO highlights, NO shading, NO texture. White gaps genuinely OUTSIDE the body or between loose curls/braids may remain. Retain the actual hair edge shape without exaggeration. Remove every background element and all other people/objects.\nSquare 1024 x 1024 composition. Use a head-and-upper-shoulders crop of this source, including the FULL hairstyle and neck, with around 8 percent white margin above the highest hair. Center the subject horizontally. Upper shoulders finish at the bottom edge. Preserve the natural head/neck proportions. No text, names, numbers, labels, watermark, border, gradient, shadow or decorative elements. Clean accurate outer edges, antialiasing only along the outer boundary. Return ONE finished silhouette image.",
+  "visualQa": "solid silhouette has no internal face or clothing details. Full hairstyle contained. Generative contour differences from source observed; not an exact pixel mask.",
+  "sourceFaithfulness": "Approximate contour; review before adopting."
+}

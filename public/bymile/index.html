@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>플레이 로그</title>
+<style>
+  :root {
+    --bg: #fff6ec; --panel: #ffffff; --border: #ffd9a8; --text: #4a3b31; --muted: #b08968; --accent: #ff8fab;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: -apple-system, "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    background: var(--bg); color: var(--text); padding: 24px 16px 60px;
+  }
+  .wrap { max-width: 1800px; margin: 0 auto; padding: 0 16px; }
+  h1 { font-size: 20px; margin: 0 0 4px; color: #ff6f91; }
+  .sub { color: var(--muted); font-size: 13px; margin-bottom: 18px; }
+  .toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
+  .toolbar button {
+    padding: 8px 14px; border-radius: 999px; border: 2px solid var(--border); background: var(--panel);
+    color: var(--text); font-size: 13px; cursor: pointer; font-weight: 600;
+  }
+  .toolbar button:disabled { opacity: 0.6; cursor: default; }
+  .toolbar .updated-label { color: var(--muted); font-size: 12px; }
+  .toolbar .count { color: var(--muted); font-size: 13px; margin-left: auto; }
+
+  .tabs { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+  .tab-btn {
+    padding: 8px 16px; border-radius: 999px; border: 2px solid var(--border); background: var(--panel);
+    color: var(--muted); font-size: 13px; font-weight: 700; cursor: pointer;
+  }
+  .tab-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+  .tab-panel[hidden] { display: none; }
+
+  h2.section-title { font-size: 15px; margin: 0 0 10px; color: var(--text); }
+
+  .stats-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 24px;
+  }
+  .stat-card {
+    background: var(--panel); border: 2px solid var(--border); border-radius: 12px; padding: 12px 14px;
+  }
+  .stat-card .label { font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 6px; }
+  .stat-card .nums { display: flex; align-items: baseline; gap: 6px; }
+  .stat-card .total { font-size: 20px; font-weight: 800; color: var(--text); }
+  .stat-card .total .unit { font-size: 12px; font-weight: 600; color: var(--muted); margin-left: 2px; }
+  .stat-card .recent { font-size: 12px; color: var(--accent); font-weight: 700; }
+  .stat-card.grand { border-color: var(--accent); background: #fff0f5; }
+
+  table { width: 100%; border-collapse: collapse; background: var(--panel); border-radius: 12px; overflow: hidden; }
+  th, td { padding: 9px 12px; text-align: left; font-size: 13px; border-bottom: 1px solid var(--border); }
+  th { background: #fff0dc; color: var(--muted); font-weight: 700; }
+  tr:last-child td { border-bottom: none; }
+
+  .game-tag {
+    display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 700; color: white;
+    white-space: nowrap;
+  }
+  .game-tag.player-guess { background: var(--accent); }
+  .game-tag.silhouette-guess { background: #b3a3f5; }
+  .game-tag.challenge { background: #7a5cff; }
+  .game-tag.records-guess-player { background: #f0a500; }
+  .game-tag.records-guess-team { background: #c47f00; }
+  .game-tag.big6-yahtzee { background: #8b5cf6; }
+  .game-tag.captcha-speedrun { background: #22a6b3; }
+  .game-tag.connect { background: #ff7b72; }
+  .game-tag.blackjack { background: #caa23c; }
+  .game-tag.bobble { background: #2dbb78; }
+  .game-tag.bobble-online { background: #1d8a56; }
+  .game-tag.ballon-jelly { background: #ffcf3a; }
+  .game-tag.ballon-jelly-hard { background: #e0a91f; }
+  .game-tag.gogun { background: #d0102a; }
+  .game-tag.penalty { background: #ff4fa3; }
+  .game-tag.penalty-online { background: #b0124f; }
+  .game-tag.heading { background: #ff8a1f; }
+  .game-tag.scramble { background: #4f7cf0; }
+  .game-tag.unknown { background: #b08968; }
+
+  .loading, .empty { text-align: center; color: var(--muted); padding: 40px 0; }
+
+  .lb-toolbar { margin-top: 4px; }
+  .danger-btn {
+    padding: 8px 14px; border-radius: 999px; border: 2px solid #ff6b6b; background: #fff0f0;
+    color: #d9364f; font-size: 13px; font-weight: 700; cursor: pointer;
+  }
+  .danger-btn:hover { background: #ff6b6b; color: white; }
+  .danger-btn:disabled { opacity: 0.6; cursor: default; background: #fff0f0; color: #d9364f; }
+
+  .stat-card.has-lb { cursor: pointer; transition: border-color 0.12s, transform 0.12s; }
+  .stat-card.has-lb:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .stat-card .lb-hint { margin-top: 6px; font-size: 11px; font-weight: 700; color: var(--muted); }
+  .stat-card.has-lb:hover .lb-hint { color: var(--accent); }
+
+  /* 모달 (리더보드 · 계정 포인트 내역 공용) */
+  .modal-back { position: fixed; inset: 0; background: rgba(74, 59, 49, 0.45); display: flex; align-items: flex-start; justify-content: center; padding: 40px 16px; z-index: 50; overflow-y: auto; }
+  .modal-back[hidden] { display: none; }
+  .modal { background: var(--bg); border: 2px solid var(--border); border-radius: 16px; width: 100%; max-width: 640px; padding: 18px 20px 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.18); }
+  .modal.wide { max-width: 1200px; }
+  .modal-head { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 14px; }
+  .modal-head h3 { margin: 0; font-size: 17px; flex: 1; min-width: 0; word-break: break-all; }
+  .modal-head .modal-sub { display: block; margin-top: 4px; font-size: 12px; font-weight: 600; color: var(--muted); }
+  .modal-close { border: none; background: none; font-size: 22px; line-height: 1; color: var(--muted); cursor: pointer; padding: 0 4px; }
+  .modal-close:hover { color: var(--text); }
+  .modal .lb-block + .lb-block { margin-top: 18px; }
+  .lb-block-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .lb-block-head h4 { margin: 0; font-size: 14px; flex: 1; }
+  .modal .stats-grid { margin-bottom: 14px; }
+  .log-filter { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+  .log-filter button { padding: 5px 12px; border-radius: 999px; border: 2px solid var(--border); background: var(--panel); color: var(--muted); font-size: 12px; font-weight: 700; cursor: pointer; }
+  .log-filter button.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .log-table td, .log-table th { white-space: nowrap; }
+  .log-table td.num, .log-table th.num { text-align: right; }
+  .log-table td.pos { color: #1a8a49; font-weight: 700; }
+  .log-table td.neg { color: #d9364f; font-weight: 700; }
+  .log-table td.detail { white-space: normal; min-width: 160px; }
+  .acct-table tbody tr.clickable { cursor: pointer; }
+  .lb-reset-btn {
+    padding: 4px 10px; border-radius: 999px; border: 2px solid #ff6b6b; background: #fff0f0;
+    color: #d9364f; font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap; flex-shrink: 0;
+  }
+  .lb-reset-btn:hover { background: #ff6b6b; color: white; }
+  .lb-reset-btn:disabled { opacity: 0.6; cursor: default; background: #fff0f0; color: #d9364f; }
+  .lb-block th { white-space: nowrap; }
+  .lb-block .rank { width: 40px; font-weight: 700; color: var(--muted); }
+  .lb-block .nick { word-break: break-all; }
+  .lb-block .score { font-weight: 700; text-align: right; white-space: nowrap; }
+  .acct-table td.num, .acct-table th.num { text-align: right; white-space: nowrap; }
+  .acct-table td.uid { font-family: ui-monospace, Consolas, monospace; font-size: 12px; color: var(--muted); }
+  .kind { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; color: white; white-space: nowrap; }
+  .kind.google { background: #4285f4; }
+  .kind.anon { background: #b08968; }
+  .table-scroll { overflow-x: auto; border-radius: 12px; }
+  .stat-card.pack { border-color: #8b5cf6; background: #f5f0ff; }
+  .admin-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; padding: 10px 12px; background: var(--panel); border: 2px solid var(--border); border-radius: 12px; font-size: 13px; }
+  .admin-bar .who { flex: 1; min-width: 0; color: var(--muted); font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .admin-bar button, .grant-btn { padding: 6px 12px; border-radius: 999px; border: 2px solid var(--border); background: #fff; color: var(--text); font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+  .grant-btn { border-color: #22a55b; color: #1a8a49; }
+  .grant-btn:hover { background: #22a55b; color: #fff; }
+  .acct-table td.mail { font-size: 12px; white-space: nowrap; }
+  .acct-table td, .acct-table th { white-space: nowrap; }
+  .acct-table th.sortable { cursor: pointer; user-select: none; }
+  .acct-table th.sortable:hover { color: var(--text); }
+  .acct-table th.sorted { color: #ff6f91; }
+  .acct-table th .arrow { display: inline-block; width: 12px; font-size: 10px; margin-left: 2px; }
+  .acct-table td.pos { color: #1a8a49; }
+  .acct-table td.neg { color: #d9364f; }
+  .acct-table tbody tr:hover td { background: #fffaf3; }
+  #acctSearch { padding: 7px 12px; border-radius: 999px; border: 2px solid var(--border); font-size: 13px; min-width: 200px; }
+
+  /* ---------------------------------------------------------------- 📈 그래프 탭 */
+  .viz-root {
+    --surface-1: #ffffff; --ink-1: #4a3b31; --ink-2: #7a6553; --ink-muted: #b08968;
+    --grid: #f3e6d6; --axis: #e6cfb3; --bar: #f2648c; --bar-hover: #d9436f;
+    --series-1: #2a78d6; --series-2: #eb6834; --series-3: #1baf7a; --series-4: #eda100;
+    --series-5: #e87ba4; --series-6: #008300; --series-7: #6250d6; --series-8: #c4314b;
+    --series-9: #ff4fa3; --series-10: #ff8a1f; --series-11: #4f7cf0;
+    --up: #1a8a49; --down: #d9364f;
+  }
+  .viz-controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+  .seg { display: inline-flex; background: var(--panel); border: 2px solid var(--border); border-radius: 999px; padding: 2px; }
+  .seg button {
+    border: none; background: none; padding: 5px 11px; border-radius: 999px; font-size: 12px; font-weight: 700;
+    color: var(--muted); cursor: pointer; font-family: inherit;
+  }
+  .seg button.active { background: var(--accent); color: #fff; }
+  .seg button:disabled { opacity: 0.4; cursor: default; }
+  .viz-controls select {
+    padding: 6px 10px; border-radius: 999px; border: 2px solid var(--border); background: var(--panel);
+    color: var(--text); font-size: 12px; font-weight: 700; font-family: inherit; cursor: pointer;
+  }
+  .viz-card { background: var(--surface-1); border: 2px solid var(--border); border-radius: 16px; padding: 16px 18px; margin-bottom: 14px; min-width: 0; }
+  .viz-card h3 { margin: 0; font-size: 15px; color: var(--ink-1); }
+  .viz-card .viz-sub { font-size: 12px; color: var(--muted); font-weight: 600; margin-top: 2px; }
+  .viz-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 14px; }
+  .viz-grid .viz-card { margin-bottom: 0; }
+  .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; margin: 14px 0 6px; }
+  .kpi { background: #fffaf3; border-radius: 12px; padding: 10px 12px; }
+  .kpi .k-label { font-size: 11px; font-weight: 700; color: var(--muted); }
+  .kpi .k-val { font-size: 22px; font-weight: 800; color: var(--ink-1); margin-top: 2px; line-height: 1.15; }
+  .kpi .k-val .unit { font-size: 12px; font-weight: 600; color: var(--muted); margin-left: 2px; }
+  .kpi .k-foot { font-size: 11px; color: var(--ink-2); margin-top: 2px; }
+  .kpi .up { color: var(--up); } .kpi .down { color: var(--down); }
+  .viz-legend { display: flex; gap: 4px 12px; flex-wrap: wrap; font-size: 12px; color: var(--ink-2); margin: 8px 0 2px; }
+  .viz-legend span { display: inline-flex; align-items: center; gap: 5px; }
+  .viz-legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+  .viz-chart { position: relative; margin-top: 6px; }
+  .viz-chart svg { display: block; width: 100%; overflow: visible; }
+  .viz-chart text { font-family: inherit; }
+  .viz-tip {
+    position: absolute; pointer-events: none; background: #fff; border: 1px solid var(--border); border-radius: 10px;
+    padding: 8px 10px; font-size: 12px; color: var(--ink-1); box-shadow: 0 6px 20px rgba(74,59,49,0.15);
+    white-space: nowrap; z-index: 5; transform: translate(-50%, calc(-100% - 10px)); min-width: 110px;
+  }
+  .viz-tip[hidden] { display: none; }
+  .viz-tip .t-date { font-weight: 800; margin-bottom: 4px; }
+  .viz-tip .t-row { display: flex; align-items: center; gap: 6px; justify-content: space-between; }
+  .viz-tip .t-row b { font-variant-numeric: tabular-nums; }
+  .viz-tip .t-row i { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
+  .viz-tip .t-note { color: var(--muted); margin-top: 3px; font-size: 11px; }
+  .viz-link { border: none; background: none; color: var(--muted); font-size: 12px; font-weight: 700; cursor: pointer; padding: 4px 0; text-decoration: underline; }
+  .viz-table { margin-top: 10px; max-height: 320px; overflow: auto; border-radius: 10px; border: 1px solid var(--border); }
+  .viz-table table { border-radius: 0; }
+  .viz-table td.num, .viz-table th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .share-row { display: grid; grid-template-columns: minmax(110px, 150px) 1fr auto; gap: 10px; align-items: center; padding: 5px 0; cursor: pointer; border-radius: 8px; }
+  .share-row:hover .share-bar > div { background: var(--bar-hover); }
+  .share-row.sel .share-bar > div { background: var(--bar-hover); }
+  .share-row .game-tag { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+  .share-bar { height: 14px; background: #fff3ea; border-radius: 4px; overflow: hidden; }
+  .share-bar > div { height: 100%; background: var(--bar); border-radius: 0 4px 4px 0; min-width: 2px; transition: width .35s; }
+  .share-num { font-size: 12px; font-weight: 800; color: var(--ink-1); text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .share-num small { font-weight: 700; margin-left: 4px; }
+  .share-num small.up { color: var(--up); } .share-num small.down { color: var(--down); } .share-num small.flat { color: var(--muted); }
+  .viz-bar { transition: fill .12s; }
+  @media (max-width: 520px) {
+    .viz-grid { grid-template-columns: 1fr; }
+    .viz-card { padding: 14px 12px; }
+    .share-row { grid-template-columns: 100px 1fr auto; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🔒 플레이 로그</h1>
+  <div class="sub">종목별 플레이 판수와 리더보드 (판마다 개별 로그를 다시 훑지 않고, 누적 카운터만 읽어서 가볍게 표시)</div>
+  <div class="toolbar">
+    <button id="refreshBtn">새로고침</button>
+    <span class="updated-label" id="updatedLabel"></span>
+    <span class="count" id="countLabel"></span>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" type="button" data-tab="charts">📈 그래프</button>
+    <button class="tab-btn" type="button" data-tab="stats">📊 통계</button>
+    <button class="tab-btn" type="button" data-tab="accounts">👤 계정</button>
+  </div>
+
+  <div class="tab-panel viz-root" data-panel="charts">
+    <div class="viz-controls">
+      <div class="seg" id="vizRange"></div>
+      <select id="vizTarget" aria-label="볼 대상"></select>
+      <div class="seg" id="vizForm"></div>
+    </div>
+    <div class="viz-card">
+      <h3 id="vizTitle"></h3>
+      <div class="viz-sub" id="vizSub"></div>
+      <div class="kpi-row" id="vizKpis"></div>
+      <div class="viz-legend" id="vizLegend"></div>
+      <div class="viz-chart" id="vizChart"></div>
+      <button class="viz-link" id="vizTableBtn" type="button">표로 보기</button>
+      <div id="vizTable"></div>
+    </div>
+    <div class="viz-grid">
+      <div class="viz-card">
+        <h3>📅 요일별 평균</h3>
+        <div class="viz-sub" id="vizWeekSub"></div>
+        <div class="viz-chart" id="vizWeek"></div>
+      </div>
+      <div class="viz-card">
+        <h3>🏅 종목 순위</h3>
+        <div class="viz-sub" id="vizShareSub"></div>
+        <div id="vizShare" style="margin-top:10px"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-panel" data-panel="stats" hidden>
+    <h2 class="section-title">📊 종목별 통계 <span class="sub">· 🏆 표시된 종목을 누르면 순위표</span></h2>
+    <div class="stats-grid" id="statsGrid"><div class="loading">불러오는 중…</div></div>
+    <div class="lb-toolbar">
+      <button id="resetAllBtn" class="danger-btn" type="button">⚠️ 모든 리더보드 초기화</button>
+    </div>
+  </div>
+
+  <div class="tab-panel" data-panel="accounts" hidden>
+    <h2 class="section-title">👤 계정 현황</h2>
+    <div class="stats-grid" id="acctSummary"><div class="loading">불러오는 중…</div></div>
+    <div class="admin-bar">
+      <span class="who" id="adminWho">관리자 로그인 전</span>
+      <input id="acctSearch" placeholder="이메일·이름·UID로 찾기" hidden>
+      <button id="adminBtn" type="button">구글로 관리자 로그인</button>
+    </div>
+    <h2 class="section-title">계정별 상세 (표는 보유 포인트 상위 500개 · 위 합계는 전체 계정 · 열 제목을 누르면 정렬)</h2>
+    <div class="table-scroll"><table class="acct-table" id="acctTable"></table></div>
+  </div>
+</div>
+
+<div class="modal-back" id="modalBack" hidden>
+  <div class="modal" id="modal" role="dialog" aria-modal="true">
+    <div class="modal-head"><h3 id="modalTitle"></h3><button class="modal-close" id="modalClose" type="button" aria-label="닫기">×</button></div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<script src="/points.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import {
+  getFirestore, doc, getDoc, collection, query, orderBy, limit, getDocs, deleteDoc, addDoc, serverTimestamp, where, documentId,
+  getAggregateFromServer, count, sum
+} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+
+const FIREBASE_CONFIG = {
+  projectId: "guess-your-player",
+  appId: "1:1068776442781:web:433981863e0c3da178bd74",
+  storageBucket: "guess-your-player.firebasestorage.app",
+  apiKey: "AIzaSyA8SG_LbHeqS9gh0CLFaHUhEI1uG1uYLDY",
+  authDomain: "guess-your-player.firebaseapp.com",
+  messagingSenderId: "1068776442781",
+};
+const app = initializeApp(FIREBASE_CONFIG);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+const CACHE_KEY = "bymileLogCacheV6";
+
+const GAME_ORDER = ["player-guess", "silhouette-guess", "challenge", "records-guess-player", "records-guess-team", "big6-yahtzee", "captcha-speedrun", "connect", "blackjack", "bobble", "bobble-online", "ballon-jelly", "ballon-jelly-hard", "gogun", "penalty", "penalty-online", "heading", "scramble"];
+const GAME_LABEL = {
+  "player-guess": "선수 맞히기",
+  "silhouette-guess": "실루엣 맞히기", "challenge": "챌린지",
+  "records-guess-player": "기록 맞히기 (개인)", "records-guess-team": "기록 맞히기 (팀)",
+  "big6-yahtzee": "빅6 야찌",
+  "captcha-speedrun": "선수 CAPTCHA",
+  "connect": "커넥트",
+  "blackjack": "등번호 블랙잭",
+  "bobble": "알까기 축구 (CPU)",
+  "bobble-online": "알까기 축구 (온라인)",
+  "ballon-jelly": "발롱도르 만들기 (물복)",
+  "ballon-jelly-hard": "발롱도르 만들기 (딱복)",
+  "gogun": "고군분투",
+  "penalty": "승부차기 (CPU)",
+  "penalty-online": "승부차기 (온라인)",
+  "heading": "헤딩 연습",
+  "scramble": "이름 뒤죽박죽",
+};
+
+function todayKeyKST() {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul" }).format(new Date());
+}
+
+const LEADERBOARDS = [
+  {
+    title: "🎯 선수 맞히기 (힌트 최소)", game: "player-guess", path: ["guessLeaderboard", "streak", "entries"],
+    orderFields: [{ field: "hintsUsed", order: "asc" }], formatScore: r => `${r.hintsUsed} 힌트`,
+  },
+  {
+    title: "🏆 챌린지 (정답 최다)", game: "challenge", path: ["challengeLeaderboard", "allTime", "entries"],
+    orderFields: [{ field: "correct", order: "desc" }], formatScore: r => `${r.correct}명`,
+  },
+  {
+    title: "🌑 실루엣 맞히기 (정답 최다)", game: "silhouette-guess", path: ["silhouetteLeaderboard", "allTime", "entries"],
+    orderFields: [{ field: "correct", order: "desc" }],
+    formatScore: r => `${r.correct}개`,
+  },
+  {
+    title: "🎲 빅6 야찌 (총점 최고)", game: "big6-yahtzee", path: ["big6Leaderboard", "allTime", "entries"],
+    orderFields: [{ field: "score", order: "desc" }], formatScore: r => `${r.score}점`,
+  },
+  {
+    title: "⚡ 선수 CAPTCHA (최단 시간)", game: "captcha-speedrun", path: ["captchaLeaderboard", "allTime", "entries"],
+    orderFields: [{ field: "elapsedMs", order: "asc" }],
+    formatScore: r => `${(r.elapsedMs / 1000).toFixed(3)}초`,
+    tieField: "elapsedMs",
+  },
+  {
+    // 다른 리더보드와 달리 "최고 기록"이 아니라 지금 이 순간의 코인 잔액이라
+    // 판마다 오르내린다 - 그래도 초기화 버튼으로 전체 기록을 지우는 건 동일하게 둔다.
+    title: "🃏 등번호 블랙잭 (순이익)", game: "blackjack", path: ["blackjackLeaderboard", "live", "entries"],
+    orderFields: [{ field: "coins", order: "desc" }], formatScore: r => `+${r.coins}P`,
+  },
+  {
+    title: "🏆 발롱도르 만들기 · 물복 (점수 최고)", game: "ballon-jelly", path: ["jellyLeaderboard", "allTime", "entries"],
+    orderFields: [{ field: "score", order: "desc" }], formatScore: r => `${r.score}점`,
+  },
+  {
+    title: "🏆 발롱도르 만들기 · 딱복 (점수 최고)", game: "ballon-jelly-hard", path: ["jellyLeaderboard", "hard", "entries"],
+    orderFields: [{ field: "score", order: "desc" }], formatScore: r => `${r.score}점`,
+  },
+  {
+    title: "🏃 고군분투 (점수 최고)", game: "gogun", path: ["gogunLeaderboard", "allTime", "entries"],
+    orderFields: [{ field: "score", order: "desc" }], formatScore: r => `${r.score}점 · ${r.stage}단계`,
+  },
+  {
+    // score = 도달 단계×100만 + 넣은 골×1000 + (999 - 먹힌 골) (penalty/rank.js)
+    title: "⚽ 승부차기 월드컵 (최고 성적)", game: "penalty", path: ["pkCupLeaderboard", "allTime", "entries"],
+    orderFields: [{ field: "score", order: "desc" }],
+    formatScore: r => `${["", "32강", "16강", "8강", "4강", "준우승", "우승"][r.stage] || r.stage + "단계"} · ${r.gf}득점 ${r.ga}실점`,
+    tieField: "score",
+  },
+  {
+    title: "🙆 헤딩 연습 (배달 최다)", game: "heading", path: ["headingLeaderboard", "allTime", "entries"],
+    orderFields: [{ field: "delivered", order: "desc" }], formatScore: r => `${r.delivered}개`,
+    tieField: "delivered",
+  },
+];
+
+function medal(i) {
+  return i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : String(i + 1);
+}
+
+function escapeHtml(s) {
+  return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+function gameLabel(game) {
+  return GAME_LABEL[game] || game || "알 수 없음";
+}
+
+function gameTagClass(game) {
+  return GAME_ORDER.includes(game) ? game : "unknown";
+}
+
+function loadCache() {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) {
+    console.error("cache load failed", e);
+    return null;
+  }
+}
+
+function saveCache(data) {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+  } catch (e) {
+    console.error("cache save failed", e);
+  }
+}
+
+// 종목별 총 판수/오늘 판수는 판마다 하나씩 쌓이는 playLogs를 매번 훑는 대신,
+// logPlay()가 매 판마다 같이 increment해두는 작은 카운터 문서 2개(statsCounters/totals,
+// statsDaily/{오늘 날짜})만 읽어서 계산한다 - 로그가 아무리 쌓여도 이 계산 자체는
+// 항상 문서 2개짜리 고정 크기라 느려지지 않는다.
+function computeStats(data) {
+  const perGameTotal = data.totals || {};
+  const perGameToday = data.today || {};
+  let grandTotal = 0;
+  let grandToday = 0;
+  for (const k of GAME_ORDER) {
+    grandTotal += perGameTotal[k] || 0;
+    grandToday += perGameToday[k] || 0;
+  }
+  return { grandTotal, grandToday, perGameTotal, perGameToday };
+}
+
+function renderStats(stats) {
+  const cards = GAME_ORDER.map(k => {
+    const total = stats.perGameTotal[k] || 0;
+    const today = stats.perGameToday[k] || 0;
+    const lbs = LEADERBOARDS.filter(cfg => cfg.game === k);
+    const top = lbs.length && lbData[lbs[0].title] && lbData[lbs[0].title][0];
+    return `
+      <div class="stat-card${lbs.length ? " has-lb" : ""}"${lbs.length ? ` data-game="${k}"` : ""}>
+        <div class="label"><span class="game-tag ${gameTagClass(k)}">${escapeHtml(gameLabel(k))}</span></div>
+        <div class="nums">
+          <div class="total">${total}<span class="unit">판</span></div>
+        </div>
+        <div class="recent">오늘 ${today}판</div>
+        ${lbs.length ? `<div class="lb-hint">🏆 ${top ? `1위 ${escapeHtml(top.nickname || "익명")} · ${escapeHtml(lbs[0].formatScore(top))}` : "순위 보기"}</div>` : ""}
+      </div>
+    `;
+  }).join("");
+
+  return `
+    <div class="stat-card grand">
+      <div class="label">전체 합계</div>
+      <div class="nums"><div class="total">${stats.grandTotal}<span class="unit">판</span></div></div>
+      <div class="recent">오늘 ${stats.grandToday}판</div>
+    </div>
+    ${cards}
+    <div class="stat-card pack">
+      <div class="label">🃏 카드팩 개봉</div>
+      <div class="nums"><div class="total">${stats.perGameTotal["card-pack"] || 0}<span class="unit">팩</span></div></div>
+      <div class="recent">오늘 ${stats.perGameToday["card-pack"] || 0}팩</div>
+    </div>
+  `;
+}
+
+// ---------------------------------------------------------------- 모달 (리더보드 · 계정 포인트 내역)
+// 지금 열려 있는 모달이 무엇인지 기억해 두고, 새로고침하면 같은 내용으로 다시 그린다
+let lbData = {}, lastStats = null, modalGame = null, modalAcct = null;
+function openModal(titleHtml, bodyHtml, wide = false) {
+  document.getElementById("modal").classList.toggle("wide", wide);
+  document.getElementById("modalTitle").innerHTML = titleHtml;
+  document.getElementById("modalBody").innerHTML = bodyHtml;
+  document.getElementById("modalBack").hidden = false;
+  document.body.style.overflow = "hidden";
+}
+function closeModal() {
+  document.getElementById("modalBack").hidden = true;
+  document.body.style.overflow = "";
+  modalGame = null; modalAcct = null;
+}
+
+function renderLeaderboardBlock(cfg) {
+  const rows = lbData[cfg.title] ?? null;
+  const resetBtnHtml = cfg.allowReset === false ? "" : `<button class="lb-reset-btn" type="button" data-lb-index="${LEADERBOARDS.indexOf(cfg)}">초기화</button>`;
+  const body = rows === null ? `<div class="empty">순위표를 불러오지 못했습니다.</div>` : `
+    <table>
+      <tr><th>순위</th><th>닉네임</th><th style="text-align:right">기록</th></tr>
+      ${rows.length ? rows.map((r, i) => `
+        <tr>
+          <td class="rank">${medal(cfg.tieField ? rows.findIndex(other => other[cfg.tieField] === r[cfg.tieField]) : i)}</td>
+          <td class="nick">${escapeHtml(r.nickname || "익명")}</td>
+          <td class="score">${escapeHtml(cfg.formatScore(r))}</td>
+        </tr>`).join("") : `<tr><td colspan="3" class="empty">아직 기록이 없습니다.</td></tr>`}
+    </table>`;
+  return `<div class="lb-block"><div class="lb-block-head"><h4>${cfg.title}</h4>${resetBtnHtml}</div>${body}</div>`;
+}
+
+function openLeaderboardModal(game) {
+  modalGame = game; modalAcct = null;
+  const total = lastStats ? lastStats.perGameTotal[game] || 0 : 0, today = lastStats ? lastStats.perGameToday[game] || 0 : 0;
+  openModal(
+    `<span class="game-tag ${gameTagClass(game)}">${escapeHtml(gameLabel(game))}</span><span class="modal-sub">총 ${fmt(total)}판 · 오늘 ${fmt(today)}판 · 순위표는 상위 20명</span>`,
+    LEADERBOARDS.filter(cfg => cfg.game === game).map(renderLeaderboardBlock).join("")
+  );
+  wireLbResetButtons();
+}
+
+function wireLbResetButtons() {
+  document.querySelectorAll(".lb-reset-btn").forEach(btn => {
+    btn.onclick = () => resetSingleLeaderboard(LEADERBOARDS[Number(btn.dataset.lbIndex)], btn);
+  });
+}
+
+// 계정 포인트 내역: users/{uid}에 동기화된 fs-points-v1을 그대로 읽는다 (관리자만 읽기 가능).
+// 내역은 기기에서 최근 500건까지만 남기므로(points.js MAX_LOG) 그보다 오래된 건 없다.
+const pointGameName = (g) => window.FSPoints ? window.FSPoints.gameName(g) : g;
+let acctLog = [], acctLogFilter = { kind: "all", game: "all" };
+async function openAccountModal(uid) {
+  modalAcct = uid; modalGame = null;
+  const r = (lastAccounts || []).find(a => a.id === uid) || { id: uid };
+  const title = `${r.linked ? `<span class="kind google">구글</span>` : `<span class="kind anon">익명</span>`} ${escapeHtml(names[uid] || emails[uid] || uid.slice(0, 8))}
+    <span class="modal-sub">${[emails[uid], uid].filter(Boolean).map(escapeHtml).join(" · ")}</span>`;
+  openModal(title, `<div class="loading">불러오는 중…</div>`, true);
+  if (!isAdmin) {
+    document.getElementById("modalBody").innerHTML = `<div class="empty">포인트 내역은 관리자 로그인 후에 볼 수 있습니다.</div>`;
+    return;
+  }
+  let p = null;
+  try {
+    const snap = await getDoc(doc(db, "users", uid));
+    const raw = snap.exists() ? (snap.data().data || {})["fs-points-v1"] : null;
+    p = raw ? JSON.parse(raw) : null;
+  } catch (e) {
+    console.error("points log", e);
+    if (modalAcct === uid) document.getElementById("modalBody").innerHTML = `<div class="empty">내역을 읽지 못했습니다. (${escapeHtml(e.code || e.message)})<br>firestore.rules의 users 읽기 권한에 관리자가 들어가 있는지, 배포됐는지 확인하세요.</div>`;
+    return;
+  }
+  if (modalAcct !== uid) return;
+  acctLog = p && Array.isArray(p.log) ? p.log.slice().reverse() : [];
+  acctLogFilter = { kind: "all", game: "all" };
+  renderAccountLog(p);
+}
+
+function renderAccountLog(p) {
+  const body = document.getElementById("modalBody");
+  if (!acctLog.length) { body.innerHTML = `<div class="empty">서버에 올라온 포인트 내역이 없습니다.</div>`; return; }
+  const earned = acctLog.reduce((t, e) => t + (e.a > 0 ? e.a : 0), 0), spent = acctLog.reduce((t, e) => t + (e.a < 0 ? -e.a : 0), 0);
+  const first = acctLog[acctLog.length - 1].t, last = acctLog[0].t;
+  const card = (label, total, unit, recent = "") => `<div class="stat-card"><div class="label">${label}</div><div class="nums"><div class="total">${total}<span class="unit">${unit}</span></div></div>${recent ? `<div class="recent">${recent}</div>` : ""}</div>`;
+  // 종목별 건수·합계 (많이 번 종목부터)
+  const byGame = {};
+  acctLog.forEach(e => { const g = byGame[e.g] || (byGame[e.g] = { n: 0, sum: 0 }); g.n++; g.sum += e.a; });
+  const games = Object.keys(byGame).sort((a, b) => byGame[b].sum - byGame[a].sum);
+  const btn = (attr, val, label) => `<button type="button" data-${attr}="${escapeHtml(val)}" class="${acctLogFilter[attr] === val ? "active" : ""}">${label}</button>`;
+  const rows = acctLog.filter(e => (acctLogFilter.kind === "all" || (acctLogFilter.kind === "earn" ? e.a > 0 : e.a < 0))
+    && (acctLogFilter.game === "all" || e.g === acctLogFilter.game));
+  body.innerHTML = `
+    <div class="stats-grid">
+      ${card("현재 보유", fmt(p && p.bal), "P")}
+      ${card("내역 건수", fmt(acctLog.length), "건", `${fullTime(first)} ~`)}
+      ${card("내역 속 획득", fmt(earned), "P", `${acctLog.filter(e => e.a > 0).length}건`)}
+      ${card("내역 속 사용", fmt(spent), "P", `${acctLog.filter(e => e.a < 0).length}건`)}
+      ${card("마지막 변동", ago(last, Date.now()), "", fullTime(last))}
+    </div>
+    <div class="log-filter">${btn("kind", "all", "전체")}${btn("kind", "earn", "획득만")}${btn("kind", "spend", "사용만")}</div>
+    <div class="log-filter">${btn("game", "all", `모든 종목 (${acctLog.length})`)}${games.map(g => btn("game", g, `${escapeHtml(pointGameName(g))} ${byGame[g].sum > 0 ? "+" : ""}${fmt(byGame[g].sum)}P (${byGame[g].n})`)).join("")}</div>
+    <div class="table-scroll"><table class="log-table">
+      <thead><tr><th>#</th><th>시간</th><th>종목</th><th>내용</th><th class="num">변동</th><th class="num">잔액</th></tr></thead>
+      <tbody>${rows.length ? rows.map((e, i) => `<tr>
+        <td>${i + 1}</td>
+        <td>${fullTime(e.t)}</td>
+        <td>${escapeHtml(pointGameName(e.g))}</td>
+        <td class="detail">${escapeHtml(e.d || "")}</td>
+        <td class="num ${e.a > 0 ? "pos" : e.a < 0 ? "neg" : ""}">${e.a > 0 ? "+" : ""}${fmt(e.a)}</td>
+        <td class="num">${fmt(e.b)}</td>
+      </tr>`).join("") : `<tr><td colspan="6" class="empty">조건에 맞는 내역이 없습니다.</td></tr>`}</tbody>
+    </table></div>
+    <div class="sub" style="margin:10px 0 0">내역은 각 기기에 최근 500건까지만 남아서, 그보다 오래된 건 보이지 않습니다.</div>`;
+  body.querySelectorAll(".log-filter button").forEach(b => {
+    b.onclick = () => {
+      if (b.dataset.kind) acctLogFilter.kind = b.dataset.kind; else acctLogFilter.game = b.dataset.game;
+      renderAccountLog(p);
+    };
+  });
+}
+
+// 카드 하나가 실패해도(예: 새 복합 색인이 아직 빌드 중) 나머지 카드는 그대로
+// 보여줘야 하므로 개별로 잡아서 실패한 항목만 null로 표시한다.
+async function fetchAllLeaderboards() {
+  const result = {};
+  await Promise.all(LEADERBOARDS.map(async cfg => {
+    try {
+      const q = query(collection(db, ...cfg.path), ...cfg.orderFields.map(o => orderBy(o.field, o.order)), limit(20));
+      const snap = await getDocs(q);
+      result[cfg.title] = snap.docs.map(d => d.data());
+    } catch (e) {
+      console.error(cfg.title, e);
+      result[cfg.title] = null;
+    }
+  }));
+  return result;
+}
+
+function updateUpdatedLabel(ms) {
+  const label = document.getElementById("updatedLabel");
+  if (!label) return;
+  label.textContent = ms ? `마지막 갱신: ${new Date(ms).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })}` : "";
+}
+
+// 계정 요약(accountStats)은 sync.js가 계정마다 하나씩 쓴다: 구글 연동 여부, 포인트, 카드팩 개봉 수
+const fmt = (n) => Number(n || 0).toLocaleString("ko-KR");
+function renderAccounts(rows) {
+  lastAccounts = rows;
+  const sumEl = document.getElementById("acctSummary"), table = document.getElementById("acctTable");
+  if (rows === null) { sumEl.innerHTML = `<div class="empty">계정 정보를 불러오지 못했습니다.</div>`; table.innerHTML = ""; return; }
+  const today = todayKeyKST();
+  const dayOf = (r) => r.lastSeen ? new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul" }).format(new Date(r.lastSeen)) : "";
+  // 요약 숫자는 표(상위 500개)가 아니라 서버 집계로 전체 계정을 센다. 집계를 못 받았으면 표 기준.
+  const t = acctTotals || {
+    total: rows.length, linked: rows.filter(r => r.linked).length, today: rows.filter(r => dayOf(r) === today).length,
+    bal: rows.reduce((a, r) => a + (r.bal || 0), 0), earned: rows.reduce((a, r) => a + (r.earned || 0), 0),
+    spent: rows.reduce((a, r) => a + (r.spent || 0), 0), packs: rows.reduce((a, r) => a + (r.packs || 0), 0),
+  };
+  const card = (label, total, unit, recent = "") => `
+    <div class="stat-card"><div class="label">${label}</div>
+      <div class="nums"><div class="total">${total}<span class="unit">${unit}</span></div></div>
+      ${recent ? `<div class="recent">${recent}</div>` : ""}</div>`;
+  sumEl.innerHTML = [
+    `<div class="stat-card grand"><div class="label">전체 계정</div><div class="nums"><div class="total">${fmt(t.total)}<span class="unit">개</span></div></div><div class="recent">오늘 접속 ${fmt(t.today)}</div></div>`,
+    card("구글 연동", fmt(t.linked), "개", `${t.total ? Math.round(t.linked / t.total * 100) : 0}%`),
+    card("익명", fmt(t.total - t.linked), "개"),
+    card("보유 포인트 합계", fmt(t.bal), "P"),
+    card("누적 획득 포인트", fmt(t.earned), "P", `사용 ${fmt(t.spent)}P`),
+    card("카드팩 개봉 (계정 합)", fmt(t.packs), "팩"),
+  ].join("");
+  const q = (document.getElementById("acctSearch").value || "").trim().toLowerCase();
+  if (q) rows = rows.filter(r => `${emails[r.id] || ""} ${names[r.id] || ""} ${r.id}`.toLowerCase().includes(q));
+  const cols = ACCT_COLUMNS.filter(c => !c.admin || isAdmin);
+  const sortCol = cols.find(c => c.key === acctSort.key) || cols.find(c => c.key === "bal");
+  const dir = acctSort.dir === "asc" ? 1 : -1;
+  // 값이 없는 칸은 오름/내림 상관없이 항상 맨 아래로
+  rows = rows.slice().sort((a, b) => {
+    const va = sortCol.value(a), vb = sortCol.value(b);
+    const ea = va === null || va === undefined || va === "", eb = vb === null || vb === undefined || vb === "";
+    if (ea || eb) return ea === eb ? 0 : ea ? 1 : -1;
+    return (typeof va === "string" ? va.localeCompare(vb, "ko") : va - vb) * dir;
+  });
+  const now = Date.now();
+  const head = `<thead><tr><th>#</th>${cols.map(c => {
+    const sorted = c.key === sortCol.key;
+    const arrow = sorted ? (acctSort.dir === "asc" ? "▲" : "▼") : "";
+    return `<th class="sortable${c.num ? " num" : ""}${sorted ? " sorted" : ""}" data-sort="${c.key}" title="${escapeHtml(c.tip || c.label)}">${c.label}<span class="arrow">${arrow}</span></th>`;
+  }).join("")}${isAdmin ? "<th></th>" : ""}</tr></thead>`;
+  const body = rows.length ? rows.map((r, i) => `<tr class="clickable" data-uid="${escapeHtml(r.id)}" title="누르면 포인트 내역"><td>${i + 1}</td>${cols.map(c => c.cell(r, now)).join("")}${isAdmin ? `<td><button class="grant-btn" type="button" data-uid="${escapeHtml(r.id)}">포인트 지급</button></td>` : ""}</tr>`).join("")
+    : `<tr><td colspan="${cols.length + 2}" class="empty">${q ? "검색 결과가 없습니다." : "아직 계정이 없습니다."}</td></tr>`;
+  table.innerHTML = head + `<tbody>${body}</tbody>`;
+  table.querySelectorAll("th.sortable").forEach(th => {
+    th.onclick = () => {
+      const key = th.dataset.sort;
+      const col = ACCT_COLUMNS.find(c => c.key === key);
+      // 같은 열을 다시 누르면 방향만 뒤집고, 새 열은 숫자/날짜면 큰 것부터, 글자면 가나다순부터
+      acctSort = acctSort.key === key ? { key, dir: acctSort.dir === "asc" ? "desc" : "asc" } : { key, dir: col.num || col.date ? "desc" : "asc" };
+      renderAccounts(lastAccounts);
+    };
+  });
+  table.querySelectorAll(".grant-btn").forEach(b => { b.onclick = (e) => { e.stopPropagation(); grantPoints(b.dataset.uid); }; });
+  table.querySelectorAll("tr.clickable").forEach(tr => { tr.onclick = () => openAccountModal(tr.dataset.uid); });
+}
+
+const fullTime = (ms) => new Date(ms).toLocaleString("ko-KR", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
+function ago(ms, now) {
+  const m = Math.floor((now - ms) / 60000);
+  if (m < 1) return "방금";
+  if (m < 60) return `${m}분 전`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}시간 전`;
+  const d = Math.floor(h / 24);
+  return d < 30 ? `${d}일 전` : `${Math.floor(d / 30)}개월 전`;
+}
+const numCell = (v, cls = "") => `<td class="num${cls ? " " + cls : ""}">${v}</td>`;
+const ACCT_COLUMNS = [
+  { key: "kind", label: "구분", value: r => r.linked ? "구글" : "익명",
+    cell: r => `<td><span class="kind ${r.linked ? "google" : "anon"}">${r.linked ? "구글" : "익명"}</span></td>` },
+  { key: "id", label: "UID", value: r => r.id, cell: r => `<td class="uid">${escapeHtml(r.id)}</td>` },
+  { key: "name", label: "이름", admin: true, value: r => names[r.id] || "", cell: r => `<td>${escapeHtml(names[r.id] || "")}</td>` },
+  { key: "email", label: "이메일", admin: true, value: r => emails[r.id] || "", cell: r => `<td class="mail">${escapeHtml(emails[r.id] || "")}</td>` },
+  { key: "bal", label: "보유", num: true, tip: "지금 보유 포인트", value: r => r.bal || 0, cell: r => numCell(`<b>${fmt(r.bal)}</b>`) },
+  { key: "earned", label: "누적 획득", num: true, value: r => r.earned || 0, cell: r => numCell(fmt(r.earned)) },
+  { key: "spent", label: "누적 사용", num: true, value: r => r.spent || 0, cell: r => numCell(fmt(r.spent)) },
+  { key: "net", label: "순증감", num: true, tip: "누적 획득 − 누적 사용", value: r => (r.earned || 0) - (r.spent || 0),
+    cell: r => { const n = (r.earned || 0) - (r.spent || 0); return numCell(`${n > 0 ? "+" : ""}${fmt(n)}`, n > 0 ? "pos" : n < 0 ? "neg" : ""); } },
+  { key: "spendRate", label: "사용률", num: true, tip: "누적 사용 ÷ 누적 획득", value: r => r.earned ? r.spent / r.earned : null,
+    cell: r => numCell(r.earned ? `${Math.round((r.spent || 0) / r.earned * 100)}%` : "") },
+  { key: "packs", label: "팩 개봉", num: true, value: r => r.packs || 0, cell: r => numCell(fmt(r.packs)) },
+  { key: "cards", label: "보유 카드 종류", num: true, value: r => r.cards || 0, cell: r => numCell(fmt(r.cards)) },
+  { key: "cardsPerPack", label: "팩당 카드", num: true, tip: "보유 카드 종류 ÷ 팩 개봉", value: r => r.packs ? r.cards / r.packs : null,
+    cell: r => numCell(r.packs ? ((r.cards || 0) / r.packs).toFixed(2) : "") },
+  { key: "lastSeen", label: "마지막 접속", date: true, value: r => r.lastSeen, cell: r => `<td>${r.lastSeen ? fullTime(r.lastSeen) : ""}</td>` },
+  { key: "ago", label: "경과", num: true, tip: "마지막 접속 후 지난 시간", value: r => r.lastSeen ? -r.lastSeen : null,
+    cell: (r, now) => numCell(r.lastSeen ? ago(r.lastSeen, now) : "") },
+];
+let acctSort = { key: "bal", dir: "desc" };
+
+// ---------------------------------------------------------------- 관리자: 포인트 지급
+// 관리자 여부는 firestore.rules의 이메일 목록으로 정해진다. 여기서는 이메일을 읽어보고 되면 관리자로 본다.
+let isAdmin = false, emails = {}, names = {}, lastAccounts = null, acctTotals = null;
+async function loadEmails() {
+  const snap = await getDocs(collection(db, "accountEmails"));
+  emails = {}; names = {};
+  snap.docs.forEach(d => { emails[d.id] = d.data().email; names[d.id] = d.data().name || ""; });
+}
+onAuthStateChanged(auth, async (u) => {
+  const who = document.getElementById("adminWho"), btn = document.getElementById("adminBtn");
+  isAdmin = false; emails = {}; names = {};
+  if (u && !u.isAnonymous) {
+    try { await loadEmails(); isAdmin = true; } catch (e) { isAdmin = false; }
+    who.textContent = `${u.email} · ${isAdmin ? "관리자" : "관리자 아님"}`;
+    btn.textContent = "로그아웃";
+  } else {
+    who.textContent = "관리자 로그인 전";
+    btn.textContent = "구글로 관리자 로그인";
+  }
+  document.getElementById("acctSearch").hidden = !isAdmin;
+  if (lastAccounts) renderAccounts(lastAccounts);
+});
+document.getElementById("adminBtn").onclick = async () => {
+  if (auth.currentUser && !auth.currentUser.isAnonymous) return signOut(auth);
+  try { await signInWithPopup(auth, new GoogleAuthProvider()); } catch (e) { console.error(e); }
+};
+document.getElementById("acctSearch").oninput = () => { if (lastAccounts) renderAccounts(lastAccounts); };
+async function grantPoints(uid) {
+  const label = emails[uid] || uid.slice(0, 8);
+  const amount = parseInt(prompt(`${label} 에게 지급할 포인트`) || "", 10);
+  if (!(amount > 0)) return;
+  const note = (prompt("내역에 남길 메모 (비워도 됨)", "관리자 지급") || "").slice(0, 60);
+  if (!confirm(`${label} 에게 ${amount.toLocaleString()}P 를 지급할까요?`)) return;
+  try {
+    await addDoc(collection(db, "grants"), { uid, amount, note, claimed: false, by: auth.currentUser.email, createdAt: serverTimestamp() });
+    alert("지급했습니다. 그 계정이 다음에 메인이나 카드 페이지에 들어오면 받아집니다.");
+  } catch (e) {
+    console.error(e);
+    alert("지급하지 못했습니다. 관리자 계정인지 확인하세요.");
+  }
+}
+async function fetchAccounts() {
+  try {
+    const snap = await getDocs(query(collection(db, "accountStats"), orderBy("bal", "desc"), limit(500)));
+    return snap.docs.map(d => {
+      const v = d.data();
+      return { id: d.id, ...v, lastSeen: v.lastSeen && v.lastSeen.toMillis ? v.lastSeen.toMillis() : null };
+    });
+  } catch (e) {
+    console.error("accountStats", e);
+    return null;
+  }
+}
+// 계정이 몇 개든 문서를 다 읽지 않고 서버에서 개수·합계만 받는다.
+// 합계 여러 개를 한 집계에 묶으면 복합 인덱스가 필요해서 값마다 따로 묻는다.
+async function fetchAccountTotals() {
+  try {
+    const col = collection(db, "accountStats");
+    const todayStart = new Date(todayKeyKST() + "T00:00:00+09:00");
+    const one = async (q, agg) => (await getAggregateFromServer(q, { n: agg })).data().n;
+    const [total, linked, today, bal, earned, spent, packs] = await Promise.all([
+      one(col, count()),
+      one(query(col, where("linked", "==", true)), count()),
+      one(query(col, where("lastSeen", ">=", todayStart)), count()),
+      one(col, sum("bal")), one(col, sum("earned")), one(col, sum("spent")), one(col, sum("packs")),
+    ]);
+    return { total, linked, today, bal, earned, spent, packs };
+  } catch (e) {
+    console.error("accountStats totals", e);
+    return null;
+  }
+}
+
+function renderAll(data) {
+  const stats = computeStats(data);
+  lbData = data.lbData || {};
+  lastStats = stats;
+  acctTotals = data.acctTotals ?? null;
+  document.getElementById("countLabel").textContent = `총 ${stats.grandTotal}판 · 오늘 ${stats.grandToday}판`;
+  document.getElementById("statsGrid").innerHTML = renderStats(stats);
+  renderAccounts(data.accounts ?? null);
+  updateUpdatedLabel(data.fetchedAt);
+  if (modalGame) openLeaderboardModal(modalGame);
+  dailyData = data.daily ?? null;
+  renderViz();
+}
+
+// 그래프용 날짜별 카운터: statsDaily 문서 하나가 하루치라, 최근 DAILY_DAYS일치를
+// 문서 ID(YYYY-MM-DD) 범위로 한 번에 읽는다. 90일 보기 + 직전 90일 비교까지 되도록 180일.
+const DAILY_DAYS = 180;
+async function fetchDaily() {
+  try {
+    const snap = await getDocs(query(collection(db, "statsDaily"), where(documentId(), ">=", dayKeyAgo(DAILY_DAYS - 1))));
+    const out = {};
+    snap.docs.forEach(d => { out[d.id] = d.data(); });
+    return out;
+  } catch (e) {
+    console.error("statsDaily", e);
+    return null;
+  }
+}
+
+async function fetchAllData() {
+  const totalsRef = doc(db, "statsCounters", "totals");
+  const dailyRef = doc(db, "statsDaily", todayKeyKST());
+  const [totalsSnap, dailySnap, lbData, accounts, daily, acctTotals] = await Promise.all([
+    getDoc(totalsRef), getDoc(dailyRef), fetchAllLeaderboards(), fetchAccounts(), fetchDaily(), fetchAccountTotals(),
+  ]);
+  return {
+    totals: totalsSnap.exists() ? totalsSnap.data() : {},
+    today: dailySnap.exists() ? dailySnap.data() : {},
+    lbData,
+    accounts,
+    daily,
+    acctTotals,
+    fetchedAt: Date.now(),
+  };
+}
+
+// ---------------------------------------------------------------- 📈 그래프
+// 차트는 라이브러리 없이 SVG로 직접 그린다. 상태(기간·대상·형태)는 이 기기에만 기억한다.
+const VIZ_KEY = "bymileVizV1";
+const KST_MS = 9 * 3600e3, DAY_MS = 86400e3;
+const dayKeyAgo = (n) => new Date(Date.now() + KST_MS - n * DAY_MS).toISOString().slice(0, 10);
+const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
+const weekdayOf = (key) => new Date(key + "T00:00:00Z").getUTCDay();
+const shortDate = (key) => `${Number(key.slice(5, 7))}/${Number(key.slice(8, 10))}`;
+
+// 누적 막대용 묶음 - 14개 종목을 색 8개로 나눠 고정한다 (기간을 바꿔도 같은 종목은 같은 색)
+const VIZ_GROUPS = [
+  { id: "grp-guess", label: "맞히기류", games: ["player-guess", "silhouette-guess", "challenge", "records-guess-player", "records-guess-team"] },
+  { id: "grp-big6", label: "빅6 야찌", games: ["big6-yahtzee"] },
+  { id: "grp-captcha", label: "선수 CAPTCHA", games: ["captcha-speedrun"] },
+  { id: "grp-connect", label: "커넥트", games: ["connect"] },
+  { id: "grp-blackjack", label: "등번호 블랙잭", games: ["blackjack"] },
+  { id: "grp-bobble", label: "알까기 축구", games: ["bobble", "bobble-online"] },
+  { id: "grp-jelly", label: "발롱도르 만들기", games: ["ballon-jelly", "ballon-jelly-hard"] },
+  { id: "grp-gogun", label: "고군분투", games: ["gogun"] },
+  { id: "grp-penalty", label: "승부차기", games: ["penalty", "penalty-online"] },
+  { id: "grp-heading", label: "헤딩 연습", games: ["heading"] },
+  { id: "grp-scramble", label: "이름 뒤죽박죽", games: ["scramble"] },
+];
+VIZ_GROUPS.forEach((g, i) => { g.color = `var(--series-${i + 1})`; });
+
+// 그래프로 볼 수 있는 대상: 전체 / 묶음별 누적 / 여러 종목짜리 묶음 / 종목 하나 / 카드팩
+const VIZ_TARGETS = [
+  { id: "all", label: "전체 판수", games: GAME_ORDER, unit: "판" },
+  { id: "stack", label: "종목별 누적", games: GAME_ORDER, unit: "판", stacked: true },
+  ...VIZ_GROUPS.filter(g => g.games.length > 1).map(g => ({ id: g.id, label: `${g.label} (전체)`, games: g.games, unit: "판" })),
+  ...GAME_ORDER.map(k => ({ id: k, label: GAME_LABEL[k], games: [k], unit: "판" })),
+  { id: "card-pack", label: "카드팩 개봉", games: ["card-pack"], unit: "팩" },
+];
+const vizTarget = (id) => VIZ_TARGETS.find(t => t.id === id) || VIZ_TARGETS[0];
+
+let dailyData = null;
+let viz = { days: 14, target: "all", form: "bar", table: false };
+try { Object.assign(viz, JSON.parse(localStorage.getItem(VIZ_KEY) || "{}")); } catch (e) { /* 기본값 사용 */ }
+const saveViz = () => { try { localStorage.setItem(VIZ_KEY, JSON.stringify(viz)); } catch (e) { /* 무시 */ } };
+
+// 하루치 값: 일반 대상은 숫자, 누적 대상은 묶음별 배열
+const dayValue = (key, target) => {
+  const d = (dailyData && dailyData[key]) || {};
+  return target.games.reduce((t, g) => t + (d[g] || 0), 0);
+};
+const dayStack = (key) => {
+  const d = (dailyData && dailyData[key]) || {};
+  return VIZ_GROUPS.map(g => g.games.reduce((t, k) => t + (d[k] || 0), 0));
+};
+// 기간 [start, end) 의 날짜 키 (오래된 날 → 오늘). offset만큼 더 과거로 민다.
+const rangeKeys = (days, offset = 0) => Array.from({ length: days }, (_, i) => dayKeyAgo(offset + days - 1 - i));
+
+function niceScale(max, ticks = 4) {
+  if (!(max > 0)) return { max: ticks, step: 1 };
+  const raw = max / ticks, p = 10 ** Math.floor(Math.log10(raw)), n = raw / p;
+  const step = Math.max(1, (n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 && p >= 10 ? 2.5 : n <= 5 ? 5 : 10) * p);
+  return { max: Math.ceil(max / step) * step, step };
+}
+// 바닥은 각지고 윗변만 4px 둥근 막대
+function barPath(x, y, w, h, r = 4) {
+  if (h <= 0) return "";
+  r = Math.min(r, w / 2, h);
+  return `M${x},${y + h}V${y + r}Q${x},${y} ${x + r},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h}Z`;
+}
+const pct = (cur, prev) => prev > 0 ? Math.round((cur - prev) / prev * 100) : null;
+function deltaHtml(cur, prev, tag = "span") {
+  const p = pct(cur, prev);
+  if (p === null) return cur > 0 ? `<${tag} class="up">▲ 새로 생김</${tag}>` : `<${tag} class="flat">–</${tag}>`;
+  if (p === 0) return `<${tag} class="flat">– 0%</${tag}>`;
+  return `<${tag} class="${p > 0 ? "up" : "down"}">${p > 0 ? "▲" : "▼"} ${Math.abs(p)}%</${tag}>`;
+}
+
+// 공용 세로 막대/선 차트. items: [{ label, sub, value | stack, faded, tip }]
+function drawColumnChart(el, items, opt) {
+  const W = el.clientWidth;
+  if (!W) return;
+  const H = opt.height || 260, padL = 34, padR = 8, padT = 22, padB = 26;
+  const plotW = W - padL - padR, plotH = H - padT - padB;
+  const totals = items.map(it => it.stack ? it.stack.reduce((a, b) => a + b, 0) : it.value);
+  const { max, step } = niceScale(Math.max(...totals, 0));
+  const y = (v) => padT + plotH - (v / max) * plotH;
+  const colW = plotW / items.length;
+  const gap = Math.max(2, Math.min(colW * 0.28, 14));
+  const barW = Math.max(1, colW - gap);
+  const xMid = (i) => padL + colW * i + colW / 2;
+  const parts = [];
+  // 가로 눈금선 + y축 숫자
+  for (let v = 0; v <= max; v += step) {
+    parts.push(`<line x1="${padL}" x2="${W - padR}" y1="${y(v)}" y2="${y(v)}" stroke="${v === 0 ? "var(--axis)" : "var(--grid)"}" stroke-width="1"/>`);
+    parts.push(`<text x="${padL - 6}" y="${y(v) + 4}" text-anchor="end" font-size="11" fill="var(--ink-muted)" style="font-variant-numeric:tabular-nums">${fmt(v)}</text>`);
+  }
+  // x축 라벨: 겹치지 않게 간격을 둔다 (마지막 칸은 항상)
+  const labelW = Math.max(...items.map(it => String(it.label).length)) * 7 + 12;
+  const every = Math.max(1, Math.ceil(items.length / Math.max(1, Math.floor(plotW / labelW))));
+  items.forEach((it, i) => {
+    if ((items.length - 1 - i) % every !== 0) return;
+    parts.push(`<text x="${xMid(i)}" y="${H - 8}" text-anchor="middle" font-size="11" fill="${it.faded ? "var(--accent)" : "var(--ink-muted)"}" font-weight="${it.faded ? 700 : 400}">${escapeHtml(it.label)}</text>`);
+  });
+  if (opt.form === "line" && !items.some(it => it.stack)) {
+    const pts = items.map((it, i) => [xMid(i), y(it.value)]);
+    const area = `M${pts[0][0]},${y(0)}L${pts.map(p => p.join(",")).join("L")}L${pts[pts.length - 1][0]},${y(0)}Z`;
+    parts.push(`<path d="${area}" fill="var(--bar)" opacity="0.10"/>`);
+    parts.push(`<path d="M${pts.map(p => p.join(",")).join("L")}" fill="none" stroke="var(--bar)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`);
+    if (items.length <= 31) pts.forEach(([px, py], i) => parts.push(`<circle cx="${px}" cy="${py}" r="${items[i].faded ? 4 : 3}" fill="${items[i].faded ? "var(--surface-1)" : "var(--bar)"}" stroke="var(--bar)" stroke-width="2"/>`));
+  } else {
+    items.forEach((it, i) => {
+      const x = xMid(i) - barW / 2;
+      if (it.stack) {
+        // 누적: 아래 묶음부터 쌓고, 조각 사이에 2px 틈. 맨 윗조각만 둥글게.
+        let acc = 0;
+        const topIdx = it.stack.reduce((top, v, gi) => v > 0 ? gi : top, -1);
+        it.stack.forEach((v, gi) => {
+          if (!v) return;
+          const y0 = y(acc), y1 = y(acc + v);
+          const h = Math.max(0, y0 - y1 - (acc > 0 ? 2 : 0));
+          parts.push(`<path class="viz-bar" data-i="${i}" d="${gi === topIdx ? barPath(x, y1, barW, h) : `M${x},${y1}h${barW}v${h}h${-barW}Z`}" fill="${VIZ_GROUPS[gi].color}" opacity="${it.faded ? 0.55 : 1}"/>`);
+          acc += v;
+        });
+      } else {
+        parts.push(`<path class="viz-bar" data-i="${i}" d="${barPath(x, y(it.value), barW, y(0) - y(it.value))}" fill="var(--bar)" opacity="${it.faded ? 0.5 : 1}"/>`);
+      }
+    });
+  }
+  // 평균선
+  if (opt.avg != null && opt.avg > 0) {
+    parts.push(`<line x1="${padL}" x2="${W - padR}" y1="${y(opt.avg)}" y2="${y(opt.avg)}" stroke="var(--ink-2)" stroke-width="1" stroke-dasharray="4 4" opacity="0.7"/>`);
+    parts.push(`<text x="${W - padR}" y="${y(opt.avg) - 5}" text-anchor="end" font-size="11" font-weight="700" fill="var(--ink-2)" stroke="var(--surface-1)" stroke-width="3" paint-order="stroke">평균 ${opt.avg.toFixed(opt.avg < 10 ? 1 : 0)}</text>`);
+  }
+  // 최고값에만 숫자 라벨 (모든 막대에 숫자를 달면 지저분하다)
+  if (opt.labelMax) {
+    const mi = totals.indexOf(Math.max(...totals));
+    if (mi >= 0 && totals[mi] > 0) parts.push(`<text x="${xMid(mi)}" y="${y(totals[mi]) - 6}" text-anchor="middle" font-size="11" font-weight="800" fill="var(--ink-1)">🔥 ${fmt(totals[mi])}</text>`);
+  }
+  const hoverLine = `<line id="${el.id}-cross" x1="0" x2="0" y1="${padT}" y2="${padT + plotH}" stroke="var(--ink-muted)" stroke-width="1" visibility="hidden"/>`;
+  el.innerHTML = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${escapeHtml(opt.aria || "")}">${hoverLine}${parts.join("")}<rect x="${padL}" y="0" width="${plotW}" height="${H}" fill="transparent" class="viz-hit"/></svg><div class="viz-tip" hidden></div>`;
+  // 마우스/손가락 위치로 칸을 찾아 툴팁을 띄운다 (막대보다 넓은 히트 영역)
+  const svg = el.querySelector("svg"), tip = el.querySelector(".viz-tip"), cross = svg.querySelector(`#${CSS.escape(el.id)}-cross`);
+  const show = (ev) => {
+    const r = svg.getBoundingClientRect();
+    const i = Math.floor((ev.clientX - r.left - padL) / colW);
+    if (i < 0 || i >= items.length) return hide();
+    tip.innerHTML = items[i].tip;
+    tip.hidden = false;
+    const tx = Math.min(Math.max(xMid(i), 70), W - 70);
+    tip.style.left = `${tx}px`;
+    tip.style.top = `${Math.max(y(totals[i]), padT + 30)}px`;
+    if (opt.form === "line") { cross.setAttribute("x1", xMid(i)); cross.setAttribute("x2", xMid(i)); cross.setAttribute("visibility", "visible"); }
+    svg.querySelectorAll(".viz-bar").forEach(b => b.style.filter = b.dataset.i === String(i) ? "brightness(0.85)" : "");
+  };
+  const hide = () => { tip.hidden = true; cross.setAttribute("visibility", "hidden"); svg.querySelectorAll(".viz-bar").forEach(b => b.style.filter = ""); };
+  svg.addEventListener("pointermove", show);
+  svg.addEventListener("pointerdown", show);
+  svg.addEventListener("pointerleave", hide);
+}
+
+function renderVizControls() {
+  const seg = (id, opts, cur, disabled = []) => {
+    document.getElementById(id).innerHTML = opts.map(([v, l]) => `<button type="button" data-v="${v}" class="${String(cur) === String(v) ? "active" : ""}"${disabled.includes(v) ? " disabled" : ""}>${l}</button>`).join("");
+  };
+  seg("vizRange", [[7, "7일"], [14, "14일"], [30, "30일"], [90, "90일"]], viz.days);
+  const t = vizTarget(viz.target);
+  seg("vizForm", [["bar", "막대"], ["line", "선"]], t.stacked ? "bar" : viz.form, t.stacked ? ["line"] : []);
+  const sel = document.getElementById("vizTarget");
+  const opt = (x) => `<option value="${x.id}"${x.id === viz.target ? " selected" : ""}>${escapeHtml(x.label)}</option>`;
+  sel.innerHTML = `${VIZ_TARGETS.slice(0, 2).map(opt).join("")}
+    <optgroup label="묶음">${VIZ_TARGETS.filter(x => x.id.startsWith("grp-")).map(opt).join("")}</optgroup>
+    <optgroup label="종목">${VIZ_TARGETS.filter(x => GAME_ORDER.includes(x.id)).map(opt).join("")}</optgroup>
+    <optgroup label="기타">${opt(vizTarget("card-pack"))}</optgroup>`;
+}
+
+function renderViz() {
+  renderVizControls();
+  const chartEl = document.getElementById("vizChart");
+  if (!chartEl || !chartEl.offsetParent) return; // 탭이 숨겨져 있으면 폭을 잴 수 없다 - 탭을 열 때 다시 그림
+  const t = vizTarget(viz.target), days = viz.days, unit = t.unit;
+  const keys = rangeKeys(days), prevKeys = rangeKeys(days, days);
+  const today = todayKeyKST();
+  document.getElementById("vizTitle").textContent = `최근 ${days}일 · ${t.label}`;
+  if (!dailyData) {
+    document.getElementById("vizSub").textContent = "";
+    ["vizKpis", "vizLegend", "vizTable", "vizWeek", "vizShare"].forEach(id => { document.getElementById(id).innerHTML = ""; });
+    chartEl.innerHTML = `<div class="empty">날짜별 기록이 아직 없어요. 위의 <b>새로고침</b>을 눌러 불러오세요.</div>`;
+    return;
+  }
+  const vals = keys.map(k => dayValue(k, t));
+  const sum = vals.reduce((a, b) => a + b, 0), prevSum = prevKeys.reduce((a, k) => a + dayValue(k, t), 0);
+  const avg = sum / days;
+  const best = vals.indexOf(Math.max(...vals));
+  const activeDays = vals.filter(v => v > 0).length;
+  document.getElementById("vizSub").textContent = `${keys[0]} ~ ${keys[keys.length - 1]} · 오늘은 아직 집계 중이라 흐리게 표시`;
+
+  // 요약 카드
+  const kpi = (label, val, u, foot = "") => `<div class="kpi"><div class="k-label">${label}</div><div class="k-val">${val}<span class="unit">${u}</span></div>${foot ? `<div class="k-foot">${foot}</div>` : ""}</div>`;
+  const kpis = [
+    kpi("합계", fmt(sum), unit, `직전 ${days}일 ${fmt(prevSum)}${unit}`),
+    kpi(`직전 ${days}일 대비`, deltaHtml(sum, prevSum), "", sum >= prevSum ? "상승세 📈" : "하락세 📉"),
+    kpi("하루 평균", avg.toFixed(avg < 10 ? 1 : 0), unit, `기록 있는 날 ${activeDays}/${days}일`),
+    kpi("🔥 최고의 날", fmt(vals[best]), unit, sum ? `${shortDate(keys[best])}(${WEEKDAYS[weekdayOf(keys[best])]})` : "아직 없음"),
+  ];
+  if (t.stacked || t.id === "all") {
+    const per = GAME_ORDER.map(g => [g, keys.reduce((a, k) => a + ((dailyData[k] || {})[g] || 0), 0)]).sort((a, b) => b[1] - a[1]);
+    if (per[0] && per[0][1] > 0) kpis.push(kpi("👑 제일 많이 한 종목", escapeHtml(gameLabel(per[0][0])), "", `${fmt(per[0][1])}판 · ${Math.round(per[0][1] / sum * 100)}%`));
+  }
+  document.getElementById("vizKpis").innerHTML = kpis.join("");
+
+  // 범례 (누적일 때만 - 하나짜리 그래프는 제목이 곧 범례)
+  const stacks = t.stacked ? keys.map(dayStack) : null;
+  document.getElementById("vizLegend").innerHTML = t.stacked
+    ? VIZ_GROUPS.map(g => `<span><i style="background:${g.color}"></i>${escapeHtml(g.label)}</span>`).join("") : "";
+
+  const items = keys.map((k, i) => {
+    const wd = WEEKDAYS[weekdayOf(k)], isToday = k === today;
+    const head = `<div class="t-date">${shortDate(k)} (${wd})${isToday ? " · 오늘" : ""}</div>`;
+    let body;
+    if (t.stacked) {
+      body = VIZ_GROUPS.map((g, gi) => stacks[i][gi] ? `<div class="t-row"><span><i style="background:${g.color}"></i> ${escapeHtml(g.label)}</span><b>${fmt(stacks[i][gi])}</b></div>` : "").reverse().join("")
+        + `<div class="t-row" style="border-top:1px solid var(--grid);margin-top:3px;padding-top:3px"><span>합계</span><b>${fmt(vals[i])}${unit}</b></div>`;
+    } else {
+      body = `<div class="t-row"><span>${escapeHtml(t.label)}</span><b>${fmt(vals[i])}${unit}</b></div>`;
+    }
+    const diff = avg > 0 ? Math.round((vals[i] - avg) / avg * 100) : 0;
+    const note = isToday ? "아직 집계 중" : avg > 0 ? `평균보다 ${diff >= 0 ? `${diff}% 많음` : `${-diff}% 적음`}` : "";
+    return {
+      label: shortDate(k),
+      value: vals[i], stack: stacks ? stacks[i] : null, faded: isToday,
+      tip: head + body + (note ? `<div class="t-note">${note}</div>` : ""),
+    };
+  });
+  drawColumnChart(chartEl, items, { form: t.stacked ? "bar" : viz.form, avg, labelMax: true, aria: `최근 ${days}일 ${t.label} 일별 그래프` });
+
+  // 표로 보기
+  document.getElementById("vizTableBtn").textContent = viz.table ? "표 닫기" : "표로 보기";
+  document.getElementById("vizTable").innerHTML = viz.table ? `<div class="viz-table"><table>
+    <thead><tr><th>날짜</th>${t.stacked ? VIZ_GROUPS.map(g => `<th class="num">${escapeHtml(g.label)}</th>`).join("") : ""}<th class="num">${t.stacked ? "합계" : escapeHtml(t.label)}</th></tr></thead>
+    <tbody>${keys.map((k, i) => `<tr><td>${k} (${WEEKDAYS[weekdayOf(k)]})</td>${t.stacked ? stacks[i].map(v => `<td class="num">${fmt(v)}</td>`).join("") : ""}<td class="num"><b>${fmt(vals[i])}</b></td></tr>`).reverse().join("")}</tbody>
+  </table></div>` : "";
+
+  // 요일별 평균: 오늘(집계 중)은 빼고, 이번 기간과 직전 기간을 합쳐서 표본을 늘린다 (최소 4주치)
+  const wkKeys = rangeKeys(Math.max(days * 2, 28)).filter(k => k !== today);
+  const wkSum = Array(7).fill(0), wkCnt = Array(7).fill(0);
+  wkKeys.forEach(k => { const w = weekdayOf(k); wkSum[w] += dayValue(k, t); wkCnt[w]++; });
+  const order = [1, 2, 3, 4, 5, 6, 0];
+  const wkAvg = order.map(w => wkCnt[w] ? wkSum[w] / wkCnt[w] : 0);
+  const topW = wkAvg.indexOf(Math.max(...wkAvg));
+  document.getElementById("vizWeekSub").textContent = wkAvg[topW] > 0
+    ? `최근 ${wkKeys.length}일 기준 · 가장 붐비는 요일은 ${WEEKDAYS[order[topW]]}요일` : `최근 ${wkKeys.length}일 기준`;
+  drawColumnChart(document.getElementById("vizWeek"), order.map((w, i) => ({
+    label: WEEKDAYS[w], value: Math.round(wkAvg[i] * 10) / 10,
+    tip: `<div class="t-date">${WEEKDAYS[w]}요일</div><div class="t-row"><span>평균</span><b>${wkAvg[i].toFixed(1)}${unit}</b></div><div class="t-note">${wkCnt[w]}일 평균</div>`,
+  })), { form: "bar", height: 200, labelMax: false, aria: "요일별 평균 그래프" });
+
+  // 종목 순위 (같은 기간, 직전 기간 대비 증감). 누르면 그 종목 그래프로.
+  const rank = GAME_ORDER.map(g => ({
+    g, cur: keys.reduce((a, k) => a + ((dailyData[k] || {})[g] || 0), 0), prev: prevKeys.reduce((a, k) => a + ((dailyData[k] || {})[g] || 0), 0),
+  })).sort((a, b) => b.cur - a.cur || b.prev - a.prev);
+  const rMax = Math.max(1, ...rank.map(r => r.cur)), rSum = rank.reduce((a, r) => a + r.cur, 0);
+  const hot = rank.filter(r => r.cur >= 5).sort((a, b) => (pct(b.cur, b.prev) ?? 999) - (pct(a.cur, a.prev) ?? 999))[0];
+  document.getElementById("vizShareSub").textContent = `최근 ${days}일 판수 · 직전 ${days}일 대비` + (hot ? ` · 🚀 요즘 뜨는 종목: ${gameLabel(hot.g)}` : "");
+  document.getElementById("vizShare").innerHTML = rank.map(r => `
+    <div class="share-row${viz.target === r.g ? " sel" : ""}" data-g="${r.g}" title="${escapeHtml(gameLabel(r.g))} 그래프 보기">
+      <span><span class="game-tag ${gameTagClass(r.g)}">${escapeHtml(gameLabel(r.g))}</span></span>
+      <div class="share-bar"><div style="width:${r.cur / rMax * 100}%"></div></div>
+      <div class="share-num">${fmt(r.cur)}<span style="color:var(--muted);font-weight:600"> · ${rSum ? Math.round(r.cur / rSum * 100) : 0}%</span>${deltaHtml(r.cur, r.prev, "small")}</div>
+    </div>`).join("");
+}
+
+function setViz(patch) {
+  Object.assign(viz, patch);
+  saveViz();
+  renderViz();
+}
+
+document.getElementById("vizRange").onclick = (e) => { const b = e.target.closest("button"); if (b) setViz({ days: Number(b.dataset.v) }); };
+document.getElementById("vizForm").onclick = (e) => { const b = e.target.closest("button"); if (b && !b.disabled) setViz({ form: b.dataset.v }); };
+document.getElementById("vizTarget").onchange = (e) => setViz({ target: e.target.value });
+document.getElementById("vizTableBtn").onclick = () => setViz({ table: !viz.table });
+document.getElementById("vizShare").onclick = (e) => { const r = e.target.closest(".share-row"); if (r) setViz({ target: r.dataset.g }); };
+let vizResizeTimer = 0;
+window.addEventListener("resize", () => { clearTimeout(vizResizeTimer); vizResizeTimer = setTimeout(renderViz, 120); });
+
+async function refreshFromServer() {
+  const btn = document.getElementById("refreshBtn");
+  btn.disabled = true;
+  btn.textContent = "새로고침 중…";
+  try {
+    const data = await fetchAllData();
+    saveCache(data);
+    renderAll(data);
+  } catch (e) {
+    console.error(e);
+    document.getElementById("statsGrid").innerHTML = `<div class="empty">통계를 불러오지 못했습니다.</div>`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "새로고침";
+  }
+}
+
+// firestore.rules가 각 게임 리더보드 entries 경로에만, 관리자(isAdmin: 구글 로그인 이메일)에게만
+// 삭제를 허용한다 - 관리자 로그인 전에 누르면 권한 오류로 실패한다.
+async function resetAllLeaderboards() {
+  const typed = prompt('정말로 모든 게임의 리더보드를 초기화할까요?\n되돌릴 수 없습니다. 진행하려면 "초기화"라고 입력하세요.');
+  if (typed !== "초기화") return;
+
+  const btn = document.getElementById("resetAllBtn");
+  btn.disabled = true;
+  btn.textContent = "초기화 중…";
+  try {
+    await Promise.all(LEADERBOARDS.filter(cfg => cfg.allowReset !== false).map(async cfg => {
+      const snap = await getDocs(collection(db, ...cfg.path));
+      await Promise.all(snap.docs.map(d => deleteDoc(d.ref)));
+    }));
+    alert("모든 리더보드를 초기화했습니다.");
+    await refreshFromServer();
+  } catch (e) {
+    console.error(e);
+    alert("초기화 중 오류가 발생했습니다. 콘솔을 확인하세요.");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "⚠️ 모든 리더보드 초기화";
+  }
+}
+
+async function resetSingleLeaderboard(cfg, btn) {
+  const typed = prompt(`정말로 "${cfg.title}" 리더보드를 초기화할까요?\n되돌릴 수 없습니다. 진행하려면 "초기화"라고 입력하세요.`);
+  if (typed !== "초기화") return;
+
+  const orig = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "초기화 중…";
+  try {
+    const snap = await getDocs(collection(db, ...cfg.path));
+    await Promise.all(snap.docs.map(d => deleteDoc(d.ref)));
+    alert(`"${cfg.title}" 리더보드를 초기화했습니다.`);
+    await refreshFromServer();
+  } catch (e) {
+    console.error(e);
+    alert("초기화 중 오류가 발생했습니다. 콘솔을 확인하세요.");
+    btn.disabled = false;
+    btn.textContent = orig;
+  }
+}
+
+function init() {
+  const cached = loadCache();
+  if (cached) {
+    renderAll(cached);
+  } else {
+    refreshFromServer();
+  }
+}
+
+// /bymile과 내용은 똑같지만 /fhrm이라는 별칭 주소로도 접속되게 해뒀는데(firebase.json
+// rewrites), 이 별칭으로 들어온 IP만 따로 남겨서 이 주소를 누가 찾아 들어오는지
+// 나중에 확인할 수 있게 한다. playLogs와는 별개 컬렉션 - 게임 플레이 기록이 아니다.
+async function logFhrmAccess() {
+  if (!window.location.pathname.startsWith("/fhrm")) return;
+  try {
+    const res = await fetch("https://api.ipify.org?format=json");
+    const ip = (await res.json()).ip;
+    await addDoc(collection(db, "fhrmAccessLog"), { ts: serverTimestamp(), ip });
+  } catch (e) {
+    console.error("logFhrmAccess failed", e);
+  }
+}
+
+document.querySelectorAll(".tab-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("active", b === btn));
+    document.querySelectorAll(".tab-panel").forEach(p => { p.hidden = p.dataset.panel !== btn.dataset.tab; });
+    if (btn.dataset.tab === "charts") renderViz();
+  });
+});
+
+document.getElementById("refreshBtn").onclick = refreshFromServer;
+document.getElementById("resetAllBtn").onclick = resetAllLeaderboards;
+document.getElementById("statsGrid").onclick = (e) => {
+  const c = e.target.closest(".stat-card.has-lb");
+  if (c) openLeaderboardModal(c.dataset.game);
+};
+document.getElementById("modalClose").onclick = closeModal;
+document.getElementById("modalBack").onclick = (e) => { if (e.target.id === "modalBack") closeModal(); };
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !document.getElementById("modalBack").hidden) closeModal(); });
+init();
+logFhrmAccess();
+</script>
+</body>
+</html>

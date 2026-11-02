@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#14305a">
+  <title>승부차기</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="../favicon-32.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=8">
+  <script src="/points.js"></script>
+</head>
+<body>
+  <div id="app">
+  <main class="stage-wrap">
+    <canvas id="stage"></canvas>
+
+    <section id="hud" class="hud" hidden>
+      <button type="button" class="mini-btn exit" id="exitBtn" aria-label="나가기" title="나가기">✕</button>
+      <div class="sound-slot hud-sound"><div class="sound"><button type="button" class="sound-icon" aria-label="소리">🔊</button><input type="range" class="sound-range" min="0" max="100" step="1" aria-label="소리 크기"></div></div>
+    </section>
+
+    <!-- CPU: 월드컵 -->
+    <section id="cup" class="overlay" hidden>
+      <div class="win">
+        <header class="win-bar">
+          <a class="win-btn" href="../" aria-label="홈">←</a>
+          <h1>🏆 승부차기 월드컵</h1>
+          <div class="sound-slot"><div class="sound"><button type="button" class="sound-icon" aria-label="소리">🔊</button><input type="range" class="sound-range" min="0" max="100" step="1" aria-label="소리 크기"></div></div>
+        </header>
+        <div class="win-body">
+          <div class="howto" id="cupHowto">
+            <p><b class="tag kick">키커</b> <em>끌어서</em> 조준 → 오른쪽 슛 게이지 보고 <em>떼면 슛</em> (맨 위는 홈런!)</p>
+            <p><b class="tag keep">키퍼</b> <em>드래그</em>로 다이빙 방향·거리. 안 하면 가운데만 막아요</p>
+            <p class="small">둘 다 5초 안에! 키커가 시간 넘기면 철퍼덕 😵</p>
+          </div>
+          <div class="cup-msg" id="cupMsg" hidden></div>
+          <div class="bracket" id="cupBracket"></div>
+          <div class="cup-stats" id="cupStats" hidden></div>
+          <button type="button" class="go-btn" id="cupStart">킥오프!</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 온라인 -->
+    <section id="menu" class="overlay" hidden>
+      <div class="win">
+        <header class="win-bar">
+          <a class="win-btn" href="../" aria-label="홈">←</a>
+          <h1>🌐 온라인 승부차기</h1>
+          <div class="sound-slot"><div class="sound"><button type="button" class="sound-icon" aria-label="소리">🔊</button><input type="range" class="sound-range" min="0" max="100" step="1" aria-label="소리 크기"></div></div>
+        </header>
+        <div class="win-body">
+          <div class="howto">
+            <p><b class="tag kick">키커</b> <em>끌어서</em> 조준 → 오른쪽 슛 게이지 보고 <em>떼면 슛</em> (맨 위는 홈런!)</p>
+            <p><b class="tag keep">키퍼</b> <em>드래그</em>로 다이빙 방향·거리. 안 하면 가운데만 막아요</p>
+          </div>
+          <div class="vs-kits"><span><i class="kit-dot red"></i>나</span><b>VS</b><span>상대<i class="kit-dot blue"></i></span></div>
+          <div class="seg" id="onlineKinds">
+            <button type="button" data-online="random">랜덤</button>
+            <button type="button" data-online="host">방 열기</button>
+            <button type="button" data-online="join">방 참가</button>
+          </div>
+          <button type="button" class="go-btn" id="startBtn">킥오프!</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="matching" class="overlay dim" hidden>
+      <div class="win small">
+        <header class="win-bar"><h1>온라인</h1></header>
+        <div class="win-body center">
+          <div class="room-code" id="roomCode" hidden></div>
+          <div class="spinner">⚽</div>
+          <b id="matchMsg">상대 찾는 중</b>
+          <button type="button" class="sub-btn" id="matchCancel">취소</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="joinRoom" class="overlay dim" hidden>
+      <form class="win small" id="joinForm" autocomplete="off">
+        <header class="win-bar"><h1>방 코드</h1></header>
+        <div class="win-body center">
+          <input id="roomInput" inputmode="numeric" pattern="[0-9]*" maxlength="4" aria-label="방 코드">
+          <div class="join-msg" id="joinMsg"></div>
+          <div class="row">
+            <button type="button" class="sub-btn" id="joinCancel">취소</button>
+            <button type="submit" class="go-btn slim" id="joinGo">입장</button>
+          </div>
+        </div>
+      </form>
+    </section>
+
+    <section id="confirm" class="overlay dim" hidden>
+      <div class="win small">
+        <header class="win-bar"><h1>나갈까요?</h1></header>
+        <div class="win-body center">
+          <p class="confirm-sub" id="confirmSub"></p>
+          <div class="row">
+            <button type="button" class="sub-btn" id="confirmStay">계속하기</button>
+            <button type="button" class="go-btn slim danger" id="confirmLeave">나가기</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 한 경기 결과 (온라인 / 월드컵 진출) -->
+    <section id="result" class="overlay dim" hidden>
+      <div class="win small">
+        <header class="win-bar"><h1 id="resultHead">경기 종료</h1></header>
+        <div class="win-body center">
+          <div class="result-emoji" id="resultEmoji">🏆</div>
+          <h2 id="resultTitle">승리!</h2>
+          <div class="result-score"><i class="kit-dot red"></i><b id="resultScore">5 : 4</b><i class="kit-dot blue"></i></div>
+          <p id="resultSub"></p>
+          <div class="col">
+            <button type="button" class="go-btn slim" id="againBtn">다시 하기</button>
+            <button type="button" class="sub-btn" id="menuBtn">메뉴로</button>
+            <a class="sub-btn" href="../">홈으로</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 월드컵 끝 (탈락 / 우승): 기록 등록 -->
+    <section id="cupEnd" class="overlay dim" hidden>
+      <div class="win">
+        <header class="win-bar"><h1 id="cupEndHead">대회 종료</h1></header>
+        <div class="win-body center">
+          <div class="result-emoji" id="cupEndEmoji">🏆</div>
+          <h2 id="cupEndTitle">우승!</h2>
+          <div class="cup-final" id="cupEndStats"></div>
+          <form class="nick-row" id="nickForm" autocomplete="off">
+            <input id="nickInput" maxlength="20" placeholder="닉네임" aria-label="닉네임">
+            <button type="submit" class="go-btn slim" id="nickGo">기록 등록</button>
+          </form>
+          <div class="join-msg" id="nickMsg"></div>
+          <div class="board">
+            <div class="board-head"><b>🏅 월드컵 랭킹</b></div>
+            <div id="cupEndBoard"></div>
+          </div>
+          <div class="row">
+            <button type="button" class="go-btn slim" id="cupAgain">다시 도전</button>
+            <a class="sub-btn" href="../">홈으로</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="toast" id="toast" hidden></div>
+  </main>
+  </div>
+
+  <script type="module" src="app.js?v=8"></script>
+</body>
+</html>

@@ -1,0 +1,682 @@
+{
+  "akanji": {
+    "query": "Manuel Akanji",
+    "fotmobId": "521318",
+    "fotmobTeam": "Inter",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/521318.png",
+    "imageDownloaded": true,
+    "imageBytes": 11766
+  },
+  "kolo-muani": {
+    "query": "Randal Kolo Muani",
+    "fotmobId": "823825",
+    "fotmobTeam": "Juventus",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/823825.png",
+    "imageDownloaded": true,
+    "imageBytes": 11205
+  },
+  "robert-sanchez": {
+    "query": "Robert Sanchez",
+    "fotmobId": "789571",
+    "fotmobTeam": "Como",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/789571.png",
+    "imageDownloaded": true,
+    "imageBytes": 11686
+  },
+  "dimarco": {
+    "query": "Federico Dimarco",
+    "fotmobId": "605224",
+    "fotmobTeam": "Inter",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/605224.png",
+    "imageDownloaded": true,
+    "imageBytes": 12330
+  },
+  "nahuel-molina": {
+    "query": "Nahuel Molina",
+    "fotmobId": "726345",
+    "fotmobTeam": "Roma",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/726345.png",
+    "imageDownloaded": true,
+    "imageBytes": 11376
+  },
+  "cambiaso": {
+    "query": "Andrea Cambiaso",
+    "fotmobId": "1078846",
+    "fotmobTeam": "Juventus",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/1078846.png",
+    "imageDownloaded": true,
+    "imageBytes": 12572
+  },
+  "mctominay": {
+    "query": "Scott McTominay",
+    "fotmobId": "843099",
+    "fotmobTeam": "Napoli",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/843099.png",
+    "imageDownloaded": true,
+    "imageBytes": 11546
+  },
+  "koopmeiners": {
+    "query": "Teun Koopmeiners",
+    "fotmobId": "866516",
+    "fotmobTeam": "Juventus",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/866516.png",
+    "imageDownloaded": true,
+    "imageBytes": 11219
+  },
+  "khephren-thuram": {
+    "query": "Khephren Thuram",
+    "fotmobId": "980793",
+    "fotmobTeam": "Juventus",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/980793.png",
+    "imageDownloaded": true,
+    "imageBytes": 15370
+  },
+  "saelemaekers": {
+    "query": "Alexis Saelemaekers",
+    "fotmobId": "921341",
+    "fotmobTeam": "Milan",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/921341.png",
+    "imageDownloaded": true,
+    "imageBytes": 13170
+  },
+  "zaccagni": {
+    "query": "Mattia Zaccagni",
+    "fotmobId": "541555",
+    "fotmobTeam": "Lazio",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/541555.png",
+    "imageDownloaded": true,
+    "imageBytes": 12427
+  },
+  "mckennie": {
+    "query": "Weston McKennie",
+    "fotmobId": "848266",
+    "fotmobTeam": "Juventus",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/848266.png",
+    "imageDownloaded": true,
+    "imageBytes": 19763
+  },
+  "dovbyk": {
+    "query": "Artem Dovbyk",
+    "fotmobId": "655696",
+    "fotmobTeam": "Bologna",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/655696.png",
+    "imageDownloaded": true,
+    "imageBytes": 11111
+  },
+  "yildiz": {
+    "query": "Kenan Yildiz",
+    "fotmobId": "1412132",
+    "fotmobTeam": "Juventus",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/1412132.png",
+    "imageDownloaded": true,
+    "imageBytes": 19289
+  },
+  "moise-kean": {
+    "query": "Moise Kean",
+    "fotmobId": "747926",
+    "fotmobTeam": "Como",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/747926.png",
+    "imageDownloaded": true,
+    "imageBytes": 11949
+  },
+  "goncalo-ramos": {
+    "query": "Goncalo Ramos",
+    "fotmobId": "940087",
+    "fotmobTeam": "Milan",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/940087.png",
+    "imageDownloaded": true,
+    "imageBytes": 12846
+  },
+  "marcus-thuram": {
+    "query": "Marcus Thuram",
+    "fotmobId": "621562",
+    "fotmobTeam": "Inter",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/621562.png",
+    "imageDownloaded": true,
+    "imageBytes": 11965
+  },
+  "rabiot": {
+    "query": "Adrien Rabiot",
+    "fotmobId": "352879",
+    "fotmobTeam": "Milan",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/352879.png",
+    "imageDownloaded": true,
+    "imageBytes": 13833
+  },
+  "bremer": {
+    "query": "Bremer",
+    "fotmobId": "857269",
+    "fotmobTeam": "Juventus",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/857269.png",
+    "imageDownloaded": true,
+    "imageBytes": 12683
+  },
+  "upamecano": {
+    "query": "Dayot Upamecano",
+    "fotmobId": "658554",
+    "fotmobTeam": "Bayern München",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/658554.png",
+    "imageDownloaded": true,
+    "imageBytes": 12603
+  },
+  "nkunku": {
+    "query": "Christopher Nkunku",
+    "fotmobId": "704523",
+    "fotmobTeam": "RB Leipzig",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/704523.png",
+    "imageDownloaded": true,
+    "imageBytes": 14519
+  },
+  "kobel": {
+    "query": "Gregor Kobel",
+    "fotmobId": "764018",
+    "fotmobTeam": "Borussia Dortmund",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/764018.png",
+    "imageDownloaded": true,
+    "imageBytes": 13878
+  },
+  "jonathan-tah": {
+    "query": "Jonathan Tah",
+    "fotmobId": "469700",
+    "fotmobTeam": "Bayern München",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/469700.png",
+    "imageDownloaded": true,
+    "imageBytes": 12388
+  },
+  "schlotterbeck": {
+    "query": "Nico Schlotterbeck",
+    "fotmobId": "1002058",
+    "fotmobTeam": "Borussia Dortmund",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/1002058.png",
+    "imageDownloaded": true,
+    "imageBytes": 9399
+  },
+  "laimer": {
+    "query": "Konrad Laimer",
+    "fotmobId": "526827",
+    "fotmobTeam": "Bayern München",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/526827.png",
+    "imageDownloaded": true,
+    "imageBytes": 13729
+  },
+  "boniface": {
+    "query": "Victor Boniface",
+    "fotmobId": "1035208",
+    "fotmobTeam": "Bayer Leverkusen",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/1035208.png",
+    "imageDownloaded": true,
+    "imageBytes": 12251
+  },
+  "schick": {
+    "query": "Patrik Schick",
+    "fotmobId": "540097",
+    "fotmobTeam": "Bayer Leverkusen",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/540097.png",
+    "imageDownloaded": true,
+    "imageBytes": 13348
+  },
+  "guirassy": {
+    "query": "Serhou Guirassy",
+    "fotmobId": "448540",
+    "fotmobTeam": "Borussia Dortmund",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/448540.png",
+    "imageDownloaded": true,
+    "imageBytes": 11756
+  },
+  "fullkrug": {
+    "query": "Niclas Fullkrug",
+    "fotmobId": "276791",
+    "fotmobTeam": "Werder Bremen",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/276791.png",
+    "imageDownloaded": true,
+    "imageBytes": 12764
+  },
+  "gnabry": {
+    "query": "Serge Gnabry",
+    "fotmobId": "385437",
+    "fotmobTeam": "Bayern München",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/385437.png",
+    "imageDownloaded": true,
+    "imageBytes": 20437
+  },
+  "ferran-torres": {
+    "query": "Ferran Torres",
+    "fotmobId": "881771",
+    "fotmobTeam": "Paris Saint-Germain",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/881771.png",
+    "imageDownloaded": true,
+    "imageBytes": 17379
+  },
+  "doue": {
+    "query": "Desire Doue",
+    "fotmobId": "1339208",
+    "fotmobTeam": "Paris Saint-Germain",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/1339208.png",
+    "imageDownloaded": true,
+    "imageBytes": 12244
+  },
+  "chevalier": {
+    "query": "Lucas Chevalier",
+    "fotmobId": "1177131",
+    "fotmobTeam": "Paris Saint-Germain",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/1177131.png",
+    "imageDownloaded": true,
+    "imageBytes": 12216
+  },
+  "nuno-mendes": {
+    "query": "Nuno Mendes",
+    "fotmobId": "1158945",
+    "fotmobTeam": "Paris Saint-Germain",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/1158945.png",
+    "imageDownloaded": true,
+    "imageBytes": 12721
+  },
+  "pacho": {
+    "query": "Willian Pacho",
+    "fotmobId": "1137670",
+    "fotmobTeam": "Paris Saint-Germain",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/1137670.png",
+    "imageDownloaded": true,
+    "imageBytes": 12279
+  },
+  "zaire-emery": {
+    "query": "Warren Zaire-Emery",
+    "fotmobId": "1367615",
+    "fotmobTeam": "Paris Saint-Germain",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/1367615.png",
+    "imageDownloaded": true,
+    "imageBytes": 19728
+  },
+  "fabian-ruiz": {
+    "query": "Fabian Ruiz",
+    "fotmobId": "605654",
+    "fotmobTeam": "Paris Saint-Germain",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/605654.png",
+    "imageDownloaded": true,
+    "imageBytes": 13365
+  },
+  "openda": {
+    "query": "Loic Openda",
+    "fotmobId": "747767",
+    "fotmobTeam": "Lyon",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/747767.png",
+    "imageDownloaded": true,
+    "imageBytes": 14128
+  },
+  "colwill": {
+    "query": "Levi Colwill",
+    "fotmobId": "1096400",
+    "fotmobTeam": "Chelsea",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/1096400.png",
+    "imageDownloaded": true,
+    "imageBytes": 12709
+  },
+  "van-de-ven": {
+    "query": "Micky van de Ven",
+    "fotmobId": "1097466",
+    "fotmobTeam": "Tottenham Hotspur",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/1097466.png",
+    "imageDownloaded": true,
+    "imageBytes": 11762
+  },
+  "de-ligt": {
+    "query": "Matthijs de Ligt",
+    "fotmobId": "769895",
+    "fotmobTeam": "Manchester United",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/769895.png",
+    "imageDownloaded": true,
+    "imageBytes": 12608
+  },
+  "mazraoui": {
+    "query": "Noussair Mazraoui",
+    "fotmobId": "775539",
+    "fotmobTeam": "Manchester United",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/775539.png",
+    "imageDownloaded": true,
+    "imageBytes": 18772
+  },
+  "savinho": {
+    "query": "Savinho",
+    "fotmobId": "1174337",
+    "fotmobTeam": "Tottenham Hotspur",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/1174337.png",
+    "imageDownloaded": true,
+    "imageBytes": 11399
+  },
+  "morgan-rogers": {
+    "query": "Morgan Rogers",
+    "fotmobId": "883080",
+    "fotmobTeam": "Chelsea",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/883080.png",
+    "imageDownloaded": true,
+    "imageBytes": 17047
+  },
+  "mamardashvili": {
+    "query": "Giorgi Mamardashvili",
+    "fotmobId": "948800",
+    "fotmobTeam": "Liverpool",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/948800.png",
+    "imageDownloaded": true,
+    "imageBytes": 10636
+  },
+  "llorente": {
+    "query": "Marcos Llorente",
+    "fotmobId": "602563",
+    "fotmobTeam": "Atlético Madrid",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/602563.png",
+    "imageDownloaded": true,
+    "imageBytes": 13806
+  },
+  "sorloth": {
+    "query": "Alexander Sorloth",
+    "fotmobId": "440330",
+    "fotmobTeam": "Atlético Madrid",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/440330.png",
+    "imageDownloaded": true,
+    "imageBytes": 11518
+  },
+  "jonathan-david": {
+    "query": "Jonathan David",
+    "fotmobId": "939569",
+    "fotmobTeam": "Atlético Madrid",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/939569.png",
+    "imageDownloaded": true,
+    "imageBytes": 10845
+  },
+  "nunez": {
+    "query": "Darwin Nunez",
+    "fotmobId": "950561",
+    "fotmobTeam": "Al Diriyah",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/950561.png",
+    "imageDownloaded": true,
+    "imageBytes": 11641
+  },
+  "ivan-toney": {
+    "query": "Ivan Toney",
+    "fotmobId": "408987",
+    "fotmobTeam": "Al Ahli",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/408987.png",
+    "imageDownloaded": true,
+    "imageBytes": 11381
+  },
+  "martinelli": {
+    "query": "Gabriel Martinelli",
+    "fotmobId": "1021586",
+    "fotmobTeam": "Al Hilal",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/1021586.png",
+    "imageDownloaded": true,
+    "imageBytes": 11322
+  },
+  "carrasco": {
+    "query": "Yannick Carrasco",
+    "fotmobId": "354467",
+    "fotmobTeam": "Al Shabab",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/354467.png",
+    "imageDownloaded": true,
+    "imageBytes": 12113
+  },
+  "werner": {
+    "query": "Timo Werner",
+    "fotmobId": "450980",
+    "fotmobTeam": "San Jose Earthquakes",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/450980.png",
+    "imageDownloaded": true,
+    "imageBytes": 21163
+  },
+  "cunha": {
+    "query": "Matheus Cunha",
+    "fotmobId": "863098",
+    "fotmobTeam": "Manchester United",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/863098.png",
+    "imageDownloaded": true,
+    "imageBytes": 13459
+  },
+  "mbeumo": {
+    "query": "Bryan Mbeumo",
+    "fotmobId": "923312",
+    "fotmobTeam": "Manchester United",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/923312.png",
+    "imageDownloaded": true,
+    "imageBytes": 20065
+  },
+  "mainoo": {
+    "query": "Kobbie Mainoo",
+    "fotmobId": "1292810",
+    "fotmobTeam": "Manchester United",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/1292810.png",
+    "imageDownloaded": true,
+    "imageBytes": 20689
+  },
+  "zubimendi": {
+    "query": "Martin Zubimendi",
+    "fotmobId": "1031325",
+    "fotmobTeam": "Arsenal",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/1031325.png",
+    "imageDownloaded": true,
+    "imageBytes": 11675
+  },
+  "joao-pedro": {
+    "query": "Joao Pedro",
+    "fotmobId": "1021382",
+    "fotmobTeam": "Chelsea",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/1021382.png",
+    "imageDownloaded": true,
+    "imageBytes": 12218
+  },
+  "isco": {
+    "query": "Isco",
+    "fotmobId": "191315",
+    "fotmobTeam": "Real Betis",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/191315.png",
+    "imageDownloaded": true,
+    "imageBytes": 11277
+  },
+  "oyarzabal": {
+    "query": "Mikel Oyarzabal",
+    "fotmobId": "678234",
+    "fotmobTeam": "Real Sociedad",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/678234.png",
+    "imageDownloaded": true,
+    "imageBytes": 12381
+  },
+  "lookman": {
+    "query": "Ademola Lookman",
+    "fotmobId": "690516",
+    "fotmobTeam": "Atlético Madrid",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/690516.png",
+    "imageDownloaded": true,
+    "imageBytes": 14415
+  },
+  "benzema": {
+    "query": "Karim Benzema",
+    "fotmobId": "26166",
+    "fotmobTeam": "",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/26166.png",
+    "imageDownloaded": true,
+    "imageBytes": 12506
+  },
+  "mahrez": {
+    "query": "Riyad Mahrez",
+    "fotmobId": "278343",
+    "fotmobTeam": "",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/278343.png",
+    "imageDownloaded": true,
+    "imageBytes": 11728
+  },
+  "firmino": {
+    "query": "Roberto Firmino",
+    "fotmobId": "242709",
+    "fotmobTeam": "Al-Sadd",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/242709.png",
+    "imageDownloaded": true,
+    "imageBytes": 11064
+  },
+  "fabinho": {
+    "query": "Fabinho",
+    "fotmobId": "359188",
+    "fotmobTeam": "Trabzonspor",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/359188.png",
+    "imageDownloaded": true,
+    "imageBytes": 11507
+  },
+  "koulibaly": {
+    "query": "Kalidou Koulibaly",
+    "fotmobId": "210428",
+    "fotmobTeam": "Al Hilal",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/210428.png",
+    "imageDownloaded": true,
+    "imageBytes": 14061
+  },
+  "ruben-neves": {
+    "query": "Ruben Neves",
+    "fotmobId": "534684",
+    "fotmobTeam": "Al Hilal",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/534684.png",
+    "imageDownloaded": true,
+    "imageBytes": 12312
+  },
+  "milinkovic-savic": {
+    "query": "Sergej Milinkovic-Savic",
+    "fotmobId": "463301",
+    "fotmobTeam": "Al Hilal",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/463301.png",
+    "imageDownloaded": true,
+    "imageBytes": 11882
+  },
+  "mitrovic": {
+    "query": "Aleksandar Mitrovic",
+    "fotmobId": "351860",
+    "fotmobTeam": "Al-Rayyan",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/351860.png",
+    "imageDownloaded": true,
+    "imageBytes": 11839
+  },
+  "brozovic": {
+    "query": "Marcelo Brozovic",
+    "fotmobId": "206508",
+    "fotmobTeam": "Al-Sadd",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/206508.png",
+    "imageDownloaded": true,
+    "imageBytes": 12041
+  },
+  "busquets": {
+    "query": "Sergio Busquets",
+    "fotmobId": "154257",
+    "fotmobTeam": "",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/154257.png",
+    "imageDownloaded": true,
+    "imageBytes": 11603
+  },
+  "alba": {
+    "query": "Jordi Alba",
+    "fotmobId": "150739",
+    "fotmobTeam": "Soccer Aid World XI",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/150739.png",
+    "imageDownloaded": true,
+    "imageBytes": 13495
+  },
+  "lloris": {
+    "query": "Hugo Lloris",
+    "fotmobId": "26295",
+    "fotmobTeam": "Los Angeles FC",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/26295.png",
+    "imageDownloaded": true,
+    "imageBytes": 10643
+  },
+  "ait-nouri": {
+    "query": "Rayan Ait-Nouri",
+    "fotmobId": "933845",
+    "fotmobTeam": "Manchester City",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/933845.png",
+    "imageDownloaded": true,
+    "imageBytes": 14371
+  },
+  "reijnders": {
+    "query": "Tijjani Reijnders",
+    "fotmobId": "868344",
+    "fotmobTeam": "Al Qadsiah",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/868344.png",
+    "imageDownloaded": true,
+    "imageBytes": 12572
+  },
+  "kerkez": {
+    "query": "Milos Kerkez",
+    "fotmobId": "1195281",
+    "fotmobTeam": "Liverpool",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/1195281.png",
+    "imageDownloaded": true,
+    "imageBytes": 10883
+  },
+  "ndiaye": {
+    "query": "Iliman Ndiaye",
+    "fotmobId": "965764",
+    "fotmobTeam": "Manchester City",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/965764.png",
+    "imageDownloaded": true,
+    "imageBytes": 11745
+  },
+  "mateta": {
+    "query": "Jean-Philippe Mateta",
+    "fotmobId": "706297",
+    "fotmobTeam": "Crystal Palace",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/706297.png",
+    "imageDownloaded": true,
+    "imageBytes": 21800
+  },
+  "baena": {
+    "query": "Alex Baena",
+    "fotmobId": "942372",
+    "fotmobTeam": "Atlético Madrid",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/942372.png",
+    "imageDownloaded": true,
+    "imageBytes": 11002
+  },
+  "de-ketelaere": {
+    "query": "Charles De Ketelaere",
+    "fotmobId": "1095432",
+    "fotmobTeam": "Atalanta",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/1095432.png",
+    "imageDownloaded": true,
+    "imageBytes": 12524
+  },
+  "insigne": {
+    "query": "Lorenzo Insigne",
+    "fotmobId": "193441",
+    "fotmobTeam": "Sampdoria",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/193441.png",
+    "imageDownloaded": true,
+    "imageBytes": 11352
+  },
+  "gibbs-white": {
+    "query": "Morgan Gibbs-White",
+    "fotmobId": "789502",
+    "fotmobTeam": "Nottingham Forest",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/789502.png",
+    "imageDownloaded": true,
+    "imageBytes": 12072
+  },
+  "semenyo": {
+    "query": "Antoine Semenyo",
+    "fotmobId": "933576",
+    "fotmobTeam": "Manchester City",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/933576.png",
+    "imageDownloaded": true,
+    "imageBytes": 23271
+  },
+  "wissa": {
+    "query": "Yoane Wissa",
+    "fotmobId": "666857",
+    "fotmobTeam": "Newcastle United",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/666857.png",
+    "imageDownloaded": true,
+    "imageBytes": 12473
+  },
+  "chris-wood": {
+    "query": "Chris Wood",
+    "fotmobId": "169719",
+    "fotmobTeam": "Nottingham Forest",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/169719.png",
+    "imageDownloaded": true,
+    "imageBytes": 10832
+  }
+}

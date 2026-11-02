@@ -1,0 +1,1100 @@
+{
+  "messi": {
+    "query": "Lionel Messi",
+    "hint": "Miami",
+    "candidateCount": 1,
+    "candidates": [
+      {
+        "id": "30981",
+        "team": "Inter Miami CF"
+      }
+    ],
+    "fotmobId": "30981",
+    "chosenTeam": "Inter Miami CF",
+    "imageDownloaded": true,
+    "imageBytes": 12962
+  },
+  "mbappe": {
+    "query": "Kylian Mbappe",
+    "hint": "Real Madrid",
+    "candidateCount": 1,
+    "candidates": [
+      {
+        "id": "701154",
+        "team": "Real Madrid"
+      }
+    ],
+    "fotmobId": "701154",
+    "chosenTeam": "Real Madrid",
+    "imageDownloaded": true,
+    "imageBytes": 10970
+  },
+  "iniesta": {
+    "query": "Andres Iniesta",
+    "hint": null,
+    "candidateCount": 1,
+    "candidates": [
+      {
+        "id": "30955",
+        "team": ""
+      }
+    ],
+    "fotmobId": "30955",
+    "chosenTeam": "",
+    "imageDownloaded": true,
+    "imageBytes": 12068
+  },
+  "xavi": {
+    "query": "Xavi Hernandez",
+    "hint": null,
+    "candidateCount": 1,
+    "candidates": [
+      {
+        "id": "39854",
+        "team": "Netherlands"
+      }
+    ],
+    "fotmobId": "39854",
+    "chosenTeam": "Netherlands",
+    "imageDownloaded": true,
+    "imageBytes": 11736
+  },
+  "kaka": {
+    "query": "Kaka",
+    "hint": null,
+    "candidateCount": 3,
+    "candidates": [
+      {
+        "id": "1332771",
+        "team": "Persib Bandung"
+      },
+      {
+        "id": "933610",
+        "team": "Lobi Stars"
+      },
+      {
+        "id": "1640875",
+        "team": "Bangkok United"
+      }
+    ],
+    "fotmobId": "1332771",
+    "chosenTeam": "Persib Bandung",
+    "imageDownloaded": true,
+    "imageBytes": 19863
+  },
+  "roberto-carlos": {
+    "query": "Roberto Carlos",
+    "hint": null,
+    "candidateCount": 3,
+    "candidates": [
+      {
+        "id": "30659",
+        "team": ""
+      },
+      {
+        "id": "121118",
+        "team": "Union Lara"
+      },
+      {
+        "id": "69127",
+        "team": "Guabirá"
+      }
+    ],
+    "fotmobId": "30659",
+    "chosenTeam": "",
+    "imageDownloaded": true,
+    "imageBytes": 19665
+  },
+  "henry": {
+    "query": "Thierry Henry",
+    "hint": null,
+    "candidateCount": 1,
+    "candidates": [
+      {
+        "id": "30626",
+        "team": ""
+      }
+    ],
+    "fotmobId": "30626",
+    "chosenTeam": "",
+    "imageDownloaded": true,
+    "imageBytes": 19726
+  },
+  "van-persie": {
+    "query": "Robin van Persie",
+    "hint": null,
+    "candidateCount": 1,
+    "candidates": [
+      {
+        "id": "30843",
+        "team": ""
+      }
+    ],
+    "fotmobId": "30843",
+    "chosenTeam": "",
+    "imageDownloaded": true,
+    "imageBytes": 11506
+  },
+  "robben": {
+    "query": "Arjen Robben",
+    "hint": null,
+    "candidateCount": 1,
+    "candidates": [
+      {
+        "id": "30834",
+        "team": ""
+      }
+    ],
+    "fotmobId": "30834",
+    "chosenTeam": "",
+    "imageDownloaded": true,
+    "imageBytes": 11742
+  },
+  "sneijder": {
+    "query": "Wesley Sneijder",
+    "hint": null,
+    "candidateCount": 1,
+    "candidates": [
+      {
+        "id": "30878",
+        "team": ""
+      }
+    ],
+    "fotmobId": "30878",
+    "chosenTeam": "",
+    "imageDownloaded": true,
+    "imageBytes": 13595
+  },
+  "gerrard": {
+    "query": "Steven Gerrard",
+    "hint": null,
+    "candidateCount": 1,
+    "candidates": [
+      {
+        "id": "30618",
+        "team": ""
+      }
+    ],
+    "fotmobId": "30618",
+    "chosenTeam": "",
+    "imageDownloaded": true,
+    "imageBytes": 21104
+  },
+  "scholes": {
+    "query": "Paul Scholes",
+    "hint": null,
+    "candidateCount": 1,
+    "candidates": [
+      {
+        "id": "30373",
+        "team": ""
+      }
+    ],
+    "fotmobId": "30373",
+    "chosenTeam": "",
+    "imageDownloaded": true,
+    "imageBytes": 18223
+  },
+  "giggs": {
+    "query": "Ryan Giggs",
+    "hint": null,
+    "candidateCount": 1,
+    "candidates": [
+      {
+        "id": "24154",
+        "team": "OGFC"
+      }
+    ],
+    "fotmobId": "24154",
+    "chosenTeam": "OGFC",
+    "imageDownloaded": true,
+    "imageBytes": 21657
+  },
+  "vidic": {
+    "query": "Nemanja Vidic",
+    "hint": null,
+    "candidateCount": 2,
+    "candidates": [
+      {
+        "id": "30865",
+        "team": "OGFC"
+      },
+      {
+        "id": "251245",
+        "team": ""
+      }
+    ],
+    "fotmobId": "30865",
+    "chosenTeam": "OGFC",
+    "imageDownloaded": true,
+    "imageBytes": 15036
+  },
+  "terry": {
+    "query": "John Terry",
+    "hint": "Chelsea",
+    "candidateCount": 1,
+    "candidates": [
+      {
+        "id": "30627",
+        "team": ""
+      }
+    ],
+    "fotmobId": "30627",
+    "chosenTeam": "",
+    "imageDownloaded": true,
+    "imageBytes": 20553
+  },
+  "rio-ferdinand": {
+    "query": "Rio Ferdinand",
+    "hint": "Manchester United",
+    "candidateCount": 1,
+    "candidates": [
+      {
+        "id": "30620",
+        "team": "OGFC"
+      }
+    ],
+    "fotmobId": "30620",
+    "chosenTeam": "OGFC",
+    "imageDownloaded": true,
+    "imageBytes": 16763
+  },
+  "lampard": {
+    "query": "Frank Lampard",
+    "hint": "Chelsea",
+    "candidateCount": 1,
+    "candidates": [
+      {
+        "id": "30631",
+        "team": "Coventry City"
+      }
+    ],
+    "fotmobId": "30631",
+    "chosenTeam": "Coventry City",
+    "imageDownloaded": true,
+    "imageBytes": 19612
+  },
+  "rooney": {
+    "query": "Wayne Rooney",
+    "hint": null,
+    "candidateCount": 1,
+    "candidates": [
+      {
+        "id": "30829",
+        "team": "England Aid XI"
+      }
+    ],
+    "fotmobId": "30829",
+    "chosenTeam": "England Aid XI",
+    "imageDownloaded": true,
+    "imageBytes": 13531
+  },
+  "aguero": {
+    "query": "Sergio Aguero",
+    "hint": "Manchester City",
+    "candidateCount": 1,
+    "candidates": [
+      {
+        "id": "37412",
+        "team": ""
+      }
+    ],
+    "fotmobId": "37412",
+    "chosenTeam": "",
+    "imageDownloaded": true,
+    "imageBytes": 12183
+  },
+  "suarez": {
+    "query": "Luis Suarez",
+    "hint": "Inter Miami",
+    "candidateCount": 3,
+    "candidates": [
+      {
+        "id": "40636",
+        "team": "Inter Miami CF"
+      },
+      {
+        "id": "792303",
+        "team": "Sporting CP"
+      },
+      {
+        "id": "287431",
+        "team": "Real Mamore"
+      }
+    ],
+    "fotmobId": "40636",
+    "chosenTeam": "Inter Miami CF",
+    "imageDownloaded": true,
+    "imageBytes": 12504
+  },
+  "forlan": {
+    "query": "Diego Forlan",
+    "hint": null,
+    "candidateCount": 1,
+    "candidates": [
+      {
+        "id": "38460",
+        "team": "Uruguay"
+      }
+    ],
+    "fotmobId": "38460",
+    "chosenTeam": "Uruguay",
+    "imageDownloaded": true,
+    "imageBytes": 19362
+  },
+  "yaya-toure": {
+    "query": "Yaya Toure",
+    "hint": null,
+    "candidateCount": 2,
+    "candidates": [
+      {
+        "id": "36615",
+        "team": "Slovan Bratislava"
+      },
+      {
+        "id": "852164",
+        "team": ""
+      }
+    ],
+    "fotmobId": "36615",
+    "chosenTeam": "Slovan Bratislava",
+    "imageDownloaded": true,
+    "imageBytes": 18772
+  },
+  "essien": {
+    "query": "Michael Essien",
+    "hint": null,
+    "candidateCount": 1,
+    "candidates": [
+      {
+        "id": "30675",
+        "team": "Soccer Aid World XI"
+      }
+    ],
+    "fotmobId": "30675",
+    "chosenTeam": "Soccer Aid World XI",
+    "imageDownloaded": true,
+    "imageBytes": 19325
+  },
+  "etoo": {
+    "query": "Samuel Eto'o",
+    "hint": null,
+    "candidateCount": 1,
+    "candidates": [
+      {
+        "id": "33639",
+        "team": ""
+      }
+    ],
+    "fotmobId": "33639",
+    "chosenTeam": "",
+    "imageDownloaded": true,
+    "imageBytes": 19136
+  },
+  "weah": {
+    "query": "George Weah",
+    "hint": null,
+    "candidateCount": 0,
+    "candidates": [],
+    "error": "no search result"
+  },
+  "okocha": {
+    "query": "Jay-Jay Okocha",
+    "hint": null,
+    "candidateCount": 0,
+    "candidates": [],
+    "error": "no search result"
+  },
+  "kanu": {
+    "query": "Nwankwo Kanu",
+    "hint": null,
+    "candidateCount": 0,
+    "candidates": [],
+    "error": "no search result"
+  },
+  "nakata": {
+    "query": "Hidetoshi Nakata",
+    "hint": null,
+    "candidateCount": 0,
+    "candidates": [],
+    "error": "no search result"
+  },
+  "honda": {
+    "query": "Keisuke Honda",
+    "hint": null,
+    "candidateCount": 1,
+    "candidates": [
+      {
+        "id": "72656",
+        "team": "FC Jurong"
+      }
+    ],
+    "fotmobId": "72656",
+    "chosenTeam": "FC Jurong",
+    "imageDownloaded": true,
+    "imageBytes": 10321
+  },
+  "park-ji-sung": {
+    "query": "Park Ji-sung",
+    "hint": "Manchester United",
+    "candidateCount": 0,
+    "candidates": [],
+    "error": "no search result"
+  },
+  "kim-min-jae": {
+    "query": "Kim Min-jae",
+    "hint": "Bayern",
+    "candidateCount": 3,
+    "candidates": [
+      {
+        "id": "1861850",
+        "team": "Namyangju Citizen"
+      },
+      {
+        "id": "1714841",
+        "team": "FC Mokpo"
+      },
+      {
+        "id": "1999309",
+        "team": "Ansan Greeners"
+      }
+    ],
+    "fotmobId": "1861850",
+    "chosenTeam": "Namyangju Citizen",
+    "imageDownloaded": false,
+    "imageError": "403 Client Error: Forbidden for url: https://images.fotmob.com/image_resources/playerimages/1861850.png"
+  },
+  "lewandowski": {
+    "query": "Robert Lewandowski",
+    "hint": "Barcelona",
+    "candidateCount": 1,
+    "candidates": [
+      {
+        "id": "93447",
+        "team": "Chicago Fire FC"
+      }
+    ],
+    "fotmobId": "93447",
+    "chosenTeam": "Chicago Fire FC",
+    "imageDownloaded": true,
+    "imageBytes": 18170
+  },
+  "muller": {
+    "query": "Thomas Muller",
+    "hint": "Bayern",
+    "candidateCount": 2,
+    "candidates": [
+      {
+        "id": "116772",
+        "team": "Vancouver Whitecaps"
+      },
+      {
+        "id": "1080229",
+        "team": "KSV Baunatal"
+      }
+    ],
+    "fotmobId": "116772",
+    "chosenTeam": "Vancouver Whitecaps",
+    "imageDownloaded": true,
+    "imageBytes": 12791
+  },
+  "neuer": {
+    "query": "Manuel Neuer",
+    "hint": "Bayern",
+    "candidateCount": 1,
+    "candidates": [
+      {
+        "id": "27299",
+        "team": "Bayern München"
+      }
+    ],
+    "fotmobId": "27299",
+    "chosenTeam": "Bayern München",
+    "imageDownloaded": true,
+    "imageBytes": 12156
+  },
+  "gotze": {
+    "query": "Mario Gotze",
+    "hint": null,
+    "candidateCount": 2,
+    "candidates": [
+      {
+        "id": "177714",
+        "team": "Eintracht Frankfurt"
+      },
+      {
+        "id": "661076",
+        "team": "Ingolstadt II"
+      }
+    ],
+    "fotmobId": "177714",
+    "chosenTeam": "Eintracht Frankfurt",
+    "imageDownloaded": true,
+    "imageBytes": 11845
+  },
+  "ozil": {
+    "query": "Mesut Ozil",
+    "hint": null,
+    "candidateCount": 1,
+    "candidates": [
+      {
+        "id": "36378",
+        "team": ""
+      }
+    ],
+    "fotmobId": "36378",
+    "chosenTeam": "",
+    "imageDownloaded": true,
+    "imageBytes": 10901
+  },
+  "kroos": {
+    "query": "Toni Kroos",
+    "hint": "Real Madrid",
+    "candidateCount": 1,
+    "candidates": [
+      {
+        "id": "95078",
+        "team": ""
+      }
+    ],
+    "fotmobId": "95078",
+    "chosenTeam": "",
+    "imageDownloaded": true,
+    "imageBytes": 12077
+  },
+  "schweinsteiger": {
+    "query": "Bastian Schweinsteiger",
+    "hint": null,
+    "candidateCount": 1,
+    "candidates": [
+      {
+        "id": "30872",
+        "team": ""
+      }
+    ],
+    "fotmobId": "30872",
+    "chosenTeam": "",
+    "imageDownloaded": true,
+    "imageBytes": 11433
+  },
+  "kp-boateng": {
+    "query": "Kevin-Prince Boateng",
+    "hint": null,
+    "candidateCount": 1,
+    "candidates": [
+      {
+        "id": "27335",
+        "team": "Kaefigtiger"
+      }
+    ],
+    "fotmobId": "27335",
+    "chosenTeam": "Kaefigtiger",
+    "imageDownloaded": true,
+    "imageBytes": 13412
+  },
+  "di-maria": {
+    "query": "Angel Di Maria",
+    "hint": null,
+    "candidateCount": 1,
+    "candidates": [
+      {
+        "id": "46509",
+        "team": "Rosario Central"
+      }
+    ],
+    "fotmobId": "46509",
+    "chosenTeam": "Rosario Central",
+    "imageDownloaded": true,
+    "imageBytes": 12442
+  },
+  "enzo-fernandez": {
+    "query": "Enzo Fernandez",
+    "hint": "Chelsea",
+    "candidateCount": 3,
+    "candidates": [
+      {
+        "id": "1137705",
+        "team": "Manchester City"
+      },
+      {
+        "id": "1710240",
+        "team": "Antigua Guatemala"
+      },
+      {
+        "id": "1890211",
+        "team": "C.S. Cartaginés"
+      }
+    ],
+    "fotmobId": "1137705",
+    "chosenTeam": "Manchester City",
+    "imageDownloaded": true,
+    "imageBytes": 13672
+  },
+  "emi-martinez": {
+    "query": "Emiliano Martinez",
+    "hint": "Aston Villa",
+    "candidateCount": 3,
+    "candidates": [
+      {
+        "id": "268375",
+        "team": "Chelsea"
+      },
+      {
+        "id": "1137909",
+        "team": "Palmeiras"
+      },
+      {
+        "id": "1603095",
+        "team": "Alacranes de Durango"
+      }
+    ],
+    "fotmobId": "268375",
+    "chosenTeam": "Chelsea",
+    "imageDownloaded": true,
+    "imageBytes": 13605
+  },
+  "mac-allister": {
+    "query": "Alexis Mac Allister",
+    "hint": "Liverpool",
+    "candidateCount": 1,
+    "candidates": [
+      {
+        "id": "831489",
+        "team": "Liverpool"
+      }
+    ],
+    "fotmobId": "831489",
+    "chosenTeam": "Liverpool",
+    "imageDownloaded": true,
+    "imageBytes": 12759
+  },
+  "de-paul": {
+    "query": "Rodrigo De Paul",
+    "hint": "Atletico",
+    "candidateCount": 1,
+    "candidates": [
+      {
+        "id": "324578",
+        "team": "Inter Miami CF"
+      }
+    ],
+    "fotmobId": "324578",
+    "chosenTeam": "Inter Miami CF",
+    "imageDownloaded": true,
+    "imageBytes": 20287
+  },
+  "cuti-romero": {
+    "query": "Cristian Romero",
+    "hint": "Tottenham",
+    "candidateCount": 3,
+    "candidates": [
+      {
+        "id": "789066",
+        "team": "Atlético Madrid"
+      },
+      {
+        "id": "1000017",
+        "team": "Gimnasia y Esgrima de Concepcion"
+      },
+      {
+        "id": "1634798",
+        "team": "Rayo Zuliano"
+      }
+    ],
+    "fotmobId": "789066",
+    "chosenTeam": "Atlético Madrid",
+    "imageDownloaded": true,
+    "imageBytes": 13293
+  },
+  "dembele": {
+    "query": "Ousmane Dembele",
+    "hint": "Paris",
+    "candidateCount": 1,
+    "candidates": [
+      {
+        "id": "692984",
+        "team": "Paris Saint-Germain"
+      }
+    ],
+    "fotmobId": "692984",
+    "chosenTeam": "Paris Saint-Germain",
+    "imageDownloaded": true,
+    "imageBytes": 13036
+  },
+  "konate": {
+    "query": "Ibrahima Konate",
+    "hint": "Liverpool",
+    "candidateCount": 2,
+    "candidates": [
+      {
+        "id": "820140",
+        "team": "Real Madrid"
+      },
+      {
+        "id": "842626",
+        "team": "Real Madrid"
+      }
+    ],
+    "fotmobId": "820140",
+    "chosenTeam": "Real Madrid",
+    "imageDownloaded": true,
+    "imageBytes": 12482
+  },
+  "tchouameni": {
+    "query": "Aurelien Tchouameni",
+    "hint": "Real Madrid",
+    "candidateCount": 1,
+    "candidates": [
+      {
+        "id": "914458",
+        "team": "Real Madrid"
+      }
+    ],
+    "fotmobId": "914458",
+    "chosenTeam": "Real Madrid",
+    "imageDownloaded": true,
+    "imageBytes": 12734
+  },
+  "vinicius": {
+    "query": "Vinicius Junior",
+    "hint": "Real Madrid",
+    "candidateCount": 1,
+    "candidates": [
+      {
+        "id": "846033",
+        "team": "Real Madrid"
+      }
+    ],
+    "fotmobId": "846033",
+    "chosenTeam": "Real Madrid",
+    "imageDownloaded": true,
+    "imageBytes": 18696
+  },
+  "rodrygo": {
+    "query": "Rodrygo",
+    "hint": "Real Madrid",
+    "candidateCount": 1,
+    "candidates": [
+      {
+        "id": "895362",
+        "team": "Real Madrid"
+      }
+    ],
+    "fotmobId": "895362",
+    "chosenTeam": "Real Madrid",
+    "imageDownloaded": true,
+    "imageBytes": 12249
+  },
+  "valverde": {
+    "query": "Federico Valverde",
+    "hint": "Real Madrid",
+    "candidateCount": 1,
+    "candidates": [
+      {
+        "id": "743533",
+        "team": "Real Madrid"
+      }
+    ],
+    "fotmobId": "743533",
+    "chosenTeam": "Real Madrid",
+    "imageDownloaded": true,
+    "imageBytes": 12088
+  },
+  "courtois": {
+    "query": "Thibaut Courtois",
+    "hint": "Real Madrid",
+    "candidateCount": 1,
+    "candidates": [
+      {
+        "id": "170323",
+        "team": "Real Madrid"
+      }
+    ],
+    "fotmobId": "170323",
+    "chosenTeam": "Real Madrid",
+    "imageDownloaded": true,
+    "imageBytes": 13225
+  },
+  "donnarumma": {
+    "query": "Gianluigi Donnarumma",
+    "hint": null,
+    "candidateCount": 1,
+    "candidates": [
+      {
+        "id": "618878",
+        "team": "Manchester City"
+      }
+    ],
+    "fotmobId": "618878",
+    "chosenTeam": "Manchester City",
+    "imageDownloaded": true,
+    "imageBytes": 17528
+  },
+  "verratti": {
+    "query": "Marco Verratti",
+    "hint": null,
+    "candidateCount": 1,
+    "candidates": [
+      {
+        "id": "190972",
+        "team": "Al-Duhail SC"
+      }
+    ],
+    "fotmobId": "190972",
+    "chosenTeam": "Al-Duhail SC",
+    "imageDownloaded": true,
+    "imageBytes": 11756
+  },
+  "chiesa": {
+    "query": "Federico Chiesa",
+    "hint": null,
+    "candidateCount": 1,
+    "candidates": [
+      {
+        "id": "784510",
+        "team": "Liverpool"
+      }
+    ],
+    "fotmobId": "784510",
+    "chosenTeam": "Liverpool",
+    "imageDownloaded": true,
+    "imageBytes": 18278
+  },
+  "osimhen": {
+    "query": "Victor Osimhen",
+    "hint": null,
+    "candidateCount": 1,
+    "candidates": [
+      {
+        "id": "687681",
+        "team": "Galatasaray"
+      }
+    ],
+    "fotmobId": "687681",
+    "chosenTeam": "Galatasaray",
+    "imageDownloaded": true,
+    "imageBytes": 13123
+  },
+  "kvaratskhelia": {
+    "query": "Khvicha Kvaratskhelia",
+    "hint": null,
+    "candidateCount": 1,
+    "candidates": [
+      {
+        "id": "900433",
+        "team": "Paris Saint-Germain"
+      }
+    ],
+    "fotmobId": "900433",
+    "chosenTeam": "Paris Saint-Germain",
+    "imageDownloaded": true,
+    "imageBytes": 19028
+  },
+  "van-dijk": {
+    "query": "Virgil van Dijk",
+    "hint": "Liverpool",
+    "candidateCount": 1,
+    "candidates": [
+      {
+        "id": "209405",
+        "team": "Liverpool"
+      }
+    ],
+    "fotmobId": "209405",
+    "chosenTeam": "Liverpool",
+    "imageDownloaded": true,
+    "imageBytes": 11573
+  },
+  "de-bruyne": {
+    "query": "Kevin De Bruyne",
+    "hint": "Manchester City",
+    "candidateCount": 1,
+    "candidates": [
+      {
+        "id": "169200",
+        "team": "Napoli"
+      }
+    ],
+    "fotmobId": "169200",
+    "chosenTeam": "Napoli",
+    "imageDownloaded": true,
+    "imageBytes": 13544
+  },
+  "bruno-fernandes": {
+    "query": "Bruno Fernandes",
+    "hint": "Manchester United",
+    "candidateCount": 2,
+    "candidates": [
+      {
+        "id": "422685",
+        "team": "Manchester United"
+      },
+      {
+        "id": "1797866",
+        "team": ""
+      }
+    ],
+    "fotmobId": "422685",
+    "chosenTeam": "Manchester United",
+    "imageDownloaded": true,
+    "imageBytes": 18048
+  },
+  "rashford": {
+    "query": "Marcus Rashford",
+    "hint": null,
+    "candidateCount": 1,
+    "candidates": [
+      {
+        "id": "696365",
+        "team": "Manchester United"
+      }
+    ],
+    "fotmobId": "696365",
+    "chosenTeam": "Manchester United",
+    "imageDownloaded": true,
+    "imageBytes": 19583
+  },
+  "sterling": {
+    "query": "Raheem Sterling",
+    "hint": null,
+    "candidateCount": 1,
+    "candidates": [
+      {
+        "id": "246575",
+        "team": ""
+      }
+    ],
+    "fotmobId": "246575",
+    "chosenTeam": "",
+    "imageDownloaded": true,
+    "imageBytes": 14964
+  },
+  "kane": {
+    "query": "Harry Kane",
+    "hint": "Bayern",
+    "candidateCount": 1,
+    "candidates": [
+      {
+        "id": "194165",
+        "team": "Bayern München"
+      }
+    ],
+    "fotmobId": "194165",
+    "chosenTeam": "Bayern München",
+    "imageDownloaded": true,
+    "imageBytes": 12083
+  },
+  "saka": {
+    "query": "Bukayo Saka",
+    "hint": "Arsenal",
+    "candidateCount": 1,
+    "candidates": [
+      {
+        "id": "961995",
+        "team": "Arsenal"
+      }
+    ],
+    "fotmobId": "961995",
+    "chosenTeam": "Arsenal",
+    "imageDownloaded": true,
+    "imageBytes": 12095
+  },
+  "bellingham": {
+    "query": "Jude Bellingham",
+    "hint": "Real Madrid",
+    "candidateCount": 1,
+    "candidates": [
+      {
+        "id": "1077894",
+        "team": "Real Madrid"
+      }
+    ],
+    "fotmobId": "1077894",
+    "chosenTeam": "Real Madrid",
+    "imageDownloaded": true,
+    "imageBytes": 12031
+  },
+  "foden": {
+    "query": "Phil Foden",
+    "hint": "Manchester City",
+    "candidateCount": 1,
+    "candidates": [
+      {
+        "id": "815006",
+        "team": "Manchester City"
+      }
+    ],
+    "fotmobId": "815006",
+    "chosenTeam": "Manchester City",
+    "imageDownloaded": true,
+    "imageBytes": 12493
+  },
+  "alisson": {
+    "query": "Alisson Becker",
+    "hint": "Liverpool",
+    "candidateCount": 1,
+    "candidates": [
+      {
+        "id": "319784",
+        "team": "Liverpool"
+      }
+    ],
+    "fotmobId": "319784",
+    "chosenTeam": "Liverpool",
+    "imageDownloaded": true,
+    "imageBytes": 11779
+  },
+  "rodri": {
+    "query": "Rodri",
+    "hint": "Manchester City",
+    "candidateCount": 3,
+    "candidates": [
+      {
+        "id": "675088",
+        "team": "Barcelona"
+      },
+      {
+        "id": "1419969",
+        "team": "Atlético Madrid"
+      },
+      {
+        "id": "324578",
+        "team": "Inter Miami CF"
+      }
+    ],
+    "fotmobId": "675088",
+    "chosenTeam": "Barcelona",
+    "imageDownloaded": true,
+    "imageBytes": 18260
+  },
+  "coutinho": {
+    "query": "Philippe Coutinho",
+    "hint": null,
+    "candidateCount": 1,
+    "candidates": [
+      {
+        "id": "184536",
+        "team": ""
+      }
+    ],
+    "fotmobId": "184536",
+    "chosenTeam": "",
+    "imageDownloaded": true,
+    "imageBytes": 11097
+  },
+  "aubameyang": {
+    "query": "Pierre-Emerick Aubameyang",
+    "hint": null,
+    "candidateCount": 1,
+    "candidates": [
+      {
+        "id": "150565",
+        "team": "Deportivo A Coruña"
+      }
+    ],
+    "fotmobId": "150565",
+    "chosenTeam": "Deportivo A Coruña",
+    "imageDownloaded": true,
+    "imageBytes": 18747
+  }
+}

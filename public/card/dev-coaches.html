@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>감독 카드 미리보기</title>
+<!-- 로컬 전용(배포 제외: firebase.json ignore). 카드 스타일은 index.html에서 그대로 가져와 쓴다 -->
+<style id="viewer">
+  html, body { overflow: auto !important; height: auto !important; touch-action: auto !important; }
+  body { margin: 0; padding: 16px 16px 48px; color: #2b3152; font-family: system-ui, sans-serif; }
+  body.dark { background: #14101f !important; color: #e8ecf4; }
+  body.dark::before, body.dark::after { display: none; }
+  .vbar { position: sticky; top: 0; z-index: 50; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 0 14px; }
+  .vbar h1 { font-size: 17px; margin: 0 8px 0 0; }
+  .vbar button, .vbar label { font: 600 13px system-ui; padding: 7px 12px; border-radius: 999px; border: 1px solid rgba(0,0,0,.12); background: rgba(255,255,255,.85); color: #2b3152; cursor: pointer; display: flex; gap: 6px; align-items: center; }
+  .vbar button.on { background: #2b3152; color: #fff; }
+  .vbar input[type=range] { width: 110px; }
+  #vfilter { display: flex; flex-wrap: wrap; gap: 6px; }
+  .vsec { margin: 22px 0 10px; font: 800 15px 'Gothic A1', system-ui; letter-spacing: .02em; }
+  .vgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--w, 180px), 1fr)); gap: 18px; }
+  .vcard { position: relative; aspect-ratio: 1 / 1.4; container-type: inline-size; perspective: 900px; cursor: pointer; }
+  .vcard .card3d { transition: transform .5s cubic-bezier(.2,.8,.2,1); }
+  .vcard.live .card3d { transition: transform .08s linear; }
+  .vcap { margin-top: 6px; font-size: 12px; opacity: .65; text-align: center; }
+  #vbig { position: fixed; inset: 0; z-index: 100; display: none; place-items: center; background: rgba(5, 4, 12, .82); }
+  #vbig.open { display: grid; }
+  #vbig .vcard { width: min(82vw, 420px, 56vh); cursor: grab; }
+  #verr { color: #d33; white-space: pre-wrap; }
+  /* 감독 카드: 능력치 배지 없이 이름을 크게 */
+  .coach.hero .cf-name { bottom: 3cqw; }
+</style>
+</head>
+<body>
+<div class="sparkles"></div>
+<div class="vbar">
+  <h1>감독 카드 <span id="vcount"></span></h1>
+  <span id="vfilter"></span>
+  <label><input type="checkbox" id="sway"> 자동으로 기울이기</label>
+  <label><input type="checkbox" id="dark"> 어두운 배경</label>
+  <label>크기 <input type="range" id="size" min="120" max="340" value="180"></label>
+</div>
+<div id="verr"></div>
+<div id="vlist"></div>
+<div id="vbig"><div class="vcard" id="vbigCard"></div></div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+let setLight, esc, COACHES = [], league = '전체';
+const TIER = { icon: 'icon', full: 'legend', half: 'epic', rare: 'rare', face: 'common' };
+const LEAGUE_KO = { 'Premier League': '프리미어리그', 'LaLiga': '라리가', 'Bundesliga': '분데스리가', 'Serie A': '세리에 A', 'Ligue 1': '리그 1' };
+const SHORT = { 'Luis Enrique': 'LUIS ENRIQUE', 'Hans-Dieter Flick': 'FLICK', 'Quique Sánchez Flores': 'S. FLORES', 'Beñat San José': 'SAN JOSÉ', 'Vicente del Bosque': 'DEL BOSQUE' };
+
+async function load() {
+  try {
+    const src = await fetch('/card/index.html', { cache: 'reload' }).then((r) => r.text());
+    const doc = new DOMParser().parseFromString(src, 'text/html');
+    doc.head.querySelectorAll('link[rel=stylesheet], style').forEach((n) => document.head.insertBefore(document.importNode(n, true), $('#viewer')));
+    const cut = (a, b) => { const i = src.indexOf(a), j = src.indexOf(b, i + a.length); if (i < 0 || j < 0) throw new Error('index.html에서 못 찾음: ' + a); return src.slice(i, j); };
+    [setLight, esc] = new Function([cut('const clamp =', '\n'), cut('const esc =', '\n'), cut('function setLight', '\n}\n') + '\n}'].join('\n') + '\nreturn [setLight, esc];')();
+    const lo = Object.keys(LEAGUE_KO), to = Object.keys(TIER);
+    COACHES = (await fetch('/card/coaches.json', { cache: 'reload' }).then((r) => r.json())).coaches
+      .sort((a, b) => to.indexOf(a.tier) - to.indexOf(b.tier) || lo.indexOf(a.league) - lo.indexOf(b.league) || a.team.localeCompare(b.team));
+    COACHES.forEach((c, i) => (c.no = i + 1));
+    $('#vfilter').innerHTML = ['전체', '아이콘', ...Object.keys(LEAGUE_KO)].map((l) => `<button data-l="${l}">${LEAGUE_KO[l] || l}</button>`).join(' ');
+    $('#vfilter').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { league = b.dataset.l; render(); }));
+    render();
+  } catch (e) { $('#verr').textContent = String(e.stack || e); }
+}
+
+// index.html의 heroHTML / frontHTML 구조를 그대로 따르되, 능력치 배지는 빼고 포지션 대신 COACH
+function coachHTML(c) {
+  const tier = TIER[c.tier], [c1, c2, c3] = c.colors || [];
+  const style = `--c1:${c1};--c2:${c2};--c3:${c3}`;
+  // 아이콘(은퇴 레전드 감독): index.html의 iconHTML 구조 그대로, 엠블럼 없이 이름만
+  if (tier === 'icon') {
+    const name = SHORT[c.name] || c.name.split(' ').pop().toUpperCase();
+    const nfs = Math.min(21, 140 / name.length).toFixed(1);
+    return `<div class="face front t-icon hero icon coach">
+      <div class="aura"></div><div class="frame-holo"></div>
+      <div class="cf">
+        <div class="cf-bg"></div><div class="cf-pat"></div><div class="cf-holo"></div>
+        <div class="cf-big">ICON</div>
+        <img class="cf-photo full" src="/${esc(c.photo)}" alt="" draggable="false">
+        <div class="cf-sparkle"></div>
+        <div class="cf-name" style="--nfs:${nfs}cqw">${esc(name)}</div>
+        <div class="icon-deco"></div><div class="glow-edge"></div>
+      </div>
+      <div class="glare"></div>
+    </div>`;
+  }
+  const crest = `<img class="cf-club" src="/card/crests/${c.teamId}.webp" alt="" draggable="false">`;
+  // 데 로시, 데 제르비, 르 브리처럼 성 앞 관사는 성에 붙인다
+  const words = c.name.split(' ');
+  if (words.length > 2 && /^(De|Di|Le|La|San|Da|Van|Von|Del)$/.test(words[words.length - 2])) words.splice(-2, 2, words.slice(-2).join(' '));
+  if (tier === 'legend' || tier === 'epic') {
+    const last = SHORT[c.name] || words[words.length - 1].toUpperCase();
+    const nfs = Math.min(22, 150 / last.length).toFixed(1);
+    return `<div class="face front t-${tier} hero coach" style="${style}">
+      <div class="aura"></div><div class="frame-holo"></div>
+      <div class="cf">
+        <div class="cf-bg"></div><div class="cf-pat"></div><div class="cf-holo"></div>
+        <div class="cf-big">COACH</div>
+        <img class="cf-photo full" src="/${esc(c.photo)}" alt="" draggable="false">
+        <div class="cf-sparkle"></div>
+        ${crest}
+        <div class="cf-name" style="--nfs:${nfs}cqw">${esc(last)}</div>
+        <div class="glow-edge"></div>
+      </div>
+      <div class="glare"></div>
+    </div>`;
+  }
+  const last = words.length > 1 ? words.pop() : c.name, first = words.join(' ');
+  const lfs = last.length > 12 ? 8.5 : last.length > 9 ? 10.5 : 12.5;
+  return `<div class="face front t-${tier} coach" style="${style}">
+    <div class="frame-holo"></div>
+    <div class="cf">
+      <div class="cf-bg"></div><div class="cf-pat"></div><div class="cf-holo"></div>
+      <div class="cf-big">HC</div>
+      <img class="cf-photo" src="/${esc(c.photo)}" alt="" draggable="false">
+      <div class="cf-sparkle"></div>
+      ${crest}
+      <div class="cf-plate-wrap"><div class="cf-plate">
+        <div class="cf-first">${esc(first)}</div>
+        <div class="cf-last" style="--lfs:${lfs}cqw">${esc(last)}</div>
+        <div class="cf-meta">${esc(c.nameKo)} · ${esc(c.team)}</div>
+        <div class="cf-foot"><span>${esc(LEAGUE_KO[c.league])}</span><span class="cf-tier">${tier === 'rare' ? 'RARE' : 'COACH'}</span><span>${String(c.no).padStart(3, '0')}/${COACHES.length}</span></div>
+      </div></div>
+    </div>
+    <div class="glare"></div>
+  </div>`;
+}
+const cardHTML = (c) => `<div class="card3d">${coachHTML(c)}</div>`;
+
+function render() {
+  $('#vfilter').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.l === league));
+  const list = COACHES.filter((c) => league === '전체' || c.league === league || (c.tier === 'icon' && league === '아이콘'));
+  $('#vcount').textContent = `${list.length}장`;
+  const groups = [['아이콘 · 은퇴 레전드', 'icon'], ['전신 · 레전드', 'full'], ['상반신 · 에픽', 'half'], ['얼굴 · 레어', 'rare'], ['얼굴 · 일반', 'face']];
+  $('#vlist').innerHTML = groups.map(([title, t]) => {
+    const g = list.filter((c) => c.tier === t);
+    if (!g.length) return '';
+    return `<div class="vsec">${title} (${g.length})</div><div class="vgrid">${g.map((c) => `<div><div class="vcard" data-no="${c.no}">${cardHTML(c)}</div><div class="vcap">${esc(c.nameKo)} · ${esc(c.team)}</div></div>`).join('')}</div>`;
+  }).join('');
+  document.querySelectorAll('#vlist .vcard').forEach((v) => { tilt(v, 0, 0); bindTilt(v); v.addEventListener('click', () => openBig(COACHES[v.dataset.no - 1])); });
+}
+
+function tilt(v, yaw, pitch) {
+  v.querySelector('.card3d').style.transform = `rotateY(${yaw}deg) rotateX(${pitch}deg)`;
+  setLight(v, yaw, pitch);
+}
+function bindTilt(v, strong) {
+  const amp = strong ? 32 : 24;
+  const move = (x, y) => { const r = v.getBoundingClientRect(); tilt(v, ((x - r.left) / r.width - .5) * amp * 2, -((y - r.top) / r.height - .5) * amp * 2); };
+  v.addEventListener('pointermove', (e) => { if (swaying) return; v.classList.add('live'); move(e.clientX, e.clientY); });
+  v.addEventListener('pointerleave', () => { if (swaying) return; v.classList.remove('live'); tilt(v, 0, 0); });
+}
+function openBig(c) {
+  const v = $('#vbigCard'); v.innerHTML = cardHTML(c); tilt(v, 0, 0);
+  if (!v.dataset.bound) { bindTilt(v, true); v.dataset.bound = '1'; }
+  $('#vbig').classList.add('open');
+}
+$('#vbig').addEventListener('click', (e) => { if (e.target.id === 'vbig') $('#vbig').classList.remove('open'); });
+addEventListener('keydown', (e) => { if (e.key === 'Escape') $('#vbig').classList.remove('open'); });
+
+let swaying = false, raf = 0;
+$('#sway').addEventListener('change', (e) => {
+  swaying = e.target.checked; cancelAnimationFrame(raf);
+  const all = () => document.querySelectorAll('.vcard');
+  if (!swaying) { all().forEach((v) => { v.classList.remove('live'); tilt(v, 0, 0); }); return; }
+  const t0 = performance.now();
+  const step = (t) => { const s = (t - t0) / 1000; all().forEach((v, i) => { v.classList.add('live'); tilt(v, Math.sin(s * .9 + i * .35) * 24, Math.cos(s * .7 + i * .35) * 14); }); raf = requestAnimationFrame(step); };
+  raf = requestAnimationFrame(step);
+});
+$('#dark').addEventListener('change', (e) => document.body.classList.toggle('dark', e.target.checked));
+$('#size').addEventListener('input', (e) => document.querySelectorAll('.vgrid').forEach((g) => g.style.setProperty('--w', e.target.value + 'px')));
+load();
+</script>
+</body>
+</html>

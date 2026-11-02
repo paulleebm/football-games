@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#14305a">
+  <title>헤딩 연습</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="../favicon-32.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=5">
+</head>
+<body>
+  <div id="wrap">
+  <main class="stage-wrap">
+    <canvas id="stage"></canvas>
+
+    <!-- 소리 버튼을 누르면 뜨는 볼륨 조절 -->
+    <div class="vol-pop" id="volPop" hidden>
+      <span id="volIcon">🔊</span>
+      <input type="range" id="volRange" min="0" max="100" step="5" aria-label="볼륨">
+      <b id="volVal">70</b>
+    </div>
+
+    <section id="hud" class="hud" hidden>
+      <button type="button" class="mini-btn exit" id="exitBtn" aria-label="일시정지" title="일시정지">✕</button>
+      <button type="button" class="mini-btn mute" id="muteBtn" aria-label="소리" title="소리">🔊</button>
+    </section>
+
+    <section id="menu" class="overlay">
+      <div class="win">
+        <header class="win-bar">
+          <a class="win-btn" href="../" aria-label="홈">←</a>
+          <h1>헤딩 연습</h1>
+          <button type="button" class="win-btn" id="muteBtnMenu" aria-label="소리">🔊</button>
+        </header>
+        <div class="win-body">
+          <div class="howto">
+            <p><b class="tag kick">조작</b> 마우스나 손가락을 <em>좌우로</em> 움직이면 선수가 따라가요</p>
+            <p><b class="tag keep">헤딩</b> 공이 내려올 때 그 밑에 <em>머리를 대면</em> 끝!</p>
+            <p>모든 공은 같은 길로 와요. <em>4번</em> 헤딩하면 왼쪽 수레에 쏙 → 배달</p>
+            <p class="small">공이 빨갛게 깜빡이면 둘 다 못 받는 순간! 하나를 골라요 😵 · 60초 동안 몇 개나 넣을까?</p>
+          </div>
+          <p class="best" id="menuBest"></p>
+          <div class="board">
+            <div class="board-head"><b>🏅 배달 랭킹</b></div>
+            <div id="menuBoard"></div>
+          </div>
+          <button type="button" class="go-btn" id="startBtn">시작!</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="pause" class="overlay dim" hidden>
+      <div class="win small">
+        <header class="win-bar"><h1>일시정지</h1></header>
+        <div class="win-body center">
+          <div class="row">
+            <a class="sub-btn" href="../" id="leaveBtn">나가기</a>
+            <button type="button" class="go-btn slim" id="resumeBtn">계속하기</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="result" class="overlay dim" hidden>
+      <div class="win">
+        <header class="win-bar"><h1 id="resultTitle">경기 종료</h1></header>
+        <div class="win-body center">
+          <div class="result-score"><b id="resultScore">0</b></div>
+          <p id="resultSub"></p>
+          <form class="nick-row" id="nickForm" autocomplete="off">
+            <input id="nickInput" maxlength="20" placeholder="닉네임" aria-label="닉네임">
+            <button type="submit" class="go-btn slim" id="nickGo">기록 등록</button>
+          </form>
+          <div class="join-msg" id="nickMsg"></div>
+          <div class="board">
+            <div id="resultBoard"></div>
+          </div>
+          <div class="row">
+            <a class="sub-btn" href="../">홈으로</a>
+            <button type="button" class="go-btn slim" id="againBtn">다시 하기</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  </div>
+
+  <script type="module" src="app.js?v=6"></script>
+</body>
+</html>

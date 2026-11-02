@@ -1,0 +1,194 @@
+{
+  "cristiano-ronaldo": {
+    "query": "Cristiano Ronaldo",
+    "expectedDob": "1985-02-05",
+    "candidateCount": 1,
+    "checkedCandidates": [
+      {
+        "id": "30893",
+        "dob": "1985-02-05",
+        "team": "Al Nassr FC"
+      }
+    ],
+    "fotmobId": "30893",
+    "matchedDob": "1985-02-05",
+    "matchedTeam": "Al Nassr FC",
+    "imageDownloaded": true,
+    "imageBytes": 11783
+  },
+  "neymar": {
+    "query": "Neymar",
+    "expectedDob": "1992-02-05",
+    "candidateCount": 3,
+    "checkedCandidates": [
+      {
+        "id": "19533",
+        "dob": "1992-02-05",
+        "team": "Santos"
+      },
+      {
+        "id": "1705382",
+        "dob": "2004-03-29",
+        "team": "CD Lunda Sul"
+      },
+      {
+        "id": "941827",
+        "dob": "1997-11-16",
+        "team": "Vitória de Setúbal"
+      }
+    ],
+    "fotmobId": "19533",
+    "matchedDob": "1992-02-05",
+    "matchedTeam": "Santos",
+    "imageDownloaded": true,
+    "imageBytes": 10734
+  },
+  "pogba": {
+    "query": "Paul Pogba",
+    "expectedDob": "1993-03-15",
+    "candidateCount": 1,
+    "checkedCandidates": [
+      {
+        "id": "248453",
+        "dob": "1993-03-15",
+        "team": null
+      }
+    ],
+    "fotmobId": "248453",
+    "matchedDob": "1993-03-15",
+    "matchedTeam": null,
+    "imageDownloaded": true,
+    "imageBytes": 10407
+  },
+  "maradona": {
+    "query": "Diego Maradona",
+    "expectedDob": "1960-10-30",
+    "candidateCount": 1,
+    "checkedCandidates": [
+      {
+        "id": "158546",
+        "dob": "1960-10-30",
+        "team": null
+      }
+    ],
+    "fotmobId": "158546",
+    "matchedDob": "1960-10-30",
+    "matchedTeam": null,
+    "imageDownloaded": true,
+    "imageBytes": 19311
+  },
+  "ronaldo-nazario": {
+    "query": "Ronaldo Nazario",
+    "expectedDob": "1976-09-18",
+    "candidateCount": 0,
+    "checkedCandidates": [],
+    "error": "no candidate matched expected DOB"
+  },
+  "beckham": {
+    "query": "David Beckham",
+    "expectedDob": "1975-05-02",
+    "candidateCount": 1,
+    "checkedCandidates": [
+      {
+        "id": "30612",
+        "dob": "1975-05-02",
+        "team": null
+      }
+    ],
+    "fotmobId": "30612",
+    "matchedDob": "1975-05-02",
+    "matchedTeam": null,
+    "imageDownloaded": true,
+    "imageBytes": 18338
+  },
+  "cech": {
+    "query": "Petr Cech",
+    "expectedDob": "1982-05-20",
+    "candidateCount": 1,
+    "checkedCandidates": [
+      {
+        "id": "30859",
+        "dob": "1982-05-20",
+        "team": null
+      }
+    ],
+    "fotmobId": "30859",
+    "matchedDob": "1982-05-20",
+    "matchedTeam": null,
+    "imageDownloaded": true,
+    "imageBytes": 11750
+  },
+  "drogba": {
+    "query": "Didier Drogba",
+    "expectedDob": "1978-03-11",
+    "candidateCount": 1,
+    "checkedCandidates": [
+      {
+        "id": "30822",
+        "dob": "1978-03-11",
+        "team": null
+      }
+    ],
+    "fotmobId": "30822",
+    "matchedDob": "1978-03-11",
+    "matchedTeam": null,
+    "imageDownloaded": true,
+    "imageBytes": 18487
+  },
+  "depay": {
+    "query": "Memphis Depay",
+    "expectedDob": "1994-02-13",
+    "candidateCount": 1,
+    "checkedCandidates": [
+      {
+        "id": "303824",
+        "dob": "1994-02-13",
+        "team": "Corinthians"
+      }
+    ],
+    "fotmobId": "303824",
+    "matchedDob": "1994-02-13",
+    "matchedTeam": "Corinthians",
+    "imageDownloaded": true,
+    "imageBytes": 13120
+  },
+  "de-jong": {
+    "query": "Frenkie de Jong",
+    "expectedDob": "1997-05-12",
+    "candidateCount": 1,
+    "checkedCandidates": [
+      {
+        "id": "638622",
+        "dob": "1997-05-12",
+        "team": "Barcelona"
+      }
+    ],
+    "fotmobId": "638622",
+    "matchedDob": "1997-05-12",
+    "matchedTeam": "Barcelona",
+    "imageDownloaded": true,
+    "imageBytes": 11609
+  },
+  "ramos": {
+    "query": "Sergio Ramos",
+    "expectedDob": "1986-03-30",
+    "candidateCount": 2,
+    "checkedCandidates": [
+      {
+        "id": "30962",
+        "dob": "1986-03-30",
+        "team": null
+      },
+      {
+        "id": "1390307",
+        "dob": "0001-01-01",
+        "team": null
+      }
+    ],
+    "fotmobId": "30962",
+    "matchedDob": "1986-03-30",
+    "matchedTeam": null,
+    "imageDownloaded": true,
+    "imageBytes": 12944
+  }
+}

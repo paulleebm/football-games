@@ -1,0 +1,24 @@
+{
+  "id": "david-luiz",
+  "mode": "built-in image_gen edit",
+  "tool": "image_gen__imagegen",
+  "sourcePath": "C:/Users/BYMILE/Documents/ChatGPT/축구 선수 맞추기/design/silhouette-pilot/sources/david-luiz.jpg",
+  "inputPath": "C:/Users/BYMILE/Documents/ChatGPT/축구 선수 맞추기/design/silhouette-pilot/sources/david-luiz.jpg",
+  "outputPath": "C:/Users/BYMILE/Documents/ChatGPT/축구 선수 맞추기/design/silhouette-pilot/silhouettes/david-luiz.png",
+  "originalGeneratedPath": "C:\\Users\\BYMILE\\.codex\\generated_images\\01a091f7-04fb-79e0-b9d5-a81e5b42a4ef\\exec-f6c9e7ac-6feb-4766-903d-0129609dec41.png",
+  "actualWidth": 1254,
+  "actualHeight": 1254,
+  "requestedWidth": 1024,
+  "requestedHeight": 1024,
+  "copyOnly": true,
+  "prompt": "Use case: precise-object-edit. Asset type: football player silhouette quiz pilot. Input image 1 is the edit target, an actual photograph; derive the silhouette only from this photograph. Isolate its main football player, removing every background, other person, and object. Preserve exactly the target person's outer contour, hairstyle, ears, head angle, and pose from the photograph. Fill all target hair, face, neck, and clothing as one fully opaque pure black (#000000) silhouette: absolutely no eyes, teeth, mouth holes, facial features, interior lines, shading, texture, collar lines, logos, or clothing details. White (#FFFFFF) plain background. Square 1024x1024 composition; head, neck and upper shoulders only, centered, with entire hair visible and approximately 8% white padding above the hair. Crop lower torso as necessary. Preserve the exact hair outline and individual projecting hair strands; do not invent or idealize a hairstyle, change the person's identity, or turn the head. No text, logos, borders, shadows, gradients, or additional visual elements.",
+  "qa": {
+    "status": "pilot_usable",
+    "inspected": true,
+    "notes": [
+      "All facial/clothing details removed; curly outer hair shape remains distinctive.",
+      "Very fine flyaway curls appear emphasized; top padding less than requested8%.",
+      "Generated edit, not a deterministic pixel mask. Source contour is visually approximate."
+    ]
+  }
+}

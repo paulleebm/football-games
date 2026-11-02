@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f3f7ff">
+  <title>축구 게임</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="../favicon-32.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=12">
+  <script src="/points.js"></script>
+</head>
+<body>
+  <main id="app" aria-live="polite">
+    <div class="sc-shell"><p class="sc-loading">불러오는 중…</p></div>
+  </main>
+  <script src="logic.js?v=5"></script>
+  <script src="app.js?v=11"></script>
+  <script type="module">
+    // 플레이 통계(/bymile): 끝없이 이어지는 퍼즐이라 들어올 때 한 번 "scramble" 1회로 센다 (localhost는 빼고)
+    const FB = "https://www.gstatic.com/firebasejs/10.14.1/";
+    if (location.hostname !== "localhost" && location.hostname !== "127.0.0.1") {
+      try {
+        const { initializeApp } = await import(FB + "firebase-app.js");
+        const { getFirestore, addDoc, collection, doc, setDoc, increment, serverTimestamp } = await import(FB + "firebase-firestore.js");
+        const db = getFirestore(initializeApp({
+          projectId: "guess-your-player",
+          appId: "1:1068776442781:web:433981863e0c3da178bd74",
+          storageBucket: "guess-your-player.firebasestorage.app",
+          apiKey: "AIzaSyA8SG_LbHeqS9gh0CLFaHUhEI1uG1uYLDY",
+          authDomain: "guess-your-player.firebaseapp.com",
+          messagingSenderId: "1068776442781",
+        }));
+        let ip = "unknown";
+        try { ip = (await (await fetch("https://api.ipify.org?format=json")).json()).ip; } catch (_) {}
+        const day = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul" }).format(new Date());
+        await Promise.all([
+          addDoc(collection(db, "playLogs"), { ts: serverTimestamp(), ip, game: "scramble" }),
+          setDoc(doc(db, "statsCounters", "totals"), { scramble: increment(1) }, { merge: true }),
+          setDoc(doc(db, "statsDaily", day), { scramble: increment(1) }, { merge: true }),
+        ]);
+      } catch (e) {
+        console.warn("scramble play log failed", e);
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+{
+  "id": "andrea-pirlo",
+  "mode": "built-in-imagegen-edit",
+  "sourceFile": "sources/andrea-pirlo.jpg",
+  "generatedFile": "C:\\Users\\BYMILE\\.codex\\generated_images\\01a091f4-8a77-76a3-b32b-fdbc04e50bd0\\exec-a695f5da-23c8-4bbf-979b-5011a29e2f5a.png",
+  "outputFile": "silhouettes/andrea-pirlo.png",
+  "prompt": "Use case: background-extraction / identity-preserve.\nAsset type: source-faithful footballer silhouette quiz image.\nThe attached photo is the EDIT TARGET, not a style reference. Extract ONLY the main footballer into a completely solid opaque pure black (#000000) silhouette on a perfectly plain pure white (#FFFFFF) background. Preserve this exact individual's photographed outside contour, head angle, hair volume, curls/braids/ponytail, ears, nose/chin profile and neck. Do not invent a new portrait, change identity, change hairstyle, beautify, mirror or rotate the head.\nAll parts INSIDE the person's silhouette, including the face, eyes, teeth, mouth, beard, neck and clothes, must be uniformly opaque black with NO facial details, NO white eye/mouth holes, NO clothing lines, NO highlights, NO shading, NO texture. White gaps genuinely OUTSIDE the body or between loose curls/braids may remain. Retain the actual hair edge shape without exaggeration. Remove every background element and all other people/objects.\nSquare 1024 x 1024 composition. Use a head-and-upper-shoulders crop of this source, including the FULL hairstyle and neck, with around 8 percent white margin above the highest hair. Center the subject horizontally. Upper shoulders finish at the bottom edge. Preserve the natural head/neck proportions. No text, names, numbers, labels, watermark, border, gradient, shadow or decorative elements. Clean accurate outer edges, antialiasing only along the outer boundary. Return ONE finished silhouette image.\nCRITICAL CORRECTION: Fill ALL skin and hair in solid black, including the complete temple and forehead area beneath the falling hair on viewer right. There must be NO WHITE GAPS between hair and forehead/face, because skin is behind those hair strands. White holes inside the head are forbidden. Only loose hairs extending OUTSIDE head/body may have white background between them. Preserve the actual source right-facing head angle and original wind-blown hair. Do not invent any extra strands or change the head proportions.",
+  "requestedDimensions": [
+    1024,
+    1024
+  ],
+  "actualDimensions": [
+    1254,
+    1254
+  ],
+  "notes": "Selected second version. Rejected first version because white gaps appeared between forehead and hair. Second version fills the face entirely black. Low-resolution head in original full-body source; image model interpolates hair edges.",
+  "visualReviewStatus": "pilot_accepted_with_contour_fidelity_limitation",
+  "createdAt": "2026-09-12"
+}

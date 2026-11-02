@@ -1,0 +1,336 @@
+{
+  "ake": {
+    "query": "Nathan Ake",
+    "fotmobId": "417068",
+    "fotmobName": null,
+    "fotmobTeam": "Fenerbahçe",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/417068.png",
+    "imageDownloaded": true,
+    "imageBytes": 17258,
+    "candidateCount": 1,
+    "allCandidates": [
+      {
+        "id": "417068",
+        "name": null,
+        "team": "Fenerbahçe"
+      }
+    ]
+  },
+  "andrea-pirlo": {
+    "query": "Andrea Pirlo",
+    "fotmobId": "1174702",
+    "fotmobName": null,
+    "fotmobTeam": "United FC",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/1174702.png",
+    "imageDownloaded": true,
+    "imageBytes": 15867,
+    "candidateCount": 1,
+    "allCandidates": [
+      {
+        "id": "1174702",
+        "name": null,
+        "team": "United FC"
+      }
+    ]
+  },
+  "camavinga": {
+    "query": "Eduardo Camavinga",
+    "fotmobId": "1015185",
+    "fotmobName": null,
+    "fotmobTeam": "Real Madrid",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/1015185.png",
+    "imageDownloaded": true,
+    "imageBytes": 12779,
+    "candidateCount": 1,
+    "allCandidates": [
+      {
+        "id": "1015185",
+        "name": null,
+        "team": "Real Madrid"
+      }
+    ]
+  },
+  "carles-puyol": {
+    "query": "Carles Puyol",
+    "fotmobId": "30661",
+    "fotmobName": null,
+    "fotmobTeam": "",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/30661.png",
+    "imageDownloaded": true,
+    "imageBytes": 27997,
+    "candidateCount": 1,
+    "allCandidates": [
+      {
+        "id": "30661",
+        "name": null,
+        "team": ""
+      }
+    ]
+  },
+  "carlos-valderrama": {
+    "error": "no search result",
+    "query": "Carlos Valderrama"
+  },
+  "cucurella": {
+    "query": "Marc Cucurella",
+    "fotmobId": "873289",
+    "fotmobName": null,
+    "fotmobTeam": "Real Madrid",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/873289.png",
+    "imageDownloaded": true,
+    "imageBytes": 16373,
+    "candidateCount": 1,
+    "allCandidates": [
+      {
+        "id": "873289",
+        "name": null,
+        "team": "Real Madrid"
+      }
+    ]
+  },
+  "david-luiz": {
+    "query": "David Luiz",
+    "fotmobId": "52133",
+    "fotmobName": null,
+    "fotmobTeam": "Pafos FC",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/52133.png",
+    "imageDownloaded": true,
+    "imageBytes": 12727,
+    "candidateCount": 1,
+    "allCandidates": [
+      {
+        "id": "52133",
+        "name": null,
+        "team": "Pafos FC"
+      }
+    ]
+  },
+  "fellaini": {
+    "query": "Marouane Fellaini",
+    "fotmobId": "39618",
+    "fotmobName": null,
+    "fotmobTeam": "",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/39618.png",
+    "imageDownloaded": true,
+    "imageBytes": 12242,
+    "candidateCount": 1,
+    "allCandidates": [
+      {
+        "id": "39618",
+        "name": null,
+        "team": ""
+      }
+    ]
+  },
+  "grealish": {
+    "query": "Jack Grealish",
+    "fotmobId": "312765",
+    "fotmobName": null,
+    "fotmobTeam": "Everton",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/312765.png",
+    "imageDownloaded": true,
+    "imageBytes": 11438,
+    "candidateCount": 1,
+    "allCandidates": [
+      {
+        "id": "312765",
+        "name": null,
+        "team": "Everton"
+      }
+    ]
+  },
+  "griezmann": {
+    "query": "Antoine Griezmann",
+    "fotmobId": "184138",
+    "fotmobName": null,
+    "fotmobTeam": "Orlando City",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/184138.png",
+    "imageDownloaded": true,
+    "imageBytes": 13573,
+    "candidateCount": 1,
+    "allCandidates": [
+      {
+        "id": "184138",
+        "name": null,
+        "team": "Orlando City"
+      }
+    ]
+  },
+  "haaland": {
+    "query": "Erling Haaland",
+    "fotmobId": "737066",
+    "fotmobName": null,
+    "fotmobTeam": "Manchester City",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/737066.png",
+    "imageDownloaded": true,
+    "imageBytes": 19872,
+    "candidateCount": 1,
+    "allCandidates": [
+      {
+        "id": "737066",
+        "name": null,
+        "team": "Manchester City"
+      }
+    ]
+  },
+  "kounde": {
+    "query": "Jules Kounde",
+    "fotmobId": "705450",
+    "fotmobName": null,
+    "fotmobTeam": "Barcelona",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/705450.png",
+    "imageDownloaded": true,
+    "imageBytes": 19032,
+    "candidateCount": 1,
+    "allCandidates": [
+      {
+        "id": "705450",
+        "name": null,
+        "team": "Barcelona"
+      }
+    ]
+  },
+  "marcelo": {
+    "error": "no search result",
+    "query": "Marcelo Vieira"
+  },
+  "modric": {
+    "query": "Luka Modric",
+    "fotmobId": "31097",
+    "fotmobName": null,
+    "fotmobTeam": "Milan",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/31097.png",
+    "imageDownloaded": true,
+    "imageBytes": 15799,
+    "candidateCount": 2,
+    "allCandidates": [
+      {
+        "id": "31097",
+        "name": null,
+        "team": "Milan"
+      },
+      {
+        "id": "2114808",
+        "name": null,
+        "team": "Aluminij"
+      }
+    ]
+  },
+  "ronaldinho": {
+    "query": "Ronaldinho",
+    "fotmobId": "30743",
+    "fotmobName": null,
+    "fotmobTeam": "Ravenna",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/30743.png",
+    "imageDownloaded": true,
+    "imageBytes": 22973,
+    "candidateCount": 3,
+    "allCandidates": [
+      {
+        "id": "30743",
+        "name": null,
+        "team": "Ravenna"
+      },
+      {
+        "id": "497538",
+        "name": null,
+        "team": "Jose Galvez"
+      },
+      {
+        "id": "1529912",
+        "name": null,
+        "team": "O&M FC"
+      }
+    ]
+  },
+  "salah": {
+    "query": "Mohamed Salah",
+    "fotmobId": "292462",
+    "fotmobName": null,
+    "fotmobTeam": "Trabzonspor",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/292462.png",
+    "imageDownloaded": true,
+    "imageBytes": 10471,
+    "candidateCount": 2,
+    "allCandidates": [
+      {
+        "id": "292462",
+        "name": null,
+        "team": "Trabzonspor"
+      },
+      {
+        "id": "252356",
+        "name": null,
+        "team": "Al-Sailiya"
+      }
+    ]
+  },
+  "sane": {
+    "query": "Leroy Sane",
+    "fotmobId": "530859",
+    "fotmobName": null,
+    "fotmobTeam": "Galatasaray",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/530859.png",
+    "imageDownloaded": true,
+    "imageBytes": 12846,
+    "candidateCount": 1,
+    "allCandidates": [
+      {
+        "id": "530859",
+        "name": null,
+        "team": "Galatasaray"
+      }
+    ]
+  },
+  "son": {
+    "query": "Son Heung-min",
+    "fotmobId": "1613065",
+    "fotmobName": null,
+    "fotmobTeam": "Daegu FC II",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/1613065.png",
+    "imageDownloaded": true,
+    "imageBytes": 19258,
+    "candidateCount": 1,
+    "allCandidates": [
+      {
+        "id": "1613065",
+        "name": null,
+        "team": "Daegu FC II"
+      }
+    ]
+  },
+  "xavi_simons": {
+    "query": "Xavi Simons",
+    "fotmobId": "1173787",
+    "fotmobName": null,
+    "fotmobTeam": "Tottenham Hotspur",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/1173787.png",
+    "imageDownloaded": true,
+    "imageBytes": 12497,
+    "candidateCount": 1,
+    "allCandidates": [
+      {
+        "id": "1173787",
+        "name": null,
+        "team": "Tottenham Hotspur"
+      }
+    ]
+  },
+  "zlatan-ibrahimovic": {
+    "query": "Zlatan Ibrahimovic",
+    "fotmobId": "35724",
+    "fotmobName": null,
+    "fotmobTeam": "",
+    "imageUrl": "https://images.fotmob.com/image_resources/playerimages/35724.png",
+    "imageDownloaded": true,
+    "imageBytes": 12300,
+    "candidateCount": 1,
+    "allCandidates": [
+      {
+        "id": "35724",
+        "name": null,
+        "team": ""
+      }
+    ]
+  }
+}

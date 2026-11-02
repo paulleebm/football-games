@@ -1,0 +1,1849 @@
+{
+ "coaches": [
+  {
+   "id": "coach-39027",
+   "name": "Vincent Kompany",
+   "nameKo": "뱅상 콤파니",
+   "countryCode": "BEL",
+   "country": "Belgium",
+   "team": "Bayern München",
+   "teamId": 9823,
+   "league": "Bundesliga",
+   "tier": "full",
+   "achievement2526": "바이에른: 분데스리가 + DFB 포칼 우승",
+   "photo": "card/coaches/full/kompany.webp",
+   "colors": [
+    "#dc052d",
+    "#ffffff",
+    "#0a3a74"
+   ]
+  },
+  {
+   "id": "coach-131509",
+   "name": "Hans-Dieter Flick",
+   "nameKo": "한지 플릭",
+   "countryCode": "GER",
+   "country": "Germany",
+   "team": "Barcelona",
+   "teamId": 8634,
+   "league": "LaLiga",
+   "tier": "full",
+   "achievement2526": "바르셀로나: 라리가 우승",
+   "photo": "card/coaches/half/flick.webp",
+   "colors": [
+    "#a50044",
+    "#edbb00",
+    "#06306b"
+   ]
+  },
+  {
+   "id": "coach-11532",
+   "name": "Luis Enrique",
+   "nameKo": "루이스 엔리케",
+   "countryCode": "ESP",
+   "country": "Spain",
+   "team": "Paris Saint-Germain",
+   "teamId": 9847,
+   "league": "Ligue 1",
+   "tier": "full",
+   "achievement2526": "PSG: 챔피언스리그 우승(2연패) + 리그 1 우승",
+   "photo": "card/coaches/full/luis-enrique.webp",
+   "colors": [
+    "#0b3e7a",
+    "#da291c",
+    "#061f3f"
+   ]
+  },
+  {
+   "id": "coach-24011",
+   "name": "Mikel Arteta",
+   "nameKo": "미켈 아르테타",
+   "countryCode": "ESP",
+   "country": "Spain",
+   "team": "Arsenal",
+   "teamId": 9825,
+   "league": "Premier League",
+   "tier": "full",
+   "achievement2526": "아스날: 프리미어리그 우승 + 챔피언스리그 준우승",
+   "photo": "card/coaches/full/arteta.webp",
+   "colors": [
+    "#e0202a",
+    "#f3c64e",
+    "#5e0910"
+   ]
+  },
+  {
+   "id": "coach-27692",
+   "name": "Cristian Chivu",
+   "nameKo": "크리스티안 키부",
+   "countryCode": "ROU",
+   "country": "Romania",
+   "team": "Inter",
+   "teamId": 8636,
+   "league": "Serie A",
+   "tier": "full",
+   "achievement2526": "인테르: 세리에 A + 코파 이탈리아 우승",
+   "photo": "card/coaches/full/chivu.webp",
+   "colors": [
+    "#0a5fb4",
+    "#111111",
+    "#071b3a"
+   ]
+  },
+  {
+   "id": "coach-33072",
+   "name": "Niko Kovač",
+   "nameKo": "니코 코바치",
+   "countryCode": "CRO",
+   "country": "Croatia",
+   "team": "Borussia Dortmund",
+   "teamId": 9789,
+   "league": "Bundesliga",
+   "tier": "half",
+   "achievement2526": "도르트문트: 분데스리가 2위",
+   "photo": "card/coaches/half/kovac.webp",
+   "colors": [
+    "#fde100",
+    "#111111",
+    "#161616"
+   ]
+  },
+  {
+   "id": "coach-2642",
+   "name": "Diego Simeone",
+   "nameKo": "디에고 시메오네",
+   "countryCode": "ARG",
+   "country": "Argentina",
+   "team": "Atlético Madrid",
+   "teamId": 9906,
+   "league": "LaLiga",
+   "tier": "full",
+   "achievement2526": "라리가 2회 · 유로파리그 2회 우승",
+   "photo": "card/coaches/half/simeone.webp",
+   "colors": [
+    "#cb3524",
+    "#f2f2f2",
+    "#272e61"
+   ]
+  },
+  {
+   "id": "coach-27204",
+   "name": "Pellegrino Matarazzo",
+   "nameKo": "펠레그리노 마타라초",
+   "countryCode": "USA",
+   "country": "USA",
+   "team": "Real Sociedad",
+   "teamId": 8560,
+   "league": "LaLiga",
+   "tier": "half",
+   "achievement2526": "레알 소시에다드: 코파 델 레이 우승",
+   "photo": "card/coaches/half/matarazzo.webp",
+   "colors": [
+    "#0c54b4",
+    "#e48424",
+    "#071d3b"
+   ]
+  },
+  {
+   "id": "coach-96940",
+   "name": "Unai Emery",
+   "nameKo": "우나이 에메리",
+   "countryCode": "ESP",
+   "country": "Spain",
+   "team": "Aston Villa",
+   "teamId": 10252,
+   "league": "Premier League",
+   "tier": "half",
+   "achievement2526": "아스톤 빌라: 유로파리그 우승 + PL 4위",
+   "photo": "card/coaches/half/emery.webp",
+   "colors": [
+    "#9cb4e4",
+    "#fce40c",
+    "#101b32"
+   ]
+  },
+  {
+   "id": "coach-33025",
+   "name": "Andoni Iraola",
+   "nameKo": "안도니 이라올라",
+   "countryCode": "ESP",
+   "country": "Spain",
+   "team": "Liverpool",
+   "teamId": 8650,
+   "league": "Premier League",
+   "tier": "half",
+   "achievement2526": "본머스: 프리미어리그 6위, 유럽대항전 진출",
+   "photo": "card/coaches/half/iraola.webp",
+   "colors": [
+    "#d0172f",
+    "#18c2b2",
+    "#5c0614"
+   ]
+  },
+  {
+   "id": "coach-34944",
+   "name": "Michael Carrick",
+   "nameKo": "마이클 캐릭",
+   "countryCode": "ENG",
+   "country": "England",
+   "team": "Manchester United",
+   "teamId": 10260,
+   "league": "Premier League",
+   "tier": "half",
+   "achievement2526": "맨유(감독대행): 프리미어리그 3위",
+   "photo": "card/coaches/half/carrick.webp",
+   "colors": [
+    "#da291c",
+    "#fbe122",
+    "#2b0b08"
+   ]
+  },
+  {
+   "id": "coach-43009",
+   "name": "Oliver Glasner",
+   "nameKo": "올리버 글라스너",
+   "countryCode": "AUT",
+   "country": "Austria",
+   "team": "Nottingham Forest",
+   "teamId": 10203,
+   "league": "Premier League",
+   "tier": "half",
+   "achievement2526": "크리스탈 팰리스: 컨퍼런스리그 우승",
+   "photo": "card/coaches/half/glasner.webp",
+   "colors": [
+    "#e40c24",
+    "#e4546c",
+    "#3c060c"
+   ]
+  },
+  {
+   "id": "coach-1729612",
+   "name": "Rene Wagner",
+   "nameKo": "레네 바그너",
+   "countryCode": "GER",
+   "country": "Germany",
+   "team": "1. FC Köln",
+   "teamId": 8722,
+   "league": "Bundesliga",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/1729612.png",
+   "colors": [
+    "#e42424",
+    "#fcb4b4",
+    "#380909"
+   ]
+  },
+  {
+   "id": "coach-816800",
+   "name": "Manuel Baum",
+   "nameKo": "마누엘 바움",
+   "countryCode": "GER",
+   "country": "Germany",
+   "team": "Augsburg",
+   "teamId": 8406,
+   "league": "Bundesliga",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/816800.png",
+   "colors": [
+    "#b43c3c",
+    "#e48424",
+    "#301212"
+   ]
+  },
+  {
+   "id": "coach-1515447",
+   "name": "Carles Martínez",
+   "nameKo": "카를레스 마르티네스",
+   "countryCode": "ESP",
+   "country": "Spain",
+   "team": "Bayer Leverkusen",
+   "teamId": 8178,
+   "league": "Bundesliga",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/1515447.png",
+   "colors": [
+    "#e32221",
+    "#111111",
+    "#161616"
+   ]
+  },
+  {
+   "id": "coach-29315",
+   "name": "Alexander Blessin",
+   "nameKo": "알렉산더 블레신",
+   "countryCode": "GER",
+   "country": "Germany",
+   "team": "Borussia Mönchengladbach",
+   "teamId": 9788,
+   "league": "Bundesliga",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/29315.png",
+   "colors": [
+    "#0c0c0c",
+    "#ffffff",
+    "#212121"
+   ]
+  },
+  {
+   "id": "coach-7484",
+   "name": "Adolf Hütter",
+   "nameKo": "아돌프 휘터",
+   "countryCode": "AUT",
+   "country": "Austria",
+   "team": "Eintracht Frankfurt",
+   "teamId": 9810,
+   "league": "Bundesliga",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/7484.png",
+   "colors": [
+    "#cc0c0c",
+    "#e49c9c",
+    "#3b0606"
+   ]
+  },
+  {
+   "id": "coach-94647",
+   "name": "Vincent Wagner",
+   "nameKo": "빈센트 바그너",
+   "countryCode": "GER",
+   "country": "Germany",
+   "team": "Elversberg",
+   "teamId": 8232,
+   "league": "Bundesliga",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/94647.png",
+   "colors": [
+    "#ccb484",
+    "#ffffff",
+    "#2d2514"
+   ]
+  },
+  {
+   "id": "coach-36771",
+   "name": "Julian Schuster",
+   "nameKo": "율리안 슈스터",
+   "countryCode": "GER",
+   "country": "Germany",
+   "team": "Freiburg",
+   "teamId": 8358,
+   "league": "Bundesliga",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/36771.png",
+   "colors": [
+    "#fcfcfc",
+    "#ffffff",
+    "#212121"
+   ]
+  },
+  {
+   "id": "coach-1611908",
+   "name": "Merlin Polzin",
+   "nameKo": "메를린 폴친",
+   "countryCode": "GER",
+   "country": "Germany",
+   "team": "Hamburger SV",
+   "teamId": 9790,
+   "league": "Bundesliga",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/1611908.png",
+   "colors": [
+    "#2454b4",
+    "#84b4cc",
+    "#0d1a35"
+   ]
+  },
+  {
+   "id": "coach-601384",
+   "name": "Christian Ilzer",
+   "nameKo": "크리스티안 일저",
+   "countryCode": "AUT",
+   "country": "Austria",
+   "team": "Hoffenheim",
+   "teamId": 8226,
+   "league": "Bundesliga",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/601384.png",
+   "colors": [
+    "#246cb4",
+    "#6c9ccc",
+    "#0d2135"
+   ]
+  },
+  {
+   "id": "coach-266042",
+   "name": "Urs Fischer",
+   "nameKo": "우르스 피셔",
+   "countryCode": "SUI",
+   "country": "Switzerland",
+   "team": "Mainz 05",
+   "teamId": 9905,
+   "league": "Bundesliga",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/266042.png",
+   "colors": [
+    "#cc0c24",
+    "#e49c9c",
+    "#3b060d"
+   ]
+  },
+  {
+   "id": "coach-141102",
+   "name": "Ralf Kettemann",
+   "nameKo": "랄프 케테만",
+   "countryCode": "GER",
+   "country": "Germany",
+   "team": "Paderborn",
+   "teamId": 8460,
+   "league": "Bundesliga",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/141102.png",
+   "colors": [
+    "#0c54b4",
+    "#6c9ccc",
+    "#071d3b"
+   ]
+  },
+  {
+   "id": "coach-30459",
+   "name": "Martín Demichelis",
+   "nameKo": "마르틴 데미첼리스",
+   "countryCode": "ARG",
+   "country": "Argentina",
+   "team": "RB Leipzig",
+   "teamId": 178475,
+   "league": "Bundesliga",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/30459.png",
+   "colors": [
+    "#e40c3c",
+    "#e45484",
+    "#3c0612"
+   ]
+  },
+  {
+   "id": "coach-7528",
+   "name": "Miron Muslić",
+   "nameKo": "미론 무슬리치",
+   "countryCode": "AUT",
+   "country": "Austria",
+   "team": "Schalke 04",
+   "teamId": 10189,
+   "league": "Bundesliga",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/7528.png",
+   "colors": [
+    "#0c549c",
+    "#6c9ccc",
+    "#07213a"
+   ]
+  },
+  {
+   "id": "coach-30939",
+   "name": "Mauro Lustrinelli",
+   "nameKo": "마우로 루스트리넬리",
+   "countryCode": "SUI",
+   "country": "Switzerland",
+   "team": "Union Berlin",
+   "teamId": 8149,
+   "league": "Bundesliga",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/30939.png",
+   "colors": [
+    "#cc0c0c",
+    "#fcb424",
+    "#3b0606"
+   ]
+  },
+  {
+   "id": "coach-36490",
+   "name": "Sebastian Hoeneß",
+   "nameKo": "제바스티안 회네스",
+   "countryCode": "GER",
+   "country": "Germany",
+   "team": "VfB Stuttgart",
+   "teamId": 10269,
+   "league": "Bundesliga",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/36490.png",
+   "colors": [
+    "#cc0c24",
+    "#fce40c",
+    "#3b060d"
+   ]
+  },
+  {
+   "id": "coach-33244",
+   "name": "Daniel Thioune",
+   "nameKo": "다니엘 티우네",
+   "countryCode": "GER",
+   "country": "Germany",
+   "team": "Werder Bremen",
+   "teamId": 8697,
+   "league": "Bundesliga",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/33244.png",
+   "colors": [
+    "#249c54",
+    "#6cb49c",
+    "#0e331d"
+   ]
+  },
+  {
+   "id": "coach-1216045",
+   "name": "Edin Terzić",
+   "nameKo": "에딘 테르지치",
+   "countryCode": "GER",
+   "country": "Germany",
+   "team": "Athletic Club",
+   "teamId": 8315,
+   "league": "LaLiga",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/1216045.png",
+   "colors": [
+    "#e42424",
+    "#fc8484",
+    "#380909"
+   ]
+  },
+  {
+   "id": "coach-1622886",
+   "name": "Claudio Giráldez",
+   "nameKo": "클라우디오 히랄데스",
+   "countryCode": "ESP",
+   "country": "Spain",
+   "team": "Celta Vigo",
+   "teamId": 9910,
+   "league": "LaLiga",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/1622886.png",
+   "colors": [
+    "#e42454",
+    "#84cce4",
+    "#380915"
+   ]
+  },
+  {
+   "id": "coach-33832",
+   "name": "Antonio Hidalgo",
+   "nameKo": "안토니오 이달고",
+   "countryCode": "ESP",
+   "country": "Spain",
+   "team": "Deportivo A Coruña",
+   "teamId": 9783,
+   "league": "LaLiga",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/33832.png",
+   "colors": [
+    "#842484",
+    "#cc8454",
+    "#321032"
+   ]
+  },
+  {
+   "id": "coach-78725",
+   "name": "Quique Sánchez Flores",
+   "nameKo": "키케 산체스 플로레스",
+   "countryCode": "ESP",
+   "country": "Spain",
+   "team": "Deportivo Alavés",
+   "teamId": 9866,
+   "league": "LaLiga",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/78725.png",
+   "colors": [
+    "#0c3c9c",
+    "#546cb4",
+    "#07183a"
+   ]
+  },
+  {
+   "id": "coach-1327712",
+   "name": "Martín Anselmi",
+   "nameKo": "마르틴 안셀미",
+   "countryCode": "ARG",
+   "country": "Argentina",
+   "team": "Elche",
+   "teamId": 10268,
+   "league": "LaLiga",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/1327712.png",
+   "colors": [
+    "#e4cc84",
+    "#cc0c24",
+    "#342a0e"
+   ]
+  },
+  {
+   "id": "coach-1381560",
+   "name": "Eder Sarabia",
+   "nameKo": "에데르 사라비아",
+   "countryCode": "ESP",
+   "country": "Spain",
+   "team": "Espanyol",
+   "teamId": 8558,
+   "league": "LaLiga",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/1381560.png",
+   "colors": [
+    "#2484cc",
+    "#e40c24",
+    "#0c2436"
+   ]
+  },
+  {
+   "id": "coach-862633",
+   "name": "José Bordalás",
+   "nameKo": "호세 보르달라스",
+   "countryCode": "ESP",
+   "country": "Spain",
+   "team": "Getafe",
+   "teamId": 8305,
+   "league": "LaLiga",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/862633.png",
+   "colors": [
+    "#0c3c84",
+    "#cc2424",
+    "#081c3a"
+   ]
+  },
+  {
+   "id": "coach-1085380",
+   "name": "Luís Castro",
+   "nameKo": "루이스 카스트루",
+   "countryCode": "POR",
+   "country": "Portugal",
+   "team": "Levante",
+   "teamId": 8581,
+   "league": "LaLiga",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/1085380.png",
+   "colors": [
+    "#b40c3c",
+    "#0c549c",
+    "#3b0715"
+   ]
+  },
+  {
+   "id": "coach-1856996",
+   "name": "Juan Funes",
+   "nameKo": "후안 푸네스",
+   "countryCode": "ESP",
+   "country": "Spain",
+   "team": "Málaga",
+   "teamId": 9864,
+   "league": "LaLiga",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/1856996.png",
+   "colors": [
+    "#cc9c0c",
+    "#0c549c",
+    "#3b2e06"
+   ]
+  },
+  {
+   "id": "coach-477367",
+   "name": "Jagoba Arrasate",
+   "nameKo": "자고바 아라사테",
+   "countryCode": "ESP",
+   "country": "Spain",
+   "team": "Osasuna",
+   "teamId": 8371,
+   "league": "LaLiga",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/477367.png",
+   "colors": [
+    "#0c3c6c",
+    "#b49c24",
+    "#092139"
+   ]
+  },
+  {
+   "id": "coach-1145162",
+   "name": "José López",
+   "nameKo": "호세 로페스",
+   "countryCode": "ESP",
+   "country": "Spain",
+   "team": "Racing Santander",
+   "teamId": 8696,
+   "league": "LaLiga",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/1145162.png",
+   "colors": [
+    "#249c24",
+    "#6c240c",
+    "#0e330e"
+   ]
+  },
+  {
+   "id": "coach-1073489",
+   "name": "Beñat San José",
+   "nameKo": "베냐트 산 호세",
+   "countryCode": "ESP",
+   "country": "Spain",
+   "team": "Rayo Vallecano",
+   "teamId": 8370,
+   "league": "LaLiga",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/1073489.png",
+   "colors": [
+    "#e4b43c",
+    "#e43c24",
+    "#372a0a"
+   ]
+  },
+  {
+   "id": "coach-78591",
+   "name": "Manuel Pellegrini",
+   "nameKo": "마누엘 펠레그리니",
+   "countryCode": "CHI",
+   "country": "Chile",
+   "team": "Real Betis",
+   "teamId": 8603,
+   "league": "LaLiga",
+   "tier": "half",
+   "achievement2526": "프리미어리그 우승 (2013-14)",
+   "photo": "card/coaches/half/pellegrini.webp",
+   "colors": [
+    "#cc840c",
+    "#0c843c",
+    "#3b2706"
+   ]
+  },
+  {
+   "id": "coach-78719",
+   "name": "José Mourinho",
+   "nameKo": "조제 무리뉴",
+   "countryCode": "POR",
+   "country": "Portugal",
+   "team": "Real Madrid",
+   "teamId": 8633,
+   "league": "LaLiga",
+   "tier": "full",
+   "achievement2526": "챔스 2회 · 4개국 리그 우승",
+   "photo": "card/coaches/full/mourinho.webp",
+   "colors": [
+    "#ece6d2",
+    "#febe10",
+    "#1d3c7c"
+   ]
+  },
+  {
+   "id": "coach-242474",
+   "name": "Luis García",
+   "nameKo": "루이스 가르시아",
+   "countryCode": "ESP",
+   "country": "Spain",
+   "team": "Sevilla",
+   "teamId": 8302,
+   "league": "LaLiga",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/242474.png",
+   "colors": [
+    "#cc0c24",
+    "#cc9c0c",
+    "#3b060d"
+   ]
+  },
+  {
+   "id": "coach-78642",
+   "name": "Javier Aguirre",
+   "nameKo": "하비에르 아기레",
+   "countryCode": "MEX",
+   "country": "Mexico",
+   "team": "Valencia",
+   "teamId": 10267,
+   "league": "LaLiga",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/78642.png",
+   "colors": [
+    "#fce424",
+    "#e43c24",
+    "#3e3704"
+   ]
+  },
+  {
+   "id": "coach-188060",
+   "name": "Inigo Pérez",
+   "nameKo": "이니고 페레스",
+   "countryCode": "ESP",
+   "country": "Spain",
+   "team": "Villarreal",
+   "teamId": 10205,
+   "league": "LaLiga",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/188060.png",
+   "colors": [
+    "#0c5484",
+    "#fce46c",
+    "#08263a"
+   ]
+  },
+  {
+   "id": "coach-1141972",
+   "name": "Stéphane Gilli",
+   "nameKo": "스테판 질리",
+   "countryCode": "FRA",
+   "country": "France",
+   "team": "Angers",
+   "teamId": 8121,
+   "league": "Ligue 1",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/1141972.png",
+   "colors": [
+    "#cc9c6c",
+    "#fcccb4",
+    "#2f2112"
+   ]
+  },
+  {
+   "id": "coach-1224987",
+   "name": "Will Still",
+   "nameKo": "윌 스틸",
+   "countryCode": "BEL",
+   "country": "Belgium",
+   "team": "Auxerre",
+   "teamId": 8583,
+   "league": "Ligue 1",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/1224987.png",
+   "colors": [
+    "#0c3c9c",
+    "#84b4cc",
+    "#07183a"
+   ]
+  },
+  {
+   "id": "coach-46250",
+   "name": "Julien Lachuer",
+   "nameKo": "쥘리앵 라쉬에",
+   "countryCode": "FRA",
+   "country": "France",
+   "team": "Brest",
+   "teamId": 8521,
+   "league": "Ligue 1",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/46250.png",
+   "colors": [
+    "#e40c0c",
+    "#e45454",
+    "#3c0606"
+   ]
+  },
+  {
+   "id": "coach-33128",
+   "name": "Didier Digard",
+   "nameKo": "디디에 디가르",
+   "countryCode": "FRA",
+   "country": "France",
+   "team": "Le Havre",
+   "teamId": 9746,
+   "league": "Ligue 1",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/33128.png",
+   "colors": [
+    "#84cce4",
+    "#0c2454",
+    "#0e2a34"
+   ]
+  },
+  {
+   "id": "coach-1791881",
+   "name": "Patrick Videira",
+   "nameKo": "파트리크 비데이라",
+   "countryCode": "FRA",
+   "country": "France",
+   "team": "Le Mans",
+   "teamId": 8682,
+   "league": "Ligue 1",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/1791881.png",
+   "colors": [
+    "#b40c24",
+    "#cc840c",
+    "#3b070e"
+   ]
+  },
+  {
+   "id": "coach-46243",
+   "name": "Yannick Cahuzac",
+   "nameKo": "야니크 카위자크",
+   "countryCode": "FRA",
+   "country": "France",
+   "team": "Lens",
+   "teamId": 8588,
+   "league": "Ligue 1",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/46243.png",
+   "colors": [
+    "#fccc0c",
+    "#e40c0c",
+    "#3e3204"
+   ]
+  },
+  {
+   "id": "coach-1108529",
+   "name": "Davide Ancelotti",
+   "nameKo": "다비데 안첼로티",
+   "countryCode": "ITA",
+   "country": "Italy",
+   "team": "Lille",
+   "teamId": 8639,
+   "league": "Ligue 1",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/1108529.png",
+   "colors": [
+    "#24246c",
+    "#fc0c0c",
+    "#121230"
+   ]
+  },
+  {
+   "id": "coach-41334",
+   "name": "Alexandre Dujeux",
+   "nameKo": "알렉상드르 뒤죄",
+   "countryCode": "FRA",
+   "country": "France",
+   "team": "Lorient",
+   "teamId": 8689,
+   "league": "Ligue 1",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/41334.png",
+   "colors": [
+    "#fc6c0c",
+    "#843c0c",
+    "#3e1b04"
+   ]
+  },
+  {
+   "id": "coach-361759",
+   "name": "Paulo Fonseca",
+   "nameKo": "파울루 폰세카",
+   "countryCode": "POR",
+   "country": "Portugal",
+   "team": "Lyon",
+   "teamId": 9748,
+   "league": "Ligue 1",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/361759.png",
+   "colors": [
+    "#0c24b4",
+    "#fc0c24",
+    "#070e3b"
+   ]
+  },
+  {
+   "id": "coach-712734",
+   "name": "Bruno Génésio",
+   "nameKo": "브뤼노 제네지오",
+   "countryCode": "FRA",
+   "country": "France",
+   "team": "Marseille",
+   "teamId": 8592,
+   "league": "Ligue 1",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/712734.png",
+   "colors": [
+    "#0c6cb4",
+    "#549ccc",
+    "#07243b"
+   ]
+  },
+  {
+   "id": "coach-41167",
+   "name": "Filipe Luís",
+   "nameKo": "필리페 루이스",
+   "countryCode": "BRA",
+   "country": "Brazil",
+   "team": "Monaco",
+   "teamId": 9829,
+   "league": "Ligue 1",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/41167.png",
+   "colors": [
+    "#e40c24",
+    "#ccb46c",
+    "#3c060c"
+   ]
+  },
+  {
+   "id": "coach-278248",
+   "name": "Olivier Pantaloni",
+   "nameKo": "올리비에 판탈로니",
+   "countryCode": "FRA",
+   "country": "France",
+   "team": "Nice",
+   "teamId": 9831,
+   "league": "Ligue 1",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/278248.png",
+   "colors": [
+    "#cc9c54",
+    "#fc0c0c",
+    "#312411"
+   ]
+  },
+  {
+   "id": "coach-24105",
+   "name": "Liam Rosenior",
+   "nameKo": "리엄 로세니어",
+   "countryCode": "ENG",
+   "country": "England",
+   "team": "Paris FC",
+   "teamId": 6379,
+   "league": "Ligue 1",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/24105.png",
+   "colors": [
+    "#2484cc",
+    "#0c2454",
+    "#0c2436"
+   ]
+  },
+  {
+   "id": "coach-804046",
+   "name": "Franck Haise",
+   "nameKo": "프랑크 아이즈",
+   "countryCode": "FRA",
+   "country": "France",
+   "team": "Rennes",
+   "teamId": 9851,
+   "league": "Ligue 1",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/804046.png",
+   "colors": [
+    "#e40c0c",
+    "#fcb40c",
+    "#3c0606"
+   ]
+  },
+  {
+   "id": "coach-1700757",
+   "name": "Hugo Oliveira",
+   "nameKo": "우구 올리베이라",
+   "countryCode": "POR",
+   "country": "Portugal",
+   "team": "Strasbourg",
+   "teamId": 9848,
+   "league": "Ligue 1",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/1700757.png",
+   "colors": [
+    "#0c9ce4",
+    "#e40c24",
+    "#062a3c"
+   ]
+  },
+  {
+   "id": "coach-26831",
+   "name": "Jens Berthel Askou",
+   "nameKo": "옌스 베르텔 아스코우",
+   "countryCode": "DEN",
+   "country": "Denmark",
+   "team": "Toulouse",
+   "teamId": 9941,
+   "league": "Ligue 1",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/26831.png",
+   "colors": [
+    "#fc0c3c",
+    "#84549c",
+    "#3e040f"
+   ]
+  },
+  {
+   "id": "coach-26159",
+   "name": "Stéphane Dumont",
+   "nameKo": "스테판 뒤몽",
+   "countryCode": "FRA",
+   "country": "France",
+   "team": "Troyes",
+   "teamId": 10242,
+   "league": "Ligue 1",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/26159.png",
+   "colors": [
+    "#0c6cb4",
+    "#cc9c0c",
+    "#07243b"
+   ]
+  },
+  {
+   "id": "coach-27493",
+   "name": "Marco Rose",
+   "nameKo": "마르코 로제",
+   "countryCode": "GER",
+   "country": "Germany",
+   "team": "AFC Bournemouth",
+   "teamId": 8678,
+   "league": "Premier League",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/27493.png",
+   "colors": [
+    "#cc0c24",
+    "#540c0c",
+    "#3b060d"
+   ]
+  },
+  {
+   "id": "coach-38711",
+   "name": "Keith Andrews",
+   "nameKo": "키스 앤드루스",
+   "countryCode": "IRL",
+   "country": "Ireland",
+   "team": "Brentford",
+   "teamId": 9937,
+   "league": "Premier League",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/38711.png",
+   "colors": [
+    "#b40c0c",
+    "#e48484",
+    "#3b0707"
+   ]
+  },
+  {
+   "id": "coach-208516",
+   "name": "Fabian Hürzeler",
+   "nameKo": "파비안 휘르첼러",
+   "countryCode": "GER",
+   "country": "Germany",
+   "team": "Brighton & Hove Albion",
+   "teamId": 10204,
+   "league": "Premier League",
+   "tier": "rare",
+   "achievement2526": null,
+   "photo": "card/coaches/face/208516.png",
+   "colors": [
+    "#0c3c9c",
+    "#5484b4",
+    "#07183a"
+   ]
+  },
+  {
+   "id": "coach-30889",
+   "name": "Xabi Alonso",
+   "nameKo": "사비 알론소",
+   "countryCode": "ESP",
+   "country": "Spain",
+   "team": "Chelsea",
+   "teamId": 8455,
+   "league": "Premier League",
+   "tier": "half",
+   "achievement2526": "분데스리가 무패 우승 (2023-24)",
+   "photo": "card/coaches/half/alonso.webp",
+   "colors": [
+    "#1652b0",
+    "#e8b923",
+    "#0b2a63"
+   ]
+  },
+  {
+   "id": "coach-30631",
+   "name": "Frank Lampard",
+   "nameKo": "프랭크 램파드",
+   "countryCode": "ENG",
+   "country": "England",
+   "team": "Coventry City",
+   "teamId": 8669,
+   "league": "Premier League",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/30631.png",
+   "colors": [
+    "#846c24",
+    "#cc2424",
+    "#322910"
+   ]
+  },
+  {
+   "id": "coach-1586853",
+   "name": "Pierre Sage",
+   "nameKo": "피에르 사주",
+   "countryCode": "FRA",
+   "country": "France",
+   "team": "Crystal Palace",
+   "teamId": 9826,
+   "league": "Premier League",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/1586853.png",
+   "colors": [
+    "#0c549c",
+    "#5484b4",
+    "#07213a"
+   ]
+  },
+  {
+   "id": "coach-78626",
+   "name": "David Moyes",
+   "nameKo": "데이비드 모이스",
+   "countryCode": "SCO",
+   "country": "Scotland",
+   "team": "Everton",
+   "teamId": 8668,
+   "league": "Premier League",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/78626.png",
+   "colors": [
+    "#0c0c9c",
+    "#5454b4",
+    "#07073a"
+   ]
+  },
+  {
+   "id": "coach-37442",
+   "name": "Álvaro Arbeloa",
+   "nameKo": "알바로 아르벨로아",
+   "countryCode": "ESP",
+   "country": "Spain",
+   "team": "Fulham",
+   "teamId": 9879,
+   "league": "Premier League",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/37442.png",
+   "colors": [
+    "#cc0c0c",
+    "#6c2424",
+    "#3b0606"
+   ]
+  },
+  {
+   "id": "coach-9012",
+   "name": "Sergej Jakirović",
+   "nameKo": "세르게이 야키로비치",
+   "countryCode": "BIH",
+   "country": "Bosnia and Herzegovina",
+   "team": "Hull City",
+   "teamId": 8667,
+   "league": "Premier League",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/9012.png",
+   "colors": [
+    "#e4840c",
+    "#6c3c24",
+    "#3c2406"
+   ]
+  },
+  {
+   "id": "coach-24393",
+   "name": "Gary O'Neil",
+   "nameKo": "게리 오닐",
+   "countryCode": "ENG",
+   "country": "England",
+   "team": "Ipswich Town",
+   "teamId": 9902,
+   "league": "Premier League",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/24393.png",
+   "colors": [
+    "#0c3c84",
+    "#e46c84",
+    "#081c3a"
+   ]
+  },
+  {
+   "id": "coach-849545",
+   "name": "Daniel Farke",
+   "nameKo": "다니엘 파르케",
+   "countryCode": "GER",
+   "country": "Germany",
+   "team": "Leeds United",
+   "teamId": 8463,
+   "league": "Premier League",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/849545.png",
+   "colors": [
+    "#fce424",
+    "#0c54b4",
+    "#3e3704"
+   ]
+  },
+  {
+   "id": "coach-34000",
+   "name": "Enzo Maresca",
+   "nameKo": "엔초 마레스카",
+   "countryCode": "ITA",
+   "country": "Italy",
+   "team": "Manchester City",
+   "teamId": 8456,
+   "league": "Premier League",
+   "tier": "half",
+   "achievement2526": "컨퍼런스리그 · 클럽월드컵 우승",
+   "photo": "card/coaches/half/maresca.webp",
+   "colors": [
+    "#6cb4e6",
+    "#ffffff",
+    "#1c2c5b"
+   ]
+  },
+  {
+   "id": "coach-59582",
+   "name": "Matthias Jaissle",
+   "nameKo": "마티아스 야이슬레",
+   "countryCode": "GER",
+   "country": "Germany",
+   "team": "Newcastle United",
+   "teamId": 10261,
+   "league": "Premier League",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/59582.png",
+   "colors": [
+    "#0cccfc",
+    "#0c849c",
+    "#04323e"
+   ]
+  },
+  {
+   "id": "coach-1381583",
+   "name": "Régis Le Bris",
+   "nameKo": "레지스 르 브리",
+   "countryCode": "FRA",
+   "country": "France",
+   "team": "Sunderland",
+   "teamId": 8472,
+   "league": "Premier League",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/1381583.png",
+   "colors": [
+    "#e40c24",
+    "#b48424",
+    "#3c060c"
+   ]
+  },
+  {
+   "id": "coach-42044",
+   "name": "Roberto De Zerbi",
+   "nameKo": "로베르토 데 제르비",
+   "countryCode": "ITA",
+   "country": "Italy",
+   "team": "Tottenham Hotspur",
+   "teamId": 8586,
+   "league": "Premier League",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/42044.png",
+   "colors": [
+    "#2a3d8f",
+    "#e9edf5",
+    "#0c1338"
+   ]
+  },
+  {
+   "id": "coach-557567",
+   "name": "Maurizio Sarri",
+   "nameKo": "마우리치오 사리",
+   "countryCode": "ITA",
+   "country": "Italy",
+   "team": "Atalanta",
+   "teamId": 8524,
+   "league": "Serie A",
+   "tier": "half",
+   "achievement2526": "유로파리그 · 세리에 A 우승",
+   "photo": "card/coaches/half/sarri.webp",
+   "colors": [
+    "#0c6cb4",
+    "#84b4cc",
+    "#07243b"
+   ]
+  },
+  {
+   "id": "coach-41413",
+   "name": "Raffaele Palladino",
+   "nameKo": "라파엘레 팔라디노",
+   "countryCode": "ITA",
+   "country": "Italy",
+   "team": "Bologna",
+   "teamId": 9857,
+   "league": "Serie A",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/41413.png",
+   "colors": [
+    "#9c2424",
+    "#0c2454",
+    "#330e0e"
+   ]
+  },
+  {
+   "id": "coach-41732",
+   "name": "Fabio Pisacane",
+   "nameKo": "파비오 피사카네",
+   "countryCode": "ITA",
+   "country": "Italy",
+   "team": "Cagliari",
+   "teamId": 8529,
+   "league": "Serie A",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/41732.png",
+   "colors": [
+    "#b40c24",
+    "#0c2454",
+    "#3b070e"
+   ]
+  },
+  {
+   "id": "coach-30613",
+   "name": "Cesc Fàbregas",
+   "nameKo": "세스크 파브레가스",
+   "countryCode": "ESP",
+   "country": "Spain",
+   "team": "Como",
+   "teamId": 10171,
+   "league": "Serie A",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/30613.png",
+   "colors": [
+    "#0c3c6c",
+    "#54849c",
+    "#092139"
+   ]
+  },
+  {
+   "id": "coach-42632",
+   "name": "Paolo Vanoli",
+   "nameKo": "파올로 바놀리",
+   "countryCode": "ITA",
+   "country": "Italy",
+   "team": "Fiorentina",
+   "teamId": 8535,
+   "league": "Serie A",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/42632.png",
+   "colors": [
+    "#543c84",
+    "#e43c24",
+    "#1d152c"
+   ]
+  },
+  {
+   "id": "coach-1188285",
+   "name": "Massimiliano Alvini",
+   "nameKo": "마시밀리아노 알비니",
+   "countryCode": "ITA",
+   "country": "Italy",
+   "team": "Frosinone",
+   "teamId": 9891,
+   "league": "Serie A",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/1188285.png",
+   "colors": [
+    "#0c3c9c",
+    "#fce40c",
+    "#07183a"
+   ]
+  },
+  {
+   "id": "coach-30682",
+   "name": "Daniele De Rossi",
+   "nameKo": "다니엘레 데 로시",
+   "countryCode": "ITA",
+   "country": "Italy",
+   "team": "Genoa",
+   "teamId": 10233,
+   "league": "Serie A",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/30682.png",
+   "colors": [
+    "#cc0c0c",
+    "#fccc0c",
+    "#3b0606"
+   ]
+  },
+  {
+   "id": "coach-78584",
+   "name": "Luciano Spalletti",
+   "nameKo": "루치아노 스팔레티",
+   "countryCode": "ITA",
+   "country": "Italy",
+   "team": "Juventus",
+   "teamId": 9885,
+   "league": "Serie A",
+   "tier": "half",
+   "achievement2526": "나폴리 스쿠데토 (2022-23)",
+   "photo": "card/coaches/half/spalletti.webp",
+   "colors": [
+    "#d9d9d9",
+    "#111111",
+    "#161616"
+   ]
+  },
+  {
+   "id": "coach-30721",
+   "name": "Gennaro Gattuso",
+   "nameKo": "젠나로 가투소",
+   "countryCode": "ITA",
+   "country": "Italy",
+   "team": "Lazio",
+   "teamId": 8543,
+   "league": "Serie A",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/30721.png",
+   "colors": [
+    "#e4cc84",
+    "#84ccfc",
+    "#342a0e"
+   ]
+  },
+  {
+   "id": "coach-5615",
+   "name": "Eusebio Di Francesco",
+   "nameKo": "에우세비오 디 프란체스코",
+   "countryCode": "ITA",
+   "country": "Italy",
+   "team": "Lecce",
+   "teamId": 9888,
+   "league": "Serie A",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/5615.png",
+   "colors": [
+    "#0c2454",
+    "#b49c6c",
+    "#0a1937"
+   ]
+  },
+  {
+   "id": "coach-11754",
+   "name": "Ruben Amorim",
+   "nameKo": "후벵 아모림",
+   "countryCode": "POR",
+   "country": "Portugal",
+   "team": "Milan",
+   "teamId": 8564,
+   "league": "Serie A",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/11754.png",
+   "colors": [
+    "#e3131b",
+    "#111111",
+    "#161616"
+   ]
+  },
+  {
+   "id": "coach-41757",
+   "name": "Ivan Jurić",
+   "nameKo": "이반 유리치",
+   "countryCode": "CRO",
+   "country": "Croatia",
+   "team": "Monza",
+   "teamId": 6504,
+   "league": "Serie A",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/41757.png",
+   "colors": [
+    "#e40c24",
+    "#e46c84",
+    "#3c060c"
+   ]
+  },
+  {
+   "id": "coach-129745",
+   "name": "Massimiliano Allegri",
+   "nameKo": "마시밀리아노 알레그리",
+   "countryCode": "ITA",
+   "country": "Italy",
+   "team": "Napoli",
+   "teamId": 9875,
+   "league": "Serie A",
+   "tier": "half",
+   "achievement2526": "세리에 A 6회 우승",
+   "photo": "card/coaches/half/allegri.webp",
+   "colors": [
+    "#12a0d7",
+    "#ffffff",
+    "#003c82"
+   ]
+  },
+  {
+   "id": "coach-30881",
+   "name": "Alberto Gilardino",
+   "nameKo": "알베르토 질라르디노",
+   "countryCode": "ITA",
+   "country": "Italy",
+   "team": "Parma",
+   "teamId": 10167,
+   "league": "Serie A",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/30881.png",
+   "colors": [
+    "#243c84",
+    "#fccc0c",
+    "#101832"
+   ]
+  },
+  {
+   "id": "coach-96945",
+   "name": "Gian Piero Gasperini",
+   "nameKo": "잔 피에로 가스페리니",
+   "countryCode": "ITA",
+   "country": "Italy",
+   "team": "Roma",
+   "teamId": 8686,
+   "league": "Serie A",
+   "tier": "half",
+   "achievement2526": "유로파리그 우승 (2023-24)",
+   "photo": "card/coaches/half/gasperini.webp",
+   "colors": [
+    "#9c0c24",
+    "#fcb40c",
+    "#3a0710"
+   ]
+  },
+  {
+   "id": "coach-27694",
+   "name": "Alberto Aquilani",
+   "nameKo": "알베르토 아퀼라니",
+   "countryCode": "ITA",
+   "country": "Italy",
+   "team": "Sassuolo",
+   "teamId": 7943,
+   "league": "Serie A",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/27694.png",
+   "colors": [
+    "#3cb454",
+    "#84cc9c",
+    "#123018"
+   ]
+  },
+  {
+   "id": "coach-39555",
+   "name": "Ignazio Abate",
+   "nameKo": "이냐치오 아바테",
+   "countryCode": "ITA",
+   "country": "Italy",
+   "team": "Torino",
+   "teamId": 9804,
+   "league": "Serie A",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/39555.png",
+   "colors": [
+    "#842424",
+    "#fcb424",
+    "#321010"
+   ]
+  },
+  {
+   "id": "coach-812065",
+   "name": "Kosta Runjaić",
+   "nameKo": "코스타 룬야이치",
+   "countryCode": "GER",
+   "country": "Germany",
+   "team": "Udinese",
+   "teamId": 8600,
+   "league": "Serie A",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/812065.png",
+   "colors": [
+    "#9c8454",
+    "#ffffff",
+    "#2a2418"
+   ]
+  },
+  {
+   "id": "coach-42451",
+   "name": "Davide Nicola",
+   "nameKo": "다비데 니콜라",
+   "countryCode": "ITA",
+   "country": "Italy",
+   "team": "Venezia",
+   "teamId": 7881,
+   "league": "Serie A",
+   "tier": "face",
+   "achievement2526": null,
+   "photo": "card/coaches/face/42451.png",
+   "colors": [
+    "#fc6c0c",
+    "#0c6c3c",
+    "#3e1b04"
+   ]
+  },
+  {
+   "id": "coach-icon-ferguson",
+   "name": "Alex Ferguson",
+   "nameKo": "알렉스 퍼거슨",
+   "countryCode": "SCO",
+   "country": "Scotland",
+   "team": "ICON",
+   "teamId": null,
+   "league": null,
+   "tier": "icon",
+   "achievement2526": "맨유 26년 · 챔스 2회 · PL 13회",
+   "photo": "card/coaches/icon/ferguson.webp"
+  },
+  {
+   "id": "coach-icon-wenger",
+   "name": "Arsène Wenger",
+   "nameKo": "아르센 벵거",
+   "countryCode": "FRA",
+   "country": "France",
+   "team": "ICON",
+   "teamId": null,
+   "league": null,
+   "tier": "icon",
+   "achievement2526": "아스날 22년 · PL 무패 우승",
+   "photo": "card/coaches/icon/wenger.webp"
+  },
+  {
+   "id": "coach-icon-klopp",
+   "name": "Jürgen Klopp",
+   "nameKo": "위르겐 클롭",
+   "countryCode": "GER",
+   "country": "Germany",
+   "team": "ICON",
+   "teamId": null,
+   "league": null,
+   "tier": "icon",
+   "achievement2526": "리버풀 챔스 · PL 우승",
+   "photo": "card/coaches/icon/klopp.webp"
+  },
+  {
+   "id": "coach-icon-ancelotti",
+   "name": "Carlo Ancelotti",
+   "nameKo": "카를로 안첼로티",
+   "countryCode": "ITA",
+   "country": "Italy",
+   "team": "ICON",
+   "teamId": null,
+   "league": null,
+   "tier": "icon",
+   "achievement2526": "챔스 최다 5회 우승",
+   "photo": "card/coaches/icon/ancelotti.webp"
+  },
+  {
+   "id": "coach-icon-heynckes",
+   "name": "Jupp Heynckes",
+   "nameKo": "유프 하인케스",
+   "countryCode": "GER",
+   "country": "Germany",
+   "team": "ICON",
+   "teamId": null,
+   "league": null,
+   "tier": "icon",
+   "achievement2526": "챔스 2회 · 2013 트레블",
+   "photo": "card/coaches/icon/heynckes.webp"
+  },
+  {
+   "id": "coach-icon-delbosque",
+   "name": "Vicente del Bosque",
+   "nameKo": "비센테 델 보스케",
+   "countryCode": "ESP",
+   "country": "Spain",
+   "team": "ICON",
+   "teamId": null,
+   "league": null,
+   "tier": "icon",
+   "achievement2526": "월드컵 · 유로 · 챔스 2회",
+   "photo": "card/coaches/icon/delbosque.webp"
+  },
+  {
+   "id": "coach-icon-capello",
+   "name": "Fabio Capello",
+   "nameKo": "파비오 카펠로",
+   "countryCode": "ITA",
+   "country": "Italy",
+   "team": "ICON",
+   "teamId": null,
+   "league": null,
+   "tier": "icon",
+   "achievement2526": "밀란 챔스 우승 (1994)",
+   "photo": "card/coaches/icon/capello.webp"
+  },
+  {
+   "id": "coach-icon-lippi",
+   "name": "Marcello Lippi",
+   "nameKo": "마르첼로 리피",
+   "countryCode": "ITA",
+   "country": "Italy",
+   "team": "ICON",
+   "teamId": null,
+   "league": null,
+   "tier": "icon",
+   "achievement2526": "2006 월드컵 · 유벤투스 챔스",
+   "photo": "card/coaches/icon/lippi.webp"
+  },
+  {
+   "id": "coach-icon-guardiola",
+   "name": "Pep Guardiola",
+   "nameKo": "펩 과르디올라",
+   "countryCode": "ESP",
+   "country": "Spain",
+   "team": "ICON",
+   "teamId": null,
+   "league": null,
+   "tier": "icon",
+   "achievement2526": "챔스 3회 · 트레블 2회",
+   "photo": "card/coaches/icon/guardiola.webp"
+  }
+ ]
+}

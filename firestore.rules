@@ -1,0 +1,460 @@
+rules_version = '2';
+
+// 단독 배포 프로젝트(guess-your-player) 전용 규칙.
+// guessPlayers는 crawler/export_to_firestore.py(관리자 SDK, 이 rules 우회)만 쓴다.
+// 리더보드는 로그인 없이 브라우저가 직접 쓰는 유일한 컬렉션이라, 모양(shape)과
+// "본인 최고 기록(힌트 더 적게) 갱신 시에만 덮어쓰기"를 규칙으로 강제한다.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function knownGames() {
+      return ['player-guess', 'silhouette-guess', 'challenge', 'records-guess-player', 'records-guess-team', 'big6-yahtzee', 'captcha-speedrun', 'connect', 'blackjack', 'bobble', 'bobble-online', 'ballon-jelly', 'ballon-jelly-hard', 'gogun', 'card-pack', 'penalty', 'penalty-online', 'heading', 'scramble'];
+    }
+
+    // 리더보드는 로그인 없이 브라우저가 Firestore에 "직접" 쓰기 때문에, 값의 모양만
+    // 검사하는 규칙만으로는 "게임을 아예 안 하고 콘솔에서 setDoc만 호출해 만점을
+    // 써넣는" 걸 막을 수 없다 (Firebase 웹 설정은 원래 공개값이라 인증 없이도 SDK를
+    // 그대로 쓸 수 있음). 그래서 각 게임 시작 시점(index.html의 logPlay)에 서버
+    // 타임스탬프로 이 세션 문서를 만들어두고, 점수를 쓸 때(commitLeaderboardScore)
+    // 같은 배치 커밋 안에서 이 문서를 지우면서 점수를 쓰게 강제한다. sessionConsumed()는
+    // "그 세션이 실제로 존재했고, 생성된 지 최소 시간이 지났고, 이 커밋으로 지워지는지"를
+    // 검증한다 - 세 조건 다 클라이언트가 값을 조작할 수 없는 서버 시간/원자적 커밋에
+    // 기대므로, 방금 플레이하지 않고 점수만 쓰는 건 막힌다. (진짜 플레이를 자동화하는
+    // 스크립트까지 막지는 못한다 - 그건 서버가 문제를 내고 채점하는 백엔드가 있어야
+    // 가능한, 훨씬 큰 작업.)
+    function sessionConsumed(sessionId, minSeconds) {
+      let sessionPath = /databases/$(database)/documents/playSessions/$(sessionId);
+      return exists(sessionPath)
+        && request.time > get(sessionPath).data.startedAt + duration.value(minSeconds, 's')
+        && !existsAfter(sessionPath);
+    }
+
+    match /playSessions/{sessionId} {
+      allow read: if false;
+      allow create, update: if request.resource.data.keys().hasOnly(['startedAt'])
+        && request.resource.data.startedAt == request.time;
+      // 문서 자체엔 검증할 값이 없어서(타임스탬프뿐) 자유 삭제를 허용해도 얻을 게
+      // 없다 - 위 sessionConsumed()가 요구하는 "최소 시간 경과"를 앞당길 방법이 안 됨.
+      allow delete: if true;
+    }
+
+    // 전체 공개 읽기(catch-all)는 두지 않는다. Firestore 규칙은 OR로 합쳐지므로 하나라도 있으면
+    // 아래의 "본인·관리자만 읽기" 제한이 무력화된다. 클라이언트가 읽는 컬렉션은 전부 개별 규칙을 둔다
+    // (지정되지 않은 경로는 기본 거부).
+
+    match /guessPlayers/{playerId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // /bymile 관리자 페이지용 플레이 로그. 로그인 없는 프로젝트라 클라이언트가 직접
+    // 쓴다 - ip는 클라이언트가 외부 API(ipify)로 알아낸 값을 그대로 보내는 것이라
+    // 위변조 방지가 되는 "신뢰 가능한" 값은 아니고, 대략적인 접속 현황 참고용이다.
+    // 생성만 허용하고 수정/삭제는 막아서 로그가 사후에 조작되지 않게 한다.
+    // IP가 들어 있으므로 읽기는 관리자만 (클라이언트 코드는 이 컬렉션을 읽지 않는다).
+    match /playLogs/{logId} {
+      allow read: if isAdmin();
+      allow create: if request.resource.data.keys().hasOnly(['ts', 'ip', 'game'])
+        && request.resource.data.game in knownGames()
+        && request.resource.data.ip is string
+        && request.resource.data.ip.size() <= 64
+        && request.resource.data.ts == request.time;
+      allow update, delete: if false;
+    }
+
+    // playLogs를 판마다 하나씩 쌓아두면 /bymile 관리자 페이지가 "종목별 총 판수"를
+    // 보려고 매번 그 전체를 훑어야 해서 로그가 많아질수록 느려진다. 그래서 종목별
+    // 카운터를 별도 문서 하나(totals, 전체 누적)와 날짜별 문서(statsDaily, 하루치)에
+    // increment로만 쌓아서 관리자 페이지는 이 작은 문서 몇 개만 읽으면 되게 한다.
+    // 문서 안 키가 알려진 게임 이름으로만 채워지게는 강제하지만, 값이 정말 1씩만
+    // 증가하는지까지는(increment 남용 방지) 검증하지 않는다 - 로그인 없는 프로젝트라
+    // playLogs의 ip처럼 이것도 "참고용" 통계지 위변조 방지가 되는 값은 아니다.
+    match /statsCounters/totals {
+      allow read: if true;
+      allow write: if request.resource.data.keys().hasOnly(knownGames());
+    }
+    match /statsDaily/{dayId} {
+      allow read: if true;
+      allow write: if dayId.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && request.resource.data.keys().hasOnly(knownGames());
+    }
+
+    // /bymile과 내용이 같은 별칭 주소 /fhrm으로 접속한 IP만 따로 남기는 로그 -
+    // 이 대체 주소를 누가 찾아 들어오는지 확인하기 위한 용도라 playLogs와 분리했다.
+    // 마찬가지로 클라이언트가 직접 쓰되, 생성만 허용하고 사후 수정/삭제는 막는다.
+    match /fhrmAccessLog/{logId} {
+      allow read: if isAdmin();
+      allow create: if request.resource.data.keys().hasOnly(['ts', 'ip'])
+        && request.resource.data.ip is string
+        && request.resource.data.ip.size() <= 64
+        && request.resource.data.ts == request.time;
+      allow update, delete: if false;
+    }
+
+    // hintsUsed는 number가 아니라 int로 못박아야 한다 - number만 요구하면 0.0001처럼
+    // 게임을 하지 않고도(직접 Firestore SDK를 열어 쓰면) 어떤 실제 플레이보다도
+    // 작은 값을 넣어 영구 1위를 차지하는 게 가능해진다. 상한(150)은 실제 게임
+    // 최대치인 ROUND_SIZE(5) x (CATEGORIES.length(9) + FAIL_PENALTY(10)) = 95에
+    // 여유를 둔 값 - public/index.html의 저 상수들이 바뀌면 같이 검토할 것.
+    match /guessLeaderboard/{mode}/entries/{deviceId} {
+      allow read: if true;
+      allow write: if mode in ['streak']
+        && request.resource.data.keys().hasAll(['nickname', 'hintsUsed', 'updatedAt'])
+        && request.resource.data.nickname is string
+        && request.resource.data.nickname.size() >= 1
+        && request.resource.data.nickname.size() <= 20
+        && request.resource.data.hintsUsed is int
+        && request.resource.data.hintsUsed >= 0
+        && request.resource.data.hintsUsed <= 150
+        && request.resource.data.updatedAt is timestamp
+        && (!exists(/databases/$(database)/documents/guessLeaderboard/$(mode)/entries/$(deviceId))
+            || request.resource.data.hintsUsed < resource.data.hintsUsed)
+        && sessionConsumed('player-guess_' + deviceId, 5);
+      // /bymile 관리자 페이지의 "모든 리더보드 초기화" 버튼용. (포트폴리오 사본 보안 수정)
+      // 예전엔 `if true`라 누구나 리더보드를 지울 수 있었다 - 관리자 구글 로그인으로 제한한다.
+      // 아래 다른 리더보드들의 delete도 같은 이유로 isAdmin()이다.
+      allow delete: if isAdmin();
+    }
+
+    // 게임5(신규 챌린지): 힌트 일회용으로 몇 명까지 맞히는지 - 힌트가 적을수록 좋은
+    // guessLeaderboard와 반대로 정답 수(correct)는 클수록 좋은 기록이라 부등호 반대.
+    // correct도 int로 강제한다(위 hintsUsed와 같은 이유). 상한(300)은 전체 선수 풀
+    // (crawler/data/dataset.json, 203명)을 한 번 다 맞히고도 남을 여유치 - 실제
+    // 플레이로는 사실상 도달 불가능하면서 999 같은 조작값은 걸러내는 값이다.
+    match /challengeLeaderboard/{mode}/entries/{deviceId} {
+      allow read: if true;
+      allow write: if mode in ['allTime']
+        && request.resource.data.keys().hasAll(['nickname', 'correct', 'updatedAt'])
+        && request.resource.data.nickname is string
+        && request.resource.data.nickname.size() >= 1
+        && request.resource.data.nickname.size() <= 20
+        && request.resource.data.correct is int
+        && request.resource.data.correct >= 0
+        && request.resource.data.correct <= 300
+        && request.resource.data.updatedAt is timestamp
+        && (!exists(/databases/$(database)/documents/challengeLeaderboard/$(mode)/entries/$(deviceId))
+            || request.resource.data.correct > resource.data.correct)
+        && sessionConsumed('challenge_' + deviceId, 5);
+      allow delete: if isAdmin();
+    }
+
+    // 게임4(실루엣 맞히기): 정답 수(correct)가 더 높은 기록일 때만 덮어쓴다.
+    // correct 상한(20)은 public/index.html의 SIL_ROUND_SIZE와 같이 맞춰야 함.
+    match /silhouetteLeaderboard/{mode}/entries/{deviceId} {
+      allow read: if true;
+      allow write: if mode in ['allTime']
+        && request.resource.data.keys().hasOnly(['nickname', 'correct', 'updatedAt'])
+        && request.resource.data.nickname is string
+        && request.resource.data.nickname.size() >= 1
+        && request.resource.data.nickname.size() <= 20
+        && request.resource.data.correct is int
+        && request.resource.data.correct >= 0
+        && request.resource.data.correct <= 20
+        && request.resource.data.updatedAt is timestamp
+        && (!exists(/databases/$(database)/documents/silhouetteLeaderboard/$(mode)/entries/$(deviceId))
+            || request.resource.data.correct > resource.data.correct)
+        && sessionConsumed('silhouette-guess_' + deviceId, 5);
+      allow delete: if isAdmin();
+    }
+
+    // 게임8(빅6 야찌): 13라운드 최종 총점(score) - 높을수록 좋은 기록이라
+    // challenge/silhouette와 같은 방향 부등호. 상한(390)은 public/index.html의
+    // BIG6_* 상수로 계산되는 이론상 최대치(팀 150 + 팀보너스 30 + 포지션 45 +
+    // 포지션보너스 25 + 콤비네이션 140)와 동일 - 저 상수들이 바뀌면 같이 검토할 것.
+    match /big6Leaderboard/{mode}/entries/{deviceId} {
+      allow read: if true;
+      allow write: if mode in ['allTime']
+        && request.resource.data.keys().hasAll(['nickname', 'score', 'updatedAt'])
+        && request.resource.data.nickname is string
+        && request.resource.data.nickname.size() >= 1
+        && request.resource.data.nickname.size() <= 20
+        && request.resource.data.score is int
+        && request.resource.data.score >= 0
+        && request.resource.data.score <= 390
+        && request.resource.data.updatedAt is timestamp
+        && (!exists(/databases/$(database)/documents/big6Leaderboard/$(mode)/entries/$(deviceId))
+            || request.resource.data.score > resource.data.score)
+        && sessionConsumed('big6-yahtzee_' + deviceId, 5);
+      allow delete: if isAdmin();
+    }
+
+    // 선수 CAPTCHA 스피드런: 완료 시간(ms)이 더 짧아질 때만 개인 기록을 갱신한다.
+    // 오답 수는 순위나 기록에 사용하지 않으며, 시간만 저장한다.
+    match /captchaLeaderboard/{mode}/entries/{deviceId} {
+      allow read: if true;
+      allow create, update: if mode == 'allTime'
+        && request.resource.data.keys().hasOnly(['nickname', 'elapsedMs', 'updatedAt'])
+        && request.resource.data.nickname is string
+        && request.resource.data.nickname.size() >= 1
+        && request.resource.data.nickname.size() <= 20
+        && request.resource.data.elapsedMs is int
+        && request.resource.data.elapsedMs >= 1000
+        && request.resource.data.elapsedMs <= 3600000
+        && request.resource.data.updatedAt is timestamp
+        && (!exists(/databases/$(database)/documents/captchaLeaderboard/$(mode)/entries/$(deviceId))
+            || request.resource.data.elapsedMs < resource.data.elapsedMs)
+        && sessionConsumed('captcha-speedrun_' + deviceId, 2);
+      // /bymile 관리자 페이지의 "모든 리더보드 초기화" 버튼용. 다른 4개 리더보드와
+      // 같은 이유로 생성은 위 조건으로 막고, 삭제(초기화)는 관리자만 허용한다.
+      allow delete: if isAdmin();
+    }
+
+    // 발롱도르 만들기(public/jelly): 판 최종 점수(score)가 높아질 때만 갱신.
+    // 상한(10,000,000)은 실제 플레이로는 닿기 어려운 여유치 - 케인 2개 합체(발롱도르)
+    // 보너스가 50,000점이라 그걸 여러 번 해도 이 안에 들어온다. 판 하나가 최소 10초는
+    // 걸리므로 세션 최소 시간은 10초.
+    match /jellyLeaderboard/{mode}/entries/{deviceId} {
+      allow read: if true;
+      // allTime = 물복 모드, hard = 딱복 모드. 판 세션도 모드별로 따로 만든다
+      allow write: if mode in ['allTime', 'hard']
+        && request.resource.data.keys().hasOnly(['nickname', 'score', 'updatedAt'])
+        && request.resource.data.nickname is string
+        && request.resource.data.nickname.size() >= 1
+        && request.resource.data.nickname.size() <= 20
+        && request.resource.data.score is int
+        && request.resource.data.score >= 0
+        && request.resource.data.score <= 10000000
+        && request.resource.data.updatedAt is timestamp
+        && (!exists(/databases/$(database)/documents/jellyLeaderboard/$(mode)/entries/$(deviceId))
+            || request.resource.data.score > resource.data.score)
+        && sessionConsumed((mode == 'hard' ? 'ballon-jelly-hard_' : 'ballon-jelly_') + deviceId, 10);
+      allow delete: if isAdmin();
+    }
+
+    // 고군분투(public/gogun): 판 최종 점수(score)가 높아질 때만 갱신. stage는 떨어진 단계(1부터).
+    // 끝이 없는 무한 모드라 점수에 정해진 끝이 없다 - 상한은 발롱도르 만들기처럼 실제로는 닿기 어려운
+    // 여유치(10,000,000)로 둔다. 1단계만 해도 20초가 넘게 걸리므로 세션 최소 시간은 10초.
+    match /gogunLeaderboard/{mode}/entries/{deviceId} {
+      allow read: if true;
+      allow write: if mode == 'allTime'
+        && request.resource.data.keys().hasOnly(['nickname', 'score', 'stage', 'updatedAt'])
+        && request.resource.data.nickname is string
+        && request.resource.data.nickname.size() >= 1
+        && request.resource.data.nickname.size() <= 20
+        && request.resource.data.score is int
+        && request.resource.data.score >= 0
+        && request.resource.data.score <= 10000000
+        && request.resource.data.stage is int
+        && request.resource.data.stage >= 1
+        && request.resource.data.stage <= 9999
+        && request.resource.data.updatedAt is timestamp
+        && (!exists(/databases/$(database)/documents/gogunLeaderboard/$(mode)/entries/$(deviceId))
+            || request.resource.data.score > resource.data.score)
+        && sessionConsumed('gogun_' + deviceId, 10);
+      allow delete: if isAdmin();
+    }
+
+    // 등번호 블랙잭: 코인 잔액이 판마다 오르내리는 "실시간 랭킹"이라 위의 다른
+    // 리더보드들처럼 "최고기록만 갱신 + 세션 1회 소비" 모델을 그대로 쓸 수 없다
+    // (한 세션에 여러 판을 치므로). 대신 값의 모양(shape)과 상한을 강제하고,
+    // 짧은 시간 안에 연속으로 덮어쓰는 것만 막는(최소 2초 간격) 가벼운 검증만 둔다.
+    // 로그인 없는 정적 사이트 특성상 다른 리더보드와 마찬가지로 "참고용" 수준의
+    // 보호이며, 완전한 부정행위 방지는 아니다.
+    match /blackjackLeaderboard/live/entries/{deviceId} {
+      allow read: if true;
+      allow write: if request.resource.data.keys().hasOnly(['nickname', 'coins', 'updatedAt'])
+        && request.resource.data.nickname is string
+        && request.resource.data.nickname.size() >= 1
+        && request.resource.data.nickname.size() <= 20
+        && request.resource.data.coins is int
+        && request.resource.data.coins >= 0
+        && request.resource.data.coins <= 1000000
+        && request.resource.data.updatedAt == request.time
+        && (!exists(/databases/$(database)/documents/blackjackLeaderboard/live/entries/$(deviceId))
+            || request.time > resource.data.updatedAt + duration.value(2, 's'));
+      allow delete: if isAdmin();
+    }
+
+    // 계정별 포인트·카드 수집 데이터 (sync.js). 익명/구글 로그인 본인만 쓴다.
+    // 읽기는 본인과 관리자 (로그 페이지에서 계정별 포인트 내역을 본다).
+    // 값은 localStorage 문자열 그대로라 내용까지 검증하지는 못하고 모양과 크기만 본다.
+    match /users/{uid} {
+      allow read: if (request.auth != null && request.auth.uid == uid) || isAdmin();
+      allow write: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['data', 'rev', 'updatedAt'])
+        && request.resource.data.rev is int
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.data is map
+        && request.resource.data.data.keys().hasOnly(['fs-points-v1', 'packs-collection-v1', 'bjProfit'])
+        && (!('fs-points-v1' in request.resource.data.data) || (request.resource.data.data['fs-points-v1'] is string && request.resource.data.data['fs-points-v1'].size() < 400000))
+        && (!('packs-collection-v1' in request.resource.data.data) || (request.resource.data.data['packs-collection-v1'] is string && request.resource.data.data['packs-collection-v1'].size() < 100000))
+        && (!('bjProfit' in request.resource.data.data) || (request.resource.data.data['bjProfit'] is string && request.resource.data.data['bjProfit'].size() < 20));
+    }
+
+    // 로그 페이지 관리자 (구글 로그인 이메일)
+    function isAdmin() {
+      return request.auth != null && request.auth.token.email_verified == true
+        && request.auth.token.email in ['bm011011@gmail.com'];
+    }
+
+    // 구글 계정 이메일: 관리자만 읽는다. 쓰기는 본인만.
+    match /accountEmails/{uid} {
+      allow read: if isAdmin();
+      allow write: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['email', 'name'])
+        && request.resource.data.email is string && request.resource.data.email.size() <= 200
+        && request.resource.data.name is string && request.resource.data.name.size() <= 60;
+    }
+
+    // 관리자 포인트 지급. 받는 계정이 접속하면 claimed를 true로 바꾸며 한 번만 받는다.
+    match /grants/{grantId} {
+      allow create: if isAdmin()
+        && request.resource.data.keys().hasOnly(['uid', 'amount', 'note', 'claimed', 'by', 'createdAt'])
+        && request.resource.data.uid is string
+        && request.resource.data.amount is int && request.resource.data.amount > 0 && request.resource.data.amount <= 1000000
+        && request.resource.data.note is string && request.resource.data.note.size() <= 60
+        && request.resource.data.claimed == false
+        && request.resource.data.createdAt == request.time;
+      allow read: if isAdmin() || (request.auth != null && resource.data.uid == request.auth.uid);
+      allow update: if request.auth != null && resource.data.uid == request.auth.uid
+        && resource.data.claimed == false && request.resource.data.claimed == true
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['claimed', 'claimedAt']);
+      allow delete: if isAdmin();
+    }
+
+    // 계정 요약: 로그 페이지가 읽는다. 쓰기는 본인만.
+    match /accountStats/{uid} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['linked', 'bal', 'earned', 'spent', 'packs', 'cards', 'lastSeen'])
+        && request.resource.data.linked is bool
+        && request.resource.data.bal is int && request.resource.data.earned is int && request.resource.data.spent is int
+        && request.resource.data.packs is int && request.resource.data.cards is int
+        && request.resource.data.lastSeen == request.time;
+    }
+
+    // 알까기 풋살 온라인 대전. 로그인이 없어서 누가 쓰는지 검증할 수 없으니 모양만 검사한다.
+    // 대기열 문서는 매칭되면 지워지고, 경기 문서는 수(화살표), 방장 결과, 이모지만 담는다.
+    match /bobbleQueue/{queueId} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly(['ts', 'joinedAt', 'clubId', 'lineup', 'state', 'match', 'role'])
+        && request.resource.data.state == 'wait'
+        && request.resource.data.ts == request.time;
+      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['state', 'match', 'role'])
+        && request.resource.data.state == 'matched';
+      allow delete: if true;
+    }
+
+    // 친구 대전 방. 문서 id가 4자리 방 코드. 방장이 alive를 갱신하고, 참가자가 matched로 바꾼다.
+    match /bobbleRooms/{code} {
+      allow read: if true;
+      allow create, update: if code.matches('^[0-9]{4}$')
+        && request.resource.data.keys().hasOnly(['host', 'alive', 'clubId', 'lineup', 'state', 'match'])
+        && request.resource.data.state in ['wait', 'matched'];
+      allow delete: if true;
+    }
+
+    // CPU전 결과: 경기가 끝날 때 한 번 남긴다 (읽기 공개, 고치기·지우기 불가)
+    match /bobbleCpuResults/{resultId} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly(['ts', 'level', 'myClub', 'cpuClub', 'my', 'cpu', 'turns', 'golden'])
+        && request.resource.data.ts == request.time
+        && request.resource.data.level in ['easy', 'normal', 'hard']
+        && request.resource.data.myClub is string && request.resource.data.myClub.size() <= 8
+        && request.resource.data.cpuClub is string && request.resource.data.cpuClub.size() <= 8
+        && request.resource.data.my is int && request.resource.data.my >= 0 && request.resource.data.my <= 60
+        && request.resource.data.cpu is int && request.resource.data.cpu >= 0 && request.resource.data.cpu <= 60
+        && request.resource.data.turns is int && request.resource.data.turns >= 12 && request.resource.data.turns <= 200
+        && request.resource.data.golden is bool;
+      allow update, delete: if false;
+    }
+
+    match /bobbleMatches/{matchId} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly(['host', 'guest', 'createdAt', 'left', 'clubs', 'lineups'])
+        && request.resource.data.createdAt == request.time;
+      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['left']);
+
+      match /turns/{seq} {
+        allow read: if true;
+        allow create, update: if request.resource.data.keys().hasOnly(['host', 'guest', 'hostItem', 'guestItem', 'hostItems', 'guestItems', 'instant', 'result']);
+      }
+
+      match /emotes/{emoteId} {
+        allow read: if true;
+        allow create: if request.resource.data.keys().hasOnly(['by', 'e', 'ts'])
+          && request.resource.data.by in ['host', 'guest']
+          && request.resource.data.e in ['👏', '😂', '😱', '🔥']
+          && request.resource.data.ts == request.time;
+      }
+    }
+
+    // 승부차기 월드컵 모드 랭킹. 순위 = 도달 단계 > 넣은 골 > 덜 먹힌 골을 score 하나로 묶어
+    // 정렬하고, score가 실제로 그 셋에서 계산된 값인지 확인한다. 기기마다 더 높은 기록만 갱신.
+    // 32강 한 경기만 해도 1분은 걸리므로 세션 최소 시간은 30초.
+    match /pkCupLeaderboard/{mode}/entries/{deviceId} {
+      allow read: if true;
+      allow write: if mode == 'allTime'
+        && request.resource.data.keys().hasOnly(['nickname', 'stage', 'gf', 'ga', 'score', 'updatedAt'])
+        && request.resource.data.nickname is string
+        && request.resource.data.nickname.size() >= 1
+        && request.resource.data.nickname.size() <= 20
+        && request.resource.data.stage is int
+        && request.resource.data.stage >= 1
+        && request.resource.data.stage <= 6
+        && request.resource.data.gf is int
+        && request.resource.data.gf >= 0
+        && request.resource.data.gf <= 999
+        && request.resource.data.ga is int
+        && request.resource.data.ga >= 0
+        && request.resource.data.ga <= 999
+        && request.resource.data.score == request.resource.data.stage * 1000000 + request.resource.data.gf * 1000 + (999 - request.resource.data.ga)
+        && request.resource.data.updatedAt is timestamp
+        && (!exists(/databases/$(database)/documents/pkCupLeaderboard/$(mode)/entries/$(deviceId))
+            || request.resource.data.score > resource.data.score)
+        && sessionConsumed('pkcup_' + deviceId, 30);
+      allow delete: if isAdmin();
+    }
+
+    // 헤딩 연습(public/heading): 60초 한 판에 배달한 공 개수(delivered)가 늘 때만 갱신.
+    // 상한(200)은 실제 플레이로는 닿기 어려운 여유치 - 한 판에 던지는 공이 70개 안팎이라
+    // 전부 받아도 200을 넘을 수 없다. 한 판이 60초(+카운트다운 3초)라 세션 최소 시간은 45초.
+    match /headingLeaderboard/{mode}/entries/{deviceId} {
+      allow read: if true;
+      allow write: if mode == 'allTime'
+        && request.resource.data.keys().hasOnly(['nickname', 'delivered', 'updatedAt'])
+        && request.resource.data.nickname is string
+        && request.resource.data.nickname.size() >= 1
+        && request.resource.data.nickname.size() <= 20
+        && request.resource.data.delivered is int
+        && request.resource.data.delivered >= 0
+        && request.resource.data.delivered <= 200
+        && request.resource.data.updatedAt is timestamp
+        && (!exists(/databases/$(database)/documents/headingLeaderboard/$(mode)/entries/$(deviceId))
+            || request.resource.data.delivered > resource.data.delivered)
+        && sessionConsumed('heading_' + deviceId, 45);
+      allow delete: if isAdmin();
+    }
+
+    // 승부차기 온라인 대전. 알까기와 같은 구조: 대기열 → 경기 문서 → 킥마다 양쪽 입력.
+    match /pkQueue/{queueId} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly(['ts', 'joinedAt', 'state', 'match', 'role'])
+        && request.resource.data.state == 'wait'
+        && request.resource.data.ts == request.time;
+      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['state', 'match', 'role'])
+        && request.resource.data.state == 'matched';
+      allow delete: if true;
+    }
+
+    match /pkRooms/{code} {
+      allow read: if true;
+      allow create, update: if code.matches('^[0-9]{4}$')
+        && request.resource.data.keys().hasOnly(['host', 'alive', 'state', 'match'])
+        && request.resource.data.state in ['wait', 'matched'];
+      allow delete: if true;
+    }
+
+    match /pkMatches/{matchId} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly(['host', 'guest', 'createdAt', 'left'])
+        && request.resource.data.createdAt == request.time;
+      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['left']);
+
+      // 킥 입력: 키커 { d, p } | { fail } / 키퍼 { x, y } | { stay }
+      match /kicks/{seq} {
+        allow read: if true;
+        allow create, update: if request.resource.data.keys().hasOnly(['host', 'guest']);
+      }
+    }
+  }
+}

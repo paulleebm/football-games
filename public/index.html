@@ -1,0 +1,3671 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>축구 게임</title>
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="512x512" href="football-icon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #fff6ec; --panel: #ffffff; --panel2: #fff0dc; --border: #ffd9a8;
+    --text: #4a3b31; --muted: #b08968; --accent: #ff8fab; --accent2: #35c4a1;
+    --danger: #ff6b6b; --warn: #ffb545;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: -apple-system, "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden;
+    -webkit-user-select: none; user-select: none;
+  }
+  input, textarea, [contenteditable="true"] { -webkit-user-select: text; user-select: text; }
+  .wrap { width: 100%; max-width: 720px; margin: 0 auto; padding: 20px 16px 60px; overflow-x: clip; }
+  h1 { font-family: 'Jua', sans-serif; font-size: 26px; margin: 8px 0 4px; color: #ff6f91; }
+  .sub { color: var(--muted); font-size: 14px; margin-bottom: 20px; }
+
+  .home-screen {
+    min-height: 80vh; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; text-align: center;
+  }
+  .home-screen .modes { width: 100%; }
+  /* 포인트/카드팩 버튼의 화면 모서리 여백: 폰·작은 창(폭 640px 또는 높이 620px 이하)에선 모서리에
+     거의 붙고, 화면이 넓고 높을수록 조금씩 벌어져 큰 화면에선 최대 28px/22px까지 띄운다.
+     세로 여백은 폭도 같이 봐서, 세로로 긴 폰에서도 위쪽에 붙어 있게 한다 */
+  :root {
+    --hud-x: clamp(4px, calc((100vw - 640px) / 10 + 4px), 28px);
+    --hud-y: max(env(safe-area-inset-top), clamp(3px, min(calc((100vw - 640px) / 10 + 3px), calc((100vh - 620px) / 10 + 3px)), 22px));
+  }
+  .pts-pill {
+    /* 제목 줄 높이 안에 들어가게: 아래 게임 버튼과 겹치지 않고, 스크롤하면 같이 올라간다 */
+    position: absolute; top: var(--hud-y); right: var(--hud-x); z-index: 15; display: flex; align-items: center; gap: 5px;
+    padding: 3px 10px 3px 4px; border-radius: 999px; border: 2.5px solid var(--border); background: var(--panel);
+    box-shadow: 0 2px 0 var(--border); font-family: 'Jua', sans-serif; font-size: 15px; color: var(--text); cursor: pointer;
+  }
+  .pts-pill.bump { animation: ptsBump .5s .2s; }
+  @keyframes ptsBump { 40% { transform: scale(1.15); } }
+  .pts-gain {
+    position: absolute; right: 10px; top: 100%; font-family: 'Jua', sans-serif; font-size: 18px; color: #22a55b;
+    pointer-events: none; animation: ptsGain 1.6s ease-out forwards;
+  }
+  @keyframes ptsGain { 0% { opacity: 0; transform: translateY(-6px); } 15% { opacity: 1; transform: translateY(4px); } 70% { opacity: 1; } 100% { opacity: 0; transform: translateY(14px); } }
+  .pts-pill:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--border); }
+  .pts-ico {
+    width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; color: #fff;
+    background: linear-gradient(180deg, #ffcf3a, #f0a020); box-shadow: inset 0 -2px 0 rgba(0,0,0,.15);
+  }
+  .pts-card {
+    background: var(--panel); border-radius: 24px; width: 100%; max-width: 420px; max-height: min(640px, 86vh);
+    display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+  }
+  .pts-head { display: flex; align-items: center; gap: 10px; padding: 18px 18px 14px; border-bottom: 2px solid var(--panel2); }
+  .pts-head h2 { font-family: 'Jua', sans-serif; color: #ff6f91; margin: 0; font-size: 21px; flex: 1; text-align: left; }
+  .pts-head .pts-bal { font-family: 'Jua', sans-serif; font-size: 20px; display: flex; align-items: center; gap: 6px; }
+  .pts-head .pts-x {
+    width: 32px; height: 32px; border-radius: 50%; border: none; background: var(--panel2); color: var(--muted);
+    font-size: 18px; cursor: pointer; flex: none;
+  }
+  .pts-acct { display: flex; align-items: center; gap: 8px; padding: 10px 18px; border-bottom: 2px solid var(--panel2); font-size: 13px; color: var(--muted); }
+  .pts-acct:empty { display: none; }
+  .pts-acct .pts-mail { flex: 1; min-width: 0; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 700; }
+  .pts-acct button {
+    display: flex; align-items: center; justify-content: center; gap: 8px; border: 2px solid var(--border); background: #fff;
+    border-radius: 999px; padding: 7px 14px; font: 700 13px inherit; font-family: inherit; color: var(--text); cursor: pointer;
+  }
+  .pts-acct button.wide { flex: 1; padding: 9px 14px; }
+  .pts-acct button:disabled { opacity: .5; }
+  .pts-acct svg { width: 16px; height: 16px; flex: none; }
+  .pts-list { overflow-y: auto; padding: 4px 18px 14px; -webkit-overflow-scrolling: touch; }
+  .pts-row { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--panel2); text-align: left; }
+  .pts-row:last-child { border-bottom: none; }
+  .pts-row .pts-info { flex: 1; min-width: 0; }
+  .pts-row .pts-game { font-weight: 800; font-size: 14px; }
+  .pts-row .pts-detail { font-size: 12.5px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pts-row .pts-amt { text-align: right; flex: none; }
+  .pts-row .pts-amt b { display: block; font-family: 'Jua', sans-serif; font-size: 18px; color: #22a55b; }
+  .pts-row .pts-amt b.minus { color: #e5484d; }
+  .pts-row .pts-amt small { font-size: 11.5px; color: var(--muted); }
+  .pts-day { font-size: 12px; font-weight: 800; color: var(--muted); padding: 14px 0 2px; text-align: left; }
+  .pts-empty { padding: 40px 0; color: var(--muted); font-size: 14px; }
+  /* #app 위아래 여백(20 + 60px)을 뺀 화면 높이를 꽉 채워야 가운데 정렬이 화면 가운데쯤에 온다 (85vh면 위로 쏠림). CAPTCHA 화면과 같은 값 */
+  .game-screen { position: relative; min-width: 0; min-height: calc(100dvh - 80px); display: flex; flex-direction: column; justify-content: center; }
+  .source-badge {
+    position: absolute; top: 0; right: 0; width: 18px; height: 18px; border-radius: 50%;
+    background: var(--panel2); border: 1px solid var(--border); color: var(--muted);
+    font-size: 11px; font-weight: 700; line-height: 1; padding: 0; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .source-badge:hover { border-color: var(--accent); color: var(--accent); }
+  .modes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 16px; max-width: 420px; margin-left: auto; margin-right: auto; }
+  .mode-card {
+    position: relative; background: var(--panel); border: 3px solid var(--border); border-radius: 24px;
+    padding: 18px 14px; cursor: pointer; text-align: center; color: var(--text);
+    box-shadow: 0 4px 0 var(--border); transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .mode-card:hover { transform: translateY(-2px); border-color: var(--accent); box-shadow: 0 6px 0 var(--accent); }
+  .mode-card:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--border); }
+  .mode-card .emoji { font-size: 32px; margin-bottom: 4px; }
+  .mode-card b { font-family: 'Jua', sans-serif; font-size: 17px; display: block; margin-bottom: 4px; color: #ff6f91; }
+  .mode-card span { color: var(--muted); font-size: 12px; }
+  .mode-card.game4 { border-color: var(--accent2); box-shadow: 0 4px 0 var(--accent2); }
+  .mode-card.game4:hover { border-color: var(--accent2); box-shadow: 0 6px 0 var(--accent2); }
+  .mode-card.game4 b { color: #1f9d7c; }
+  .mode-card.game6 { border-color: var(--warn); box-shadow: 0 4px 0 var(--warn); }
+  .mode-card.game6:hover { border-color: var(--warn); box-shadow: 0 6px 0 var(--warn); }
+  .mode-card.game6 b { color: #c47f00; }
+  .mode-card.game7 { border-color: #6c8cff; box-shadow: 0 4px 0 #6c8cff; display: block; text-decoration: none; }
+  .mode-card.game7:hover { border-color: #6c8cff; box-shadow: 0 6px 0 #6c8cff; }
+  .mode-card.game7 b { color: #3f5fd9; }
+  .mode-card.game8 { border-color: #8b5cf6; box-shadow: 0 4px 0 #8b5cf6; }
+  .mode-card.game8:hover { border-color: #8b5cf6; box-shadow: 0 6px 0 #8b5cf6; }
+  .mode-card.game8 b { color: #6d28d9; }
+  .mode-card.captcha-mode { border-color: #22a6b3; box-shadow: 0 4px 0 #22a6b3; }
+  .mode-card.captcha-mode:hover { border-color: #22a6b3; box-shadow: 0 6px 0 #22a6b3; }
+  .mode-card.captcha-mode b { color: #167783; }
+  .mode-card.connect-mode { border-color: #ff7b72; box-shadow: 0 4px 0 #ff7b72; display: block; text-decoration: none; }
+  .mode-card.connect-mode:hover { border-color: #ff7b72; box-shadow: 0 6px 0 #ff7b72; }
+  .mode-card.connect-mode b { color: #d94f47; }
+  .mode-card.blackjack-mode { border-color: #caa23c; box-shadow: 0 4px 0 #caa23c; display: block; text-decoration: none; }
+  .mode-card.blackjack-mode:hover { border-color: #caa23c; box-shadow: 0 6px 0 #caa23c; }
+  .mode-card.blackjack-mode b { color: #9c7a1f; }
+  .mode-card.scramble-mode { border-color: #4f7cf0; box-shadow: 0 4px 0 #4f7cf0; display: block; text-decoration: none; }
+  .mode-card.scramble-mode:hover { border-color: #4f7cf0; box-shadow: 0 6px 0 #4f7cf0; }
+  .mode-card.scramble-mode b { color: #2f57c4; }
+  .mode-card.bobble-mode { border-color: #2dbb78; box-shadow: 0 4px 0 #2dbb78; display: block; text-decoration: none; }
+  .mode-card.bobble-mode:hover { border-color: #2dbb78; box-shadow: 0 6px 0 #2dbb78; }
+  .mode-card.bobble-mode b { color: #1d8a56; }
+  .mode-card.penalty-mode { border-color: #ff4fa3; box-shadow: 0 4px 0 #ff4fa3; text-decoration: none; }
+  .mode-card.penalty-mode:hover { border-color: #ff4fa3; box-shadow: 0 6px 0 #ff4fa3; }
+  .mode-card.penalty-mode b { color: #d1006a; }
+  .pack-btn {
+    /* 포인트 바로 아래 오른쪽 끝: 가운데 제목과 첫 게임 버튼 사이 빈칸이라 모바일에서도 안 겹친다 */
+    position: absolute; top: calc(var(--hud-y) + 40px); right: var(--hud-x); z-index: 15;
+    width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center;
+    border: 2.5px solid #8b5cf6; background: var(--panel); box-shadow: 0 2px 0 #8b5cf6;
+  }
+  .pack-btn:active { transform: translateY(2px); box-shadow: 0 0 0 #8b5cf6; }
+  .pack-btn svg { width: 16px; height: 22px; filter: drop-shadow(0 1px 1px rgba(80, 40, 160, .35)); }
+  /* 폰은 화면이 낮으면 게임 버튼이 포인트 바로 밑까지 올라오므로, 제목 줄 왼쪽 빈칸에 포인트와 마주 보게 둔다 */
+  @media (max-width: 640px) {
+    .pack-btn { top: var(--hud-y); left: var(--hud-x); right: auto; width: 34px; height: 34px; }
+  }
+  .mode-card.jelly-mode { border-color: #e0a91f; box-shadow: 0 4px 0 #e0a91f; display: block; text-decoration: none; }
+  .mode-card.jelly-mode:hover { border-color: #e0a91f; box-shadow: 0 6px 0 #e0a91f; }
+  .mode-card.jelly-mode b { color: #b07e0b; }
+  .mode-card.heading-mode { border-color: #ff8a1f; box-shadow: 0 4px 0 #ff8a1f; display: block; text-decoration: none; }
+  .mode-card.heading-mode:hover { border-color: #ff8a1f; box-shadow: 0 6px 0 #ff8a1f; }
+  .mode-card.heading-mode b { color: #d66a00; }
+  .mode-card.gogun-mode { border-color: #d0102a; box-shadow: 0 4px 0 #d0102a; display: block; text-decoration: none; }
+  .mode-card.gogun-mode:hover { border-color: #d0102a; box-shadow: 0 6px 0 #d0102a; }
+  .mode-card.gogun-mode b { color: #b00d24; }
+  /* 다른 사이트로 이동하는 카드라는 걸 보여주는 작은 배지 */
+  .external-badge {
+    position: absolute; top: 10px; right: 12px; width: 20px; height: 20px;
+    border-radius: 999px; background: var(--panel2); border: 1px solid var(--border);
+    color: var(--muted); font-size: 12px; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .rec-desc-card {
+    background: var(--panel); border: 3px solid var(--border); border-radius: 20px;
+    padding: 28px 20px; margin-bottom: 20px; text-align: center;
+    font-size: 17px; line-height: 1.55; font-weight: 700; color: var(--text);
+  }
+  .rec-explain-card {
+    background: var(--panel2); border: 2px solid var(--border); border-radius: 16px;
+    padding: 16px 18px; margin-bottom: 12px; text-align: left;
+    font-size: 14px; line-height: 1.6; color: var(--text);
+  }
+  .rec-source-link {
+    display: block; text-align: center; margin-bottom: 18px;
+    font-size: 13px; color: var(--accent2); text-decoration: underline;
+  }
+
+  /* "선수 맞히기" 카드가 클래식/챌린지로 쪼개지는 상태 + 나머지 카드 비활성 느낌 */
+  .mode-card.expanded { padding: 8px; cursor: default; display: flex; flex-direction: column; gap: 8px; }
+  .mode-card.expanded:hover { transform: none; box-shadow: 0 4px 0 var(--border); border-color: var(--border); }
+  .split-btn {
+    flex: 1; border-radius: 16px; border: 3px solid var(--border); cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: var(--panel2); transition: transform 0.12s, box-shadow 0.12s;
+  }
+  .split-btn .emoji { font-size: 20px; }
+  .split-btn b { font-family: 'Jua', sans-serif; font-size: 13px; color: var(--text); }
+  .split-btn:hover { transform: translateY(-1px); }
+  .split-btn.split-classic { border-color: var(--accent); }
+  .split-btn.split-classic b { color: #ff6f91; }
+  .split-btn.split-new { border-color: #7a5cff; }
+  .split-btn.split-new b { color: #5b32e0; }
+  a.split-btn { text-decoration: none; }
+  .split-btn.split-jelly-soft { border-color: #ff7aa8; }
+  .split-btn.split-jelly-soft b { color: #e0457a; }
+  .split-btn.split-jelly-hard { border-color: #e0a91f; }
+  .split-btn.split-jelly-hard b { color: #b07e0b; }
+  .split-btn.split-pk-cpu { border-color: #e0a91f; }
+  .split-btn.split-pk-cpu b { color: #b07e0b; }
+  .split-btn.split-pk-online { border-color: #ff4fa3; }
+  .split-btn.split-pk-online b { color: #d1006a; }
+  .mode-card.dimmed {
+    /* 모달 배경처럼 - 카드 자체는 아무 반응 없는 그냥 배경일 뿐이라 커서도 그대로,
+       클릭은 document 레벨의 "바깥 클릭하면 접힘" 리스너가 처리한다 */
+    filter: grayscale(0.7); opacity: 0.32; cursor: default; pointer-events: none;
+    transition: opacity 0.25s ease, filter 0.25s ease;
+  }
+
+  .sil-img-wrap { display: flex; justify-content: center; margin-bottom: 16px; }
+  .sil-img-wrap img {
+    width: 220px; height: 220px; object-fit: contain; background: #ffffff;
+    border: 3px solid var(--border); border-radius: 24px; box-shadow: 0 4px 0 var(--border);
+  }
+  /* 게임4 화면 내부 요소 사이 여백을 조금 더 준다 (다른 게임 레이아웃엔 영향 없게 scope) */
+  .sil-game .topbar { margin-bottom: 18px; }
+  .sil-game .criterion-banner { margin-bottom: 20px; }
+  .sil-game .sil-img-wrap { margin-bottom: 20px; }
+  .sil-game .guess-wrap { margin-bottom: 14px; }
+  .sil-game .wrong-msg { margin-bottom: 10px; }
+  .sil-game .giveup-btn { margin-top: 22px; }
+  .sil-reveal-row { display: flex; justify-content: center; gap: 14px; margin: 6px 0 18px; }
+  .sil-reveal-col { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .sil-reveal-label { font-size: 12px; color: var(--muted); font-weight: 700; }
+  .sil-reveal-col img {
+    width: 150px; height: 150px; object-fit: contain; background: #ffffff;
+    border: 3px solid var(--border); border-radius: 20px; box-shadow: 0 4px 0 var(--border);
+  }
+  .sil-next-btn {
+    display: block; width: 100%; padding: 14px; border-radius: 999px; border: none;
+    background: #a78bfa; color: white; font-family: 'Jua', sans-serif; font-size: 16px; cursor: pointer;
+  }
+
+  .criterion-banner {
+    background: var(--panel2); border: 2px dashed var(--border); border-radius: 16px;
+    padding: 12px 14px; font-size: 13px; color: var(--muted); text-align: center; margin-bottom: 16px; line-height: 1.5;
+  }
+  .streak-row { display: flex; justify-content: center; gap: 8px; margin-bottom: 18px; }
+  .streak-dot {
+    width: 34px; height: 34px; border-radius: 50%; border: 3px solid var(--border);
+    display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 800;
+    background: var(--panel); color: var(--border); transition: all 0.25s;
+  }
+  .streak-dot.on { background: var(--accent2); border-color: var(--accent2); color: white; transform: scale(1.08); }
+  .history-list { display: flex; flex-direction: column; gap: 8px; margin-top: 22px; }
+  .history-item {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    background: var(--panel); border: 2px solid var(--border); border-radius: 14px; padding: 10px 14px;
+    animation: pop 0.25s ease;
+  }
+  @keyframes pop { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .history-item .name { font-weight: 700; font-size: 14px; }
+  .history-item.latest { border-color: var(--accent2); }
+  .result-badge {
+    width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-family: 'Jua', sans-serif; font-size: 15px; color: white; flex-shrink: 0;
+  }
+  .result-badge.o { background: var(--accent2); }
+  .result-badge.x { background: var(--danger); }
+  .empty-hint { text-align: center; color: var(--muted); font-size: 13px; margin-top: 30px; line-height: 1.6; }
+  .giveup-btn { display: block; margin: 18px auto 0; background: none; border: none; color: var(--muted); font-size: 12px; text-decoration: underline; cursor: pointer; }
+
+  .overlay {
+    position: fixed; inset: 0; background: rgba(74,59,49,0.45); display: flex;
+    align-items: center; justify-content: center; padding: 20px; z-index: 20;
+  }
+  .win-card {
+    background: var(--panel); border-radius: 24px; padding: 28px 24px; max-width: 360px; width: 100%;
+    text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+  }
+  .win-card .trophy { font-size: 44px; margin-bottom: 6px; }
+  .win-card h2 { font-family: 'Jua', sans-serif; color: #ff6f91; margin: 0 0 6px; font-size: 22px; }
+  .win-card .result-line { font-size: 14px; color: var(--muted); margin-bottom: 10px; }
+  .win-card .result-line b { color: var(--accent2); font-size: 20px; font-family: 'Jua', sans-serif; }
+  .win-card .criterion-reveal {
+    background: var(--panel2); border-radius: 14px; padding: 10px 14px; font-size: 13px;
+    margin-bottom: 16px; color: var(--text); font-weight: 700;
+  }
+  .win-card .close-btn {
+    width: 100%; padding: 12px; border-radius: 999px; border: none; background: var(--accent2);
+    color: white; font-family: 'Jua', sans-serif; font-size: 15px; cursor: pointer;
+  }
+
+  /* 카드 안에 다 못 들어가는 힌트 값(우승 트로피/개인 수상 등)을 "...더보기"로
+     자르고, 누르면 이 작은 모달로 전체 텍스트를 보여준다 */
+  .hint-modal-card {
+    background: var(--panel); border-radius: 20px; padding: 22px 20px; max-width: 300px; width: 100%;
+    text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+  }
+  .hint-modal-card .hint-modal-label { font-size: 13px; color: var(--muted); font-weight: 700; margin-bottom: 8px; }
+  .hint-modal-card .hint-modal-val { font-size: 16px; font-weight: 800; color: var(--text); line-height: 1.5; word-break: keep-all; margin-bottom: 18px; }
+  .hint-modal-card .close-btn {
+    width: 100%; padding: 10px; border-radius: 999px; border: none; background: var(--accent2);
+    color: white; font-family: 'Jua', sans-serif; font-size: 14px; cursor: pointer;
+  }
+
+  .topbar { display: flex; justify-content: space-between; align-items: center; gap: 8px; min-width: 0; margin-bottom: 14px; }
+  .backbtn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 14px; padding: 6px 0; font-weight: 600; }
+  .score-pill {
+    background: var(--panel2); border: 2px solid var(--border); border-radius: 999px;
+    min-width: 0; max-width: 100%; padding: 7px 16px; font-size: 13px; color: var(--muted); font-weight: 600; text-align: center;
+  }
+  .score-pill b { color: var(--accent); font-family: 'Jua', sans-serif; font-size: 15px; }
+
+  .cat-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 18px; }
+  .cat-card { perspective: 800px; min-height: 76px; }
+  .cat-card-inner {
+    position: relative; width: 100%; height: 100%; min-height: 76px;
+    transform-style: preserve-3d; transition: transform 0.55s cubic-bezier(.34,1.4,.64,1);
+    cursor: pointer;
+  }
+  .cat-card.flipped .cat-card-inner { transform: rotateY(180deg); cursor: default; }
+  .cat-card.empty .cat-card-inner { cursor: not-allowed; }
+  .cat-card.empty .cat-front { opacity: 0.45; }
+  .cat-face {
+    position: absolute; inset: 0; backface-visibility: hidden;
+    border-radius: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 8px 4px; text-align: center;
+  }
+  .cat-front { background: var(--panel); border: 3px solid var(--border); color: var(--text); }
+  .cat-card:not(.empty):not(.flipped):hover .cat-front { border-color: var(--accent); }
+  .cat-front .cat-label { font-size: 14px; font-weight: 700; margin-bottom: 4px; word-break: keep-all; }
+  .cat-front .cat-q { font-family: 'Jua', sans-serif; font-size: 23px; color: var(--border); }
+  .cat-back {
+    background: var(--accent); color: white; border: 3px solid var(--accent);
+    transform: rotateY(180deg);
+  }
+  .cat-back .cat-label { font-size: 13px; opacity: 0.85; margin-bottom: 4px; word-break: keep-all; }
+  .cat-back .cat-val {
+    font-weight: 800; font-size: 15px; word-break: keep-all;
+    max-height: 3.3em; line-height: 1.1em; overflow: hidden;
+  }
+  .cat-back .cat-val.has-more { cursor: pointer; }
+  .cat-more-btn { text-decoration: underline; text-underline-offset: 2px; }
+
+  /* 게임5(챌린지): 카테고리 20개 - 모바일은 4x5, 데스크탑(640px~)은 5x4.
+     소진된(잠긴) 카테고리는 붉은 톤으로 구분 */
+  .challenge-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+  .challenge-grid .cat-card { min-height: 68px; }
+  .challenge-grid .cat-card-inner { min-height: 68px; }
+  .challenge-grid .cat-front .cat-label { font-size: 12px; margin-bottom: 2px; }
+  .challenge-grid .cat-front .cat-q { font-size: 17px; }
+  .challenge-grid .cat-back .cat-label { font-size: 11px; }
+  .challenge-grid .cat-back .cat-val { font-size: 13px; max-height: 2.3em; line-height: 1.1em; }
+  @media (min-width: 640px) {
+    .challenge-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  }
+  .cat-card.locked .cat-front { background: #fbe7e7; border-color: #f0c6c6; opacity: 0.7; }
+  .cat-card.locked .cat-front .cat-q { color: var(--danger); }
+
+  .guess-wrap { position: relative; margin-bottom: 8px; }
+  .guess-wrap input {
+    width: 100%; padding: 14px 20px; border-radius: 999px; border: 3px solid var(--border);
+    background: var(--panel); color: var(--text); font-size: 16px; font-family: 'Jua', sans-serif;
+  }
+  .guess-wrap input::placeholder { font-family: 'Jua', sans-serif; }
+  .guess-wrap input:focus { outline: none; border-color: var(--accent); }
+  .guess-wrap.shake { animation: shake 0.45s; }
+  @keyframes shake {
+    10%, 90% { transform: translateX(-2px); }
+    20%, 80% { transform: translateX(4px); }
+    30%, 50%, 70% { transform: translateX(-7px); }
+    40%, 60% { transform: translateX(7px); }
+  }
+  .suggest-list {
+    position: absolute; top: calc(100% + 8px); left: 0; right: 0; z-index: 10;
+    background: var(--panel); border: 3px solid var(--border); border-radius: 18px;
+    max-height: 260px; overflow-y: auto; box-shadow: 0 10px 24px rgba(74,59,49,0.18);
+  }
+  .suggest-item { padding: 10px 18px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .suggest-item:hover { background: var(--panel2); }
+  .suggest-item .en { color: var(--muted); font-size: 12px; white-space: nowrap; }
+  .suggest-empty { padding: 12px 18px; color: var(--muted); font-size: 13px; }
+  .wrong-msg { color: var(--danger); font-size: 14px; min-height: 18px; margin-bottom: 8px; font-weight: 700; }
+
+  .result-card {
+    background: var(--panel); border: 3px solid var(--border); border-radius: 26px;
+    padding: 24px; text-align: center; margin-bottom: 16px; box-shadow: 0 4px 0 var(--border);
+  }
+  .result-card img { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; margin-bottom: 10px; background: var(--panel2); border: 3px solid var(--border); }
+  .result-card .name { font-family: 'Jua', sans-serif; font-size: 22px; margin-bottom: 4px; color: #ff6f91; }
+  .result-card .grade { font-family: 'Jua', sans-serif; font-size: 40px; font-weight: 400; color: var(--accent2); margin: 10px 0; }
+  .result-card .grade small { display: block; font-size: 13px; color: var(--muted); font-family: -apple-system, sans-serif; font-weight: 400; margin-top: 4px; }
+
+  .btn-row { display: flex; gap: 10px; }
+  .btn-row button {
+    flex: 1; padding: 13px; border-radius: 999px; border: 3px solid var(--border);
+    background: var(--panel2); color: var(--text); font-size: 14px; cursor: pointer; font-weight: 700;
+  }
+  .btn-row button.primary { background: var(--accent); border-color: var(--accent); color: white; }
+
+  .nick-row { display: flex; gap: 8px; margin: 14px 0; }
+  .nick-row input {
+    flex: 1; min-width: 0; padding: 10px 16px; border-radius: 999px; border: 3px solid var(--border);
+    background: var(--panel2); color: var(--text); font-size: 16px; font-family: 'Jua', sans-serif;
+  }
+  .nick-row button { padding: 0 18px; border-radius: 999px; border: none; background: var(--accent2); color: white; font-weight: 700; cursor: pointer; }
+
+  table.lb { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 13px; margin-top: 8px; }
+  table.lb th, table.lb td { padding: 7px 10px; text-align: left; border-bottom: 2px solid var(--panel2); color: var(--muted); }
+  table.lb td:first-child, table.lb th:first-child { width: 28px; color: var(--text); }
+  table.lb tr.me td { color: var(--accent2); font-weight: 700; }
+
+  .streak-list { display: flex; flex-direction: column; gap: 6px; margin: 10px 0; font-size: 13px; }
+  .streak-list div { display: flex; justify-content: space-between; color: var(--muted); }
+  .loading { text-align: center; color: var(--muted); padding: 60px 0; }
+
+  /* 게임8: 빅6 야찌 - 좌측엔 세로 비율(트레이딩 카드꼴) 5장을 가로로 배열 +
+     다시뽑기, 우측엔 폭을 좁힌 그리드형 13개 족보 점수판(족보 섹션별로 구분).
+     좁은 화면에서는 세로로 쌓는다(카드 먼저, 점수판 다음). 다른 게임들은
+     .wrap이 720px로 고정이지만, 이 게임만 카드 5장이 여유롭게 한 줄에 들어갈
+     공간이 필요해서 :has()로 이 화면일 때만 폭을 넓힌다(다른 게임엔 영향 없음).
+     PC처럼 실제로 공간이 넉넉하면 5장이 한 줄로, 그렇지 않으면 아래에서
+     3장+2장으로 강제 전환한다(컨테이너 쿼리로 hand-col의 실제 렌더 폭을 기준
+     판단 - 화면 폭이 아니라 이 칸 자체의 폭이라 2단/1단 레이아웃 전환과도 항상
+     맞아떨어진다). */
+  .wrap:has(.b6-game) { max-width: 960px; }
+  .b6-layout { display: flex; gap: 16px; align-items: center; }
+  .b6-hand-col { flex: 1 1 auto; min-width: 0; container-type: inline-size; container-name: b6hand; }
+  .b6-sheet-col { flex: 0 0 250px; }
+  /* 카드가 92px씩 5장(+간격 8px×4)이면 492px가 필요하다 - 그보다 좁으면 그냥
+     두면 "4장+1장"처럼 어중간하게 줄바꿈되므로, max-width를 정확히 3장 폭
+     (92×3+8×2=292px)으로 못박아 넷째 장부터는 무조건 다음 줄로 넘어가게
+     강제한다(항상 3장+2장). justify-content:center가 각 줄을 따로 가운데
+     정렬해서 아래 2장도 치우치지 않는다. 컨테이너(hand-col) 폭이 5장이 들어갈
+     만큼 넉넉해지면(500px~) 그 제한을 풀어 한 줄로 보여준다. */
+  .b6-hand {
+    display: grid; grid-template-columns: repeat(6, 42px); gap: 8px;
+    justify-content: center; max-width: 292px; margin: 0 auto 28px;
+  }
+  .b6-hand .b6-card { grid-column: span 2; }
+  .b6-hand .b6-card:first-child { grid-column: 2 / span 2; }
+  @container b6hand (min-width: 500px) {
+    .b6-hand { display: flex; flex-wrap: nowrap; max-width: none; }
+    .b6-hand .b6-card, .b6-hand .b6-card:first-child { grid-column: auto; }
+  }
+  .b6-card {
+    width: 92px; background: var(--panel); border: 3px solid var(--border); border-radius: 14px;
+    padding: 6px; text-align: center; cursor: pointer; position: relative;
+    box-shadow: 0 3px 0 var(--border); transition: transform 0.12s, box-shadow 0.12s, border-color 0.12s;
+  }
+  .b6-card:hover { transform: translateY(-2px); }
+  .b6-card.held { border-color: var(--accent2); box-shadow: 0 3px 0 var(--accent2); background: #eafaf5; }
+  .b6-card.empty { cursor: default; }
+  .b6-card.empty:hover { transform: none; }
+  .b6-photo-placeholder { font-family: 'Jua', sans-serif; font-size: 26px; color: var(--border); }
+  /* FotMob 선수 사진 원본이 정사각형(192x192)이라 박스도 정사각형으로 맞춰야
+     object-fit:cover로 좌우(또는 상하)가 잘리지 않는다 - 카드 폭 92px, 패딩
+     6px씩이라 실제 내용 폭은 80px = 정확히 정사각형 높이로 맞춤. */
+  .b6-photo-wrap {
+    width: 100%; height: 80px; border-radius: 10px; overflow: hidden;
+    background: #f4f0e6; display: flex; align-items: center; justify-content: center; margin-bottom: 6px;
+    position: relative;
+  }
+  .b6-photo-wrap img { width: 100%; height: 100%; object-fit: cover; }
+  /* 카드를 (다시)뽑을 때 사진을 여러 장 스핀시키면 로딩이 못 따라와 빈 프레임이
+     스치는 문제가 있었다 - 그래서 아예 사진을 보여주지 않고 "?"가 잠깐 좌우로
+     흔들리다가 바로 결과 카드로 넘어가는 방식으로 바꿨다. */
+  .b6-card.spinning { cursor: default; animation: b6-shake 0.28s ease-in-out infinite; }
+  .b6-card.spinning .b6-name, .b6-card.spinning .b6-pill-row { visibility: hidden; }
+  @keyframes b6-shake {
+    0%, 100% { transform: translateX(0) rotate(0deg); }
+    25% { transform: translateX(-5px) rotate(-3deg); }
+    75% { transform: translateX(5px) rotate(3deg); }
+  }
+  .b6-name {
+    font-size: 10.5px; font-weight: 700; line-height: 1.2; margin-bottom: 5px; word-break: keep-all;
+    min-height: 2.2em; display: flex; align-items: center; justify-content: center;
+  }
+  .b6-pill-row { display: flex; flex-direction: column; gap: 3px; align-items: center; }
+  .b6-team-pill, .b6-pos-pill {
+    display: inline-block; width: 100%; font-size: 9px; font-weight: 800; padding: 2px 4px; border-radius: 999px;
+  }
+  .b6-team-pill { color: white; background: var(--b6-team-color, var(--muted)); }
+  .b6-pos-pill { color: var(--muted); background: var(--panel2); border: 1px solid var(--border); }
+  /* z-index를 안 주면 DOM 순서상 뒤에 오는 사진(.b6-photo-wrap)이 배지 위를
+     덮어버려서 "사진보다 밑에 깔린" 것처럼 보였다 - 배지를 사진보다 위 레이어로
+     명시하고, 위치도 카드 위로 더 확실히 띄운다. 문구 대신 자물쇠 아이콘을
+     쓰는 동그란 배지로 바꿨다. */
+  .b6-hold-badge {
+    position: absolute; top: -12px; right: -8px; z-index: 2; background: var(--accent2); color: white;
+    font-size: 13px; width: 24px; height: 24px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 0 rgba(0,0,0,0.1); opacity: 0; transform: scale(0.7); transition: all 0.15s;
+  }
+  .b6-card.held .b6-hold-badge { opacity: 1; transform: scale(1); }
+  .b6-reroll-row { text-align: center; margin-bottom: 14px; }
+  .b6-reroll-row button {
+    padding: 9px 18px; border-radius: 999px;
+    border: 3px solid var(--accent); background: var(--accent);
+    color: white; font-family: 'Jua', sans-serif; font-size: 14px; cursor: pointer;
+  }
+  .b6-reroll-row button:disabled { background: var(--panel2); border-color: var(--border); color: var(--muted); cursor: not-allowed; }
+  /* 보너스 진행 상황을 섹션 제목과 같은 줄, 오른쪽에 붙여서 세로 길이를 줄인다. */
+  .b6-sheet-heading-row { display: flex; justify-content: space-between; align-items: baseline; margin: 12px 0 6px; }
+  .b6-sheet-col .b6-sheet-heading-row:first-child { margin-top: 0; }
+  .b6-sheet-heading { font-family: 'Jua', sans-serif; font-size: 12px; color: var(--muted); }
+  .b6-bonus-inline { font-size: 10.5px; font-weight: 700; color: var(--muted); }
+  .b6-bonus-inline.done { color: var(--accent2); }
+  .b6-tile-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+  .b6-tile-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+  .b6-tile {
+    border: 2px solid var(--border); border-radius: 12px; padding: 8px 4px; text-align: center;
+    background: var(--panel); cursor: pointer; transition: border-color 0.12s;
+  }
+  .b6-tile:hover { border-color: var(--accent); }
+  .b6-tile.used { cursor: default; background: var(--panel2); opacity: 0.75; }
+  .b6-tile.locked { cursor: default; }
+  .b6-tile.locked:hover { border-color: var(--border); }
+  .b6-tile.used:hover { border-color: var(--border); }
+  .b6-tile-label { font-size: 10.5px; font-weight: 700; margin-bottom: 3px; word-break: keep-all; line-height: 1.2; }
+  .b6-tile-score { font-family: 'Jua', sans-serif; font-size: 14px; color: var(--accent2); }
+  .b6-tile.used .b6-tile-score { color: var(--muted); }
+  .b6-tile.locked .b6-tile-score { color: var(--muted); }
+  /* "?" 출처 배지와 📖 설명 배지를 다른 게임처럼 화면 우상단에 절대 위치로
+     띄우는 대신, topbar 안에 인라인으로 넣는다 - 좁은 화면에서 라운드/점수
+     pill과 서로 겹치던 문제를 구조적으로 없앴다. 3열 그리드(왼쪽/오른쪽은
+     내용 크기 그대로, 가운데만 유연한 1fr)라 뒤로가기·설명 배지는 절대 밀려서
+     줄바꿈되지 않고, 가운데 pill은 자기 글자 폭만큼만 차지하며 가운데 정렬된다
+     (flex:1을 pill 자체에 걸었을 때는 pill이 억지로 늘어나거나, 반대로 글자가
+     길어지면 양옆이 눌려 줄바꿈되는 문제가 있었다). */
+  .b6-game .topbar { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 6px; }
+  .b6-game .backbtn { white-space: nowrap; }
+  .b6-icon-row { display: flex; gap: 8px; justify-self: end; }
+  .b6-icon-row .source-badge { position: static; }
+  .b6-round-pill {
+    justify-self: center; max-width: 100%; text-align: center;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  @media (min-width: 641px) {
+    .b6-round-pill { font-size: 15px; padding: 9px 18px; }
+    .b6-round-pill b { font-size: 18px; }
+  }
+  /* PC에서는 폭을 넉넉히 넓혀서 내용이 웬만하면 스크롤 없이 다 보이게 하고,
+     그래도 화면이 낮아 스크롤이 생기는 경우엔 기본 OS 스크롤바 대신 테마
+     색상에 맞춘 얇은 스크롤바를 쓴다(브라우저 기본 회색 막대가 확 튀어서). */
+  .b6-intro-card {
+    max-width: 640px; max-height: 82vh; overflow-y: auto;
+    scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+  }
+  .b6-intro-card::-webkit-scrollbar { width: 8px; }
+  .b6-intro-card::-webkit-scrollbar-track { background: transparent; }
+  .b6-intro-card::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
+  .b6-intro-card::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+  .b6-intro-title { font-family: 'Jua', sans-serif; font-size: 19px; color: #6d28d9; margin-bottom: 14px; }
+  .b6-intro-list { text-align: left; font-size: 14.5px; line-height: 1.65; color: var(--text); margin-bottom: 16px; }
+  .b6-intro-list b { color: var(--accent2); }
+  .b6-intro-sub {
+    font-family: 'Jua', sans-serif; font-size: 13.5px; color: #6d28d9; margin: 12px 0 4px;
+  }
+
+  /* CAPTCHA speedrun is deliberately isolated from the other game layouts. */
+  .wrap:has(.captcha-screen) {
+    /* 기존 720px의 약 80%. 정사각형 사진판은 창 높이도 함께 보며 줄여서
+       상하가 짧은 브라우저에서도 헤더와 확인 버튼까지 한 화면에 둔다. */
+    max-width: min(576px, calc(100dvh - 220px));
+  }
+  .captcha-screen { min-height: calc(100dvh - 80px); display: flex; flex-direction: column; justify-content: center; }
+  .captcha-topbar { display: flex; justify-content: space-between; gap: 8px; align-items: center; margin-bottom: 12px; }
+  .captcha-timer {
+    background: var(--panel2); border: 2px solid var(--border); border-radius: 999px;
+    padding: 7px 10px; font-size: 13px; font-weight: 800; text-align: center;
+  }
+  .captcha-timer { min-width: 76px; color: #167783; font-variant-numeric: tabular-nums; }
+  .captcha-box {
+    overflow: hidden; border: 1px solid #c8c8c8; border-radius: 2px; background: #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,.24); font-family: Roboto, Arial, Helvetica, sans-serif;
+  }
+  .captcha-prompt { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: start; text-align: left; margin: 0; padding: 16px 15px 15px; color: #fff; background: #4285f4; line-height: 1.2; }
+  .captcha-prompt-copy > span { display: block; font-size: 12px; font-weight: 500; }
+  .captcha-prompt-copy > strong { display: block; margin: 1px 0 2px; font-size: 25px; font-weight: 700; letter-spacing: -.02em; }
+  .captcha-prompt-copy > small { display: block; font-size: 12px; font-weight: 400; opacity: .96; }
+  .captcha-round { min-width: 46px; padding: 5px 7px; border: 1px solid rgba(255,255,255,.75); border-radius: 2px; font-size: 13px; font-weight: 700; text-align: center; font-variant-numeric: tabular-nums; }
+  .captcha-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; padding: 2px; background: #fff; }
+  .captcha-card {
+    position: relative; appearance: none; min-width: 0; padding: 0; overflow: hidden; cursor: pointer;
+    background: #eef2f4; border: 0; border-radius: 0; color: var(--text); transition: filter .1s;
+  }
+  .captcha-card:hover { filter: brightness(.97); }
+  .captcha-card:focus-visible { outline: 4px solid #ffb545; outline-offset: -4px; }
+  .captcha-card.selected::before { content: ""; position: absolute; inset: 0; z-index: 1; background: rgba(31,115,210,.5); }
+  .captcha-card.selected::after {
+    content: "✓"; position: absolute; z-index: 2; top: 7px; right: 7px; width: 31px; height: 31px;
+    display: grid; place-items: center; border-radius: 50%; background: #1f73d2; border: 3px solid #fff;
+    color: #fff; font-size: 21px; font-weight: 900; box-shadow: 0 1px 4px rgba(0,0,0,.25);
+  }
+  .captcha-card img { display: block; width: 100%; aspect-ratio: 1 / 1; object-fit: contain; background: #f4f0e6; }
+  .captcha-actions { min-height: 66px; display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-top: 1px solid #dadce0; background: #fff; }
+  .captcha-refresh { appearance: none; display: grid; place-items: center; width: 42px; height: 42px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: #5f6368; cursor: pointer; }
+  .captcha-refresh:hover { background: #f1f3f4; color: #3c4043; }
+  .captcha-refresh:active svg { transform: rotate(-35deg); }
+  .captcha-refresh:focus-visible { outline: 2px solid #4285f4; outline-offset: 1px; }
+  .captcha-refresh:disabled { cursor: default; opacity: .45; }
+  .captcha-refresh svg { width: 27px; height: 27px; fill: currentColor; transition: transform .15s ease; }
+  .captcha-submit {
+    appearance: none; width: auto; min-width: 92px; height: 42px; margin: 0 0 0 auto; padding: 0 22px;
+    border: 1px solid #1a73e8; border-radius: 2px; background: #4285f4; color: #fff;
+    font-family: Roboto, Arial, Helvetica, sans-serif; font-size: 14px; font-weight: 500; letter-spacing: .01em;
+    line-height: 40px; text-align: center; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,.2);
+  }
+  .captcha-submit:hover { background: #3367d6; border-color: #3367d6; }
+  .captcha-submit:active { background: #2a56c6; box-shadow: inset 0 1px 2px rgba(0,0,0,.22); }
+  .captcha-submit:focus-visible { outline: 2px solid #fbbc04; outline-offset: 2px; }
+  .captcha-submit:disabled { cursor: default; opacity: .72; }
+  .captcha-feedback { flex: 1; min-height: 20px; margin: 0; text-align: left; color: #d93025; font-size: 13px; font-weight: 500; }
+  .captcha-grid.is-loading { display: grid; grid-template-columns: 1fr; place-items: center; aspect-ratio: 1 / 1; padding: 0; background: #f8f9fa; }
+  .captcha-loader { display: flex; flex-direction: column; align-items: center; gap: 13px; color: #5f6368; font-size: 13px; font-weight: 500; }
+  .captcha-loader.is-error span { color: #d93025; font-size: 23px; font-weight: 700; letter-spacing: -.01em; }
+  .captcha-loader-ring {
+    width: 42px; height: 42px; border: 4px solid #dfe6ef; border-top-color: #4285f4; border-radius: 50%;
+    animation: captcha-spin .7s linear infinite;
+  }
+  @keyframes captcha-spin { to { transform: rotate(360deg); } }
+  .captcha-countdown { text-align: center; }
+  .captcha-countdown-number { font-family: 'Jua', sans-serif; font-size: 84px; color: #22a6b3; line-height: 1; }
+  .captcha-countdown-status { color: var(--muted); font-size: 14px; margin-top: 12px; }
+  .captcha-source { margin-top: 16px; color: var(--muted); font-size: 11px; text-align: center; line-height: 1.45; }
+  .captcha-error, .captcha-result { width: 100%; max-width: 520px; margin: 0 auto; text-align: center; background: var(--panel); border: 3px solid #22a6b3; border-radius: 22px; padding: 24px 18px; }
+  .captcha-result-mark { font-size: 50px; line-height: 1; margin-bottom: 6px; }
+  .captcha-result-time { font-family: 'Jua', sans-serif; color: #167783; font-size: 48px; margin: 12px 0 4px; }
+  .captcha-result-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+  .captcha-result-btn { min-height: 46px; padding: 0 18px; border: 3px solid var(--border); border-radius: 999px; background: var(--panel2); color: var(--text); font-family: 'Jua', sans-serif; font-size: 15px; cursor: pointer; }
+  .captcha-result-btn.primary { border-color: #22a6b3; background: #22a6b3; color: #fff; }
+  .captcha-result-btn:hover { transform: translateY(-1px); box-shadow: 0 3px 0 var(--border); }
+  .captcha-result-btn.primary:hover { box-shadow: 0 3px 0 #167783; }
+  @media (max-width: 420px) {
+    .captcha-grid { gap: 2px; padding: 2px; }
+    .captcha-prompt { padding: 14px 12px 13px; }
+    .captcha-prompt-copy > strong { font-size: 22px; }
+    .captcha-round { min-width: 42px; padding: 4px 6px; }
+    .captcha-actions { min-height: 62px; padding: 8px; }
+  }
+  @media (max-width: 380px) {
+    .wrap { padding-left: 12px; padding-right: 12px; }
+    .topbar { align-items: flex-start; }
+    .score-pill { padding: 6px 10px; font-size: 11px; line-height: 1.35; }
+    .mode-card { padding-left: 8px; padding-right: 8px; }
+    .mode-card span { font-size: 11px; }
+    .sil-reveal-row { gap: 8px; }
+    .sil-reveal-col { min-width: 0; }
+    .sil-reveal-col img { width: min(41vw, 145px); height: min(41vw, 145px); }
+    .nick-row { flex-direction: column; }
+    .nick-row button { min-height: 44px; }
+    .btn-row { flex-wrap: wrap; }
+    .btn-row button { min-width: 130px; }
+    .captcha-result-actions { grid-template-columns: 1fr; }
+  }
+
+  /* PC에서는 CAPTCHA를 제외한 모든 게임이 브라우저 폭을 적극적으로 사용한다.
+     모바일은 기존 밀도를 유지하고, 900px부터 카드·사진·결과판이 함께 커진다. */
+  @media (min-width: 900px) {
+    .wrap:not(:has(.captcha-screen)) { max-width: 1180px; padding: 28px clamp(28px, 4vw, 56px) 72px; }
+    .wrap:has(.captcha-screen) { max-width: min(576px, calc(100dvh - 220px)); }
+    h1 { font-size: clamp(30px, 2.5vw, 38px); }
+    .sub { font-size: 16px; }
+    .home-screen { min-height: calc(100vh - 100px); }
+    .home-screen .modes { max-width: 940px; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(18px, 2vw, 26px); }
+    .mode-card { min-height: 176px; padding: 28px 20px; display: flex; flex-direction: column; justify-content: center; }
+    .mode-card .emoji { font-size: 42px; margin-bottom: 8px; }
+    .mode-card b { font-size: 21px; }
+    .mode-card span { font-size: 14px; line-height: 1.45; }
+    .mode-card.expanded { padding: 12px; }
+    .split-btn .emoji { font-size: 28px; }
+    .split-btn b { font-size: 16px; }
+
+    .game-screen { min-height: calc(100vh - 100px); width: 100%; }
+    .game-screen:not(.b6-game) { max-width: 720px; margin-left: auto; margin-right: auto; }
+    .game-screen .topbar { margin-bottom: 22px; }
+    .backbtn { font-size: 16px; }
+    .score-pill { padding: 10px 22px; font-size: 15px; }
+    .score-pill b { font-size: 18px; }
+    .criterion-banner { padding: 16px 20px; font-size: 15px; margin-bottom: 22px; }
+
+    .cat-grid { gap: 14px; margin-bottom: 24px; }
+    .cat-card, .cat-card-inner { min-height: clamp(80px, 10vh, 126px); }
+    .cat-face { border-radius: 22px; padding: 12px 10px; }
+    .cat-front .cat-label { font-size: clamp(16px, 1.4vw, 19px); }
+    .cat-front .cat-q { font-size: 31px; }
+    .cat-back .cat-label { font-size: 15px; }
+    .cat-back .cat-val { font-size: clamp(16px, 1.3vw, 19px); }
+    .challenge-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+    .challenge-grid .cat-card, .challenge-grid .cat-card-inner { min-height: clamp(66px, 9vh, 108px); }
+    .challenge-grid .cat-front .cat-label { font-size: 14px; }
+    .challenge-grid .cat-front .cat-q { font-size: 22px; }
+    .challenge-grid .cat-back .cat-val { font-size: 14px; }
+
+    .guess-wrap, .wrong-msg, .giveup-btn { width: 100%; margin-left: auto; margin-right: auto; }
+    .guess-wrap input { padding: 17px 24px; font-size: 18px; }
+    .suggest-list { max-height: 340px; }
+    .suggest-item { padding: 13px 20px; font-size: 15px; }
+    .wrong-msg { font-size: 16px; }
+
+    .sil-game .sil-img-wrap img { width: clamp(220px, min(30vw, 42vh), 380px); height: clamp(220px, min(30vw, 42vh), 380px); }
+    .sil-reveal-row { gap: 24px; }
+    .sil-reveal-col img { width: clamp(220px, 24vw, 300px); height: clamp(220px, 24vw, 300px); }
+    .sil-next-btn { width: min(100%, 820px); margin-left: auto; margin-right: auto; padding: 17px; font-size: 18px; }
+
+    .rec-desc-card, .rec-explain-card, .rec-source-link { width: min(100%, 900px); margin-left: auto; margin-right: auto; }
+    .rec-desc-card { padding: clamp(34px, 5vw, 62px); font-size: clamp(20px, 2vw, 27px); }
+    .rec-explain-card { padding: 22px 26px; font-size: 16px; }
+
+    .result-card, .nick-row, .btn-row, .game-screen > [id$="LbBox"], .game-screen > #lbBox { width: min(100%, 900px); margin-left: auto; margin-right: auto; }
+    .result-card { padding: clamp(30px, 4vw, 48px); }
+    .result-card img { width: 140px; height: 140px; }
+    .result-card .name { font-size: 27px; }
+    .result-card .grade { font-size: 52px; }
+    .result-card .grade small { font-size: 15px; }
+    .nick-row input { padding: 13px 20px; }
+    .nick-row button { padding: 0 24px; font-size: 15px; }
+    .btn-row button { padding: 16px; font-size: 16px; }
+    table.lb { font-size: 15px; }
+    table.lb th, table.lb td { padding: 10px 14px; }
+    .win-card { max-width: 480px; padding: 34px 30px; }
+
+    .wrap:has(.b6-game) { max-width: 1180px; }
+    .b6-layout { gap: 28px; }
+    .b6-sheet-col { flex-basis: 320px; }
+    .b6-hand { gap: 12px; }
+    .b6-card { width: clamp(108px, 10vw, 132px); padding: 8px; }
+    .b6-photo-wrap { height: auto; aspect-ratio: 1 / 1; }
+    .b6-name { font-size: 12.5px; }
+    .b6-team-pill, .b6-pos-pill { font-size: 10.5px; padding: 3px 5px; }
+    .b6-tile { padding: 11px 6px; }
+    .b6-tile-label { font-size: 12px; }
+    .b6-tile-score { font-size: 17px; }
+  }
+
+  /* 넓은 PC 화면: 홈 게임 목록을 4열로 */
+  @media (min-width: 1150px) {
+    .home-screen .modes { max-width: 1080px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  }
+
+  /* 낮은 PC/노트북 화면: 폭은 그대로 쓰되 세로 요소를 압축해 조작부까지 한 화면에 둔다. */
+  @media (min-width: 900px) and (max-height: 760px) {
+    .wrap:not(:has(.captcha-screen)) { padding-top: 0; padding-bottom: 0; }
+    .home-screen, .game-screen { min-height: calc(100vh - 36px); }
+    .home-screen .modes { gap: 14px; margin-top: 8px; }
+    .mode-card { min-height: 124px; padding: 16px 14px; }
+    .mode-card .emoji { font-size: 30px; margin-bottom: 3px; }
+    .mode-card b { font-size: 18px; }
+    .game-screen .topbar { margin-bottom: 10px; }
+    .criterion-banner { padding: 9px 14px; margin-bottom: 10px; font-size: 13px; }
+    .cat-grid { gap: 8px; margin-bottom: 12px; }
+    .cat-card, .cat-card-inner { min-height: 68px; }
+    .cat-face { padding: 6px; border-radius: 16px; }
+    .cat-front .cat-label { font-size: 14px; }
+    .cat-front .cat-q { font-size: 21px; }
+    .cat-back .cat-label { font-size: 12px; }
+    .cat-back .cat-val { font-size: 14px; }
+    .challenge-grid { gap: 6px; }
+    .challenge-grid .cat-card, .challenge-grid .cat-card-inner { min-height: 54px; }
+    .challenge-grid .cat-front .cat-label { font-size: 12px; }
+    .challenge-grid .cat-front .cat-q { font-size: 17px; }
+    .guess-wrap input { padding: 12px 20px; font-size: 16px; }
+    .suggest-list { max-height: 220px; }
+    .sil-game .topbar, .sil-game .criterion-banner, .sil-game .sil-img-wrap { margin-bottom: 10px; }
+    .sil-game .sil-img-wrap img { width: min(30vw, 40vh); height: min(30vw, 40vh); min-width: 210px; }
+    .sil-reveal-col img { width: min(22vw, 32vh); height: min(22vw, 32vh); }
+    .rec-desc-card { padding: 24px 30px; font-size: 20px; margin-bottom: 12px; }
+    .result-card { padding: 18px 24px; margin-bottom: 10px; }
+    .result-card img { width: 92px; height: 92px; }
+    .result-card .name { font-size: 21px; }
+    .result-card .grade { font-size: 40px; margin: 6px 0; }
+    .nick-row { margin-top: 8px; margin-bottom: 8px; }
+    .btn-row button { padding: 11px; }
+    table.lb th, table.lb td { padding-top: 6px; padding-bottom: 6px; }
+    .b6-layout { gap: 16px; }
+    .b6-card { width: clamp(92px, 9vw, 112px); }
+    .b6-hand { margin-bottom: 14px; }
+    .b6-tile { padding: 7px 4px; }
+    .b6-sheet-heading-row { margin-top: 7px; }
+  }
+
+  /* 창의 폭과 별개로 높이가 짧으면 모든 게임의 세로 밀도를 낮춘다.
+     데스크톱뿐 아니라 분할 창·가로형 태블릿에서도 같은 규칙을 적용한다. */
+  @media (max-height: 760px) {
+    .wrap { padding-top: 0; padding-bottom: 0; }
+    .home-screen, .game-screen, .captcha-screen { min-height: 100dvh; }
+    .home-screen h1 { margin-top: 0; font-size: clamp(21px, 4vh, 30px); }
+    .home-screen .sub { margin-bottom: 6px; font-size: 12px; }
+    .home-screen .modes { margin-top: 6px; gap: 8px; }
+    .home-screen .mode-card { min-height: 0; padding: clamp(7px, 1.7vh, 14px) 8px; border-radius: 18px; }
+    .home-screen .mode-card .emoji { font-size: clamp(22px, 4.5vh, 30px); margin-bottom: 1px; }
+    .home-screen .mode-card b { font-size: clamp(14px, 2.7vh, 18px); margin-bottom: 1px; }
+    .home-screen .mode-card span { font-size: clamp(9px, 1.8vh, 12px); line-height: 1.3; }
+
+    .game-screen .topbar { margin-bottom: 7px; }
+    .topbar .backbtn { padding-top: 3px; padding-bottom: 3px; }
+    .score-pill { padding: 5px 11px; font-size: 11px; }
+    .score-pill b { font-size: 13px; }
+    .criterion-banner { padding: 7px 10px; margin-bottom: 7px; font-size: 11px; line-height: 1.35; }
+    .cat-grid { gap: 6px; margin-bottom: 8px; }
+    .cat-card, .cat-card-inner { min-height: clamp(48px, 10vh, 64px); }
+    .cat-face { padding: 4px; border-radius: 13px; }
+    .cat-front .cat-label { font-size: 12px; margin-bottom: 1px; }
+    .cat-front .cat-q { font-size: 18px; }
+    .cat-back .cat-label { font-size: 10px; margin-bottom: 1px; }
+    .cat-back .cat-val { font-size: 12px; }
+    .challenge-grid { gap: 4px; }
+    .challenge-grid .cat-card, .challenge-grid .cat-card-inner { min-height: clamp(38px, 7.5vh, 50px); }
+    .challenge-grid .cat-front .cat-label { font-size: 10px; }
+    .challenge-grid .cat-front .cat-q { font-size: 14px; }
+    .challenge-grid .cat-back .cat-label { font-size: 9px; }
+    .challenge-grid .cat-back .cat-val { font-size: 10px; }
+    .guess-wrap { margin-bottom: 4px; }
+    .guess-wrap input { padding: 9px 15px; font-size: 14px; border-width: 2px; }
+    .wrong-msg { min-height: 14px; margin-bottom: 3px; font-size: 11px; }
+    .giveup-btn { margin-top: 7px; }
+
+    .sil-game .topbar, .sil-game .criterion-banner, .sil-game .sil-img-wrap,
+    .sil-game .guess-wrap, .sil-game .wrong-msg { margin-bottom: 6px; }
+    .sil-game .sil-img-wrap img { width: min(34vw, 38dvh, 210px); height: min(34vw, 38dvh, 210px); }
+    .sil-game .giveup-btn { margin-top: 6px; }
+    .sil-reveal-row { margin: 3px 0 8px; }
+    .sil-reveal-col img { width: min(26vw, 28dvh, 170px); height: min(26vw, 28dvh, 170px); }
+    .sil-next-btn { padding: 10px; font-size: 14px; }
+
+    .rec-desc-card { padding: clamp(14px, 4vh, 24px); margin-bottom: 8px; font-size: clamp(15px, 2.8vh, 20px); }
+    .rec-explain-card { padding: 9px 12px; margin-bottom: 6px; font-size: 12px; line-height: 1.35; }
+    .rec-source-link { margin-bottom: 7px; font-size: 11px; }
+    .result-card { padding: 12px 18px; margin-bottom: 7px; }
+    .result-card img { width: 72px; height: 72px; margin-bottom: 4px; }
+    .result-card .name { font-size: 18px; }
+    .result-card .grade { font-size: 32px; margin: 3px 0; }
+    .nick-row { margin: 6px 0; }
+    .nick-row input { padding: 7px 13px; font-size: 14px; }
+    .btn-row button { padding: 8px; }
+    table.lb { margin-top: 4px; font-size: 11px; }
+    table.lb th, table.lb td { padding: 4px 7px; }
+
+    .wrap:has(.captcha-screen) { max-width: min(576px, calc(100dvh - 190px)); }
+    .captcha-topbar { margin-bottom: 6px; }
+    .captcha-timer { padding: 4px 8px; font-size: 11px; }
+    .captcha-prompt { padding: 9px 10px; }
+    .captcha-prompt-copy > span, .captcha-prompt-copy > small { font-size: 10px; }
+    .captcha-prompt-copy > strong { font-size: clamp(17px, 3.5vh, 22px); }
+    .captcha-round { min-width: 38px; padding: 3px 5px; font-size: 11px; }
+    .captcha-actions { min-height: 48px; padding: 5px 7px; }
+    .captcha-refresh { width: 36px; height: 36px; }
+    .captcha-refresh svg { width: 23px; height: 23px; }
+    .captcha-submit { min-width: 78px; height: 36px; padding: 0 16px; line-height: 34px; font-size: 12px; }
+    .captcha-source { margin-top: 6px; font-size: 9px; }
+    .captcha-result, .captcha-error { padding: 14px; }
+    .captcha-result-mark { font-size: 36px; }
+    .captcha-result-time { font-size: 36px; margin: 5px 0 2px; }
+    .captcha-result-actions { margin-top: 8px; }
+
+    .b6-layout { align-items: flex-start; }
+    .b6-hand { margin-bottom: 8px; }
+    .b6-card { padding: 4px; }
+    .b6-photo-wrap { margin-bottom: 3px; }
+    .b6-name { margin-bottom: 2px; }
+    .b6-reroll-row { margin-bottom: 4px; }
+    .b6-reroll-row button { padding: 6px 14px; font-size: 12px; }
+    .b6-sheet-heading-row { margin: 4px 0 3px; }
+    .b6-tile-grid { gap: 3px; }
+    .b6-tile { padding: 4px 3px; border-radius: 9px; }
+    .b6-tile-label { font-size: 9px; margin-bottom: 1px; }
+    .b6-tile-score { font-size: 12px; }
+  }
+
+  @media (max-height: 620px) {
+    .wrap { padding-top: 0; padding-bottom: 0; }
+    .home-screen, .game-screen, .captcha-screen { min-height: 100dvh; }
+    .home-screen .modes { gap: 5px; margin-top: 3px; }
+    .home-screen .mode-card { padding-top: 5px; padding-bottom: 5px; }
+    .game-screen .topbar { margin-bottom: 4px; }
+    .criterion-banner { padding: 5px 8px; margin-bottom: 4px; }
+    .cat-grid { margin-bottom: 5px; }
+    .cat-card, .cat-card-inner { min-height: clamp(42px, 9vh, 54px); }
+    .challenge-grid .cat-card, .challenge-grid .cat-card-inner { min-height: clamp(32px, 7vh, 42px); }
+    .sil-game .sil-img-wrap img { width: min(31vw, 34dvh, 180px); height: min(31vw, 34dvh, 180px); }
+    .rec-desc-card { padding: 10px 16px; }
+    .result-card img { width: 58px; height: 58px; }
+    .wrap:has(.captcha-screen) { max-width: min(576px, calc(100dvh - 172px)); }
+  }
+
+  /* 빅6 모바일 최종 오버라이드: 기본 카드 선언보다 뒤에 두어 2+3 배열과
+     축소 크기가 모든 좁은 폭에서 확실히 유지되게 한다. */
+  @media (max-width: 640px) {
+    .b6-layout { flex-direction: column; gap: 8px; align-items: stretch; }
+    .b6-hand-col, .b6-sheet-col { width: 100%; }
+    .b6-sheet-col { flex-basis: auto; }
+    .b6-hand { grid-template-columns: repeat(6, 36px); gap: 8px; max-width: 256px; margin-bottom: 10px; }
+    .b6-card { width: 80px; padding: 5px; }
+    .b6-photo-wrap { height: 66px; margin-bottom: 4px; }
+    .b6-name { min-height: 2.1em; font-size: 9.5px; margin-bottom: 3px; }
+    .b6-team-pill, .b6-pos-pill { font-size: 8px; padding: 1px 3px; }
+    .b6-reroll-row { margin-bottom: 4px; }
+    .b6-sheet-heading-row { margin: 6px 0 3px; }
+    .b6-tile-grid { gap: 4px; }
+    .b6-tile { padding: 5px 3px; }
+    .b6-tile-label { font-size: 9.5px; margin-bottom: 1px; }
+    .b6-tile-score { font-size: 12px; }
+  }
+</style>
+<script src="points.js"></script>
+<script type="module" src="sync.js"></script>
+</head>
+<body>
+<div class="wrap" id="app">
+  <div class="loading">불러오는 중…</div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import {
+  getFirestore, doc, getDoc, setDoc, addDoc, serverTimestamp, collection, query, orderBy, limit, getDocs, increment, writeBatch
+} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+const FIREBASE_CONFIG = {
+  projectId: "guess-your-player",
+  appId: "1:1068776442781:web:433981863e0c3da178bd74",
+  storageBucket: "guess-your-player.firebasestorage.app",
+  apiKey: "AIzaSyA8SG_LbHeqS9gh0CLFaHUhEI1uG1uYLDY",
+  authDomain: "guess-your-player.firebaseapp.com",
+  messagingSenderId: "1068776442781",
+};
+const app = initializeApp(FIREBASE_CONFIG);
+const db = getFirestore(app);
+
+const ROUND_SIZE = 5; // 한 판에 연속으로 맞히는 선수 수
+const MAX_GUESSES = 3; // 오답은 힌트에 페널티를 주지 않는 대신, 제출 기회 자체가 제한된다
+
+// 카테고리당 힌트 1개, 대신 카테고리를 잘게 쪼개서 많이 준다 - "유명 선수와 뛴
+// 적 있다" 류의 애매한 필러 힌트 대신 매 힌트가 그 자체로 구체적인 정보여야 한다.
+const CATEGORIES = [
+  { key: "birthYear", label: "나이" },
+  { key: "height", label: "키" },
+  { key: "foot", label: "주발" },
+  { key: "position", label: "포지션" },
+  { key: "nationality", label: "국적" },
+  { key: "debutYear", label: "데뷔연도" },
+  { key: "debutClub", label: "프로 데뷔팀" },
+  { key: "currentLeague", label: "현재 소속리그" },
+  { key: "recentSeasonRanks", label: "최근 3시즌 순위" },
+];
+
+// ---------------------------------------------------------------- utils
+
+function deviceId() {
+  let id = localStorage.getItem("quizDeviceId");
+  if (!id) {
+    id = "d-" + Math.random().toString(36).slice(2) + Date.now().toString(36);
+    localStorage.setItem("quizDeviceId", id);
+  }
+  return id;
+}
+
+function escapeHtml(s) {
+  return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+function normalize(s) {
+  // 발음기호 없는 알파벳으로도 검색되게: NFD로 분해하면 ê -> e + 결합용 악센트로
+  // 쪼개지는데, 그 악센트 결합문자 범위(U+0300~036f)만 지우면 순수 알파벳만 남는다
+  // (Kanté -> Kante, João -> Joao, Müller -> Muller 등).
+  return (s || "")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[\s.\-'’]/g, "");
+}
+
+// ---------------------------------------------------------------- 정답 보호
+// 이름/정답 문자열을 sessionStorage나 네트워크 응답에 평문으로 두면 개발자도구로
+// 그냥 읽어서 치팅할 수 있다. 그래서 매칭(정답 확인)에 쓰는 값은 되돌릴 수 없는
+// SHA-256 해시로만 내려받고, 화면에 보여줘야 하는 값(정답 공개 이름/사진 등)은
+// 되돌릴 수 있는 간단한 XOR+Base64로 뒤섞어서 내려받는다 - 라운드가 끝나 실제로
+// 화면에 그릴 때만 풀어서 보여준다.
+// * 정적 사이트라 "진짜 비밀키"를 클라이언트에서 완전히 숨길 방법은 없다 - 이 키도
+//   이 파일을 읽으면 보인다. 목적은 "그냥 눈으로 읽으면 안 보이게"이지, 스크립트를
+//   직접 짜서 무차별 대입하는 수준까지 막는 게 아니다(그건 진짜 서버 검증이 필요).
+// * crawler/sanitize_for_client.js가 이 파일과 동일한 알고리즘으로 데이터를
+//   미리 변환해서 Firestore/정적 JSON에 넣어둔다 - 두 쪽 로직이 반드시 일치해야 한다.
+const OBF_KEY = "gyp-cheatguard-2024";
+
+async function sha256Hex(s) {
+  const buf = new TextEncoder().encode(s);
+  const digest = await crypto.subtle.digest("SHA-256", buf);
+  return [...new Uint8Array(digest)].map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function matchesHash(guess, hash) {
+  if (!hash) return false;
+  return (await sha256Hex(normalize(guess))) === hash;
+}
+
+function deobfuscate(b64) {
+  if (!b64) return "";
+  const bin = atob(b64);
+  const keyBytes = new TextEncoder().encode(OBF_KEY);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i) ^ keyBytes[i % keyBytes.length];
+  return new TextDecoder("utf-8").decode(out);
+}
+
+// 검색 후보 자동완성 목록 렌더링 (게임1/3/4/5 공용). SEARCH_POOL처럼 후보가 수천 개일
+// 때 일치하는 걸 전부 한 번에 DOM으로 그리면 느려질 수 있어서, 처음엔
+// SUGGEST_BATCH개만 그리고 목록을 스크롤해서 바닥 근처에 가면 다음 배치를 이어붙인다
+// - 끝까지 스크롤하면 일치하는 이름 전부를 볼 수 있다. 클릭은 매 배치마다 다시 걸지
+// 않도록 박스 자체에 한 번만 위임 리스너를 단다.
+const SUGGEST_BATCH = 40;
+function renderSuggestBox(box, names, onPick) {
+  box.innerHTML = "";
+  box.hidden = false;
+  if (!names.length) {
+    box.innerHTML = `<div class="suggest-empty">일치하는 선수가 없어요</div>`;
+    return;
+  }
+  let shown = 0;
+  function appendBatch() {
+    const next = names.slice(shown, shown + SUGGEST_BATCH);
+    shown += next.length;
+    const frag = document.createDocumentFragment();
+    next.forEach(name => {
+      const el = document.createElement("div");
+      el.className = "suggest-item";
+      el.dataset.name = name;
+      el.innerHTML = `<span>${escapeHtml(name)}</span>`;
+      frag.appendChild(el);
+    });
+    box.appendChild(frag);
+  }
+  box.onscroll = () => {
+    if (shown < names.length && box.scrollTop + box.clientHeight >= box.scrollHeight - 40) {
+      appendBatch();
+    }
+  };
+  box.onclick = (e) => {
+    const item = e.target.closest(".suggest-item");
+    if (item) onPick(item.dataset.name);
+  };
+  appendBatch();
+}
+
+function gradeFor(n) {
+  if (n <= 1) return { text: "SSS", label: "완벽한 점수" };
+  if (n === 2) return { text: "SS", label: "최고의 점수" };
+  if (n === 3) return { text: "S", label: "훌륭한 점수" };
+  if (n === 4) return { text: "A", label: "아주 좋은 점수" };
+  if (n === 5) return { text: "B", label: "좋은 점수" };
+  if (n === 6) return { text: "C", label: "괜찮은 점수" };
+  if (n === 7) return { text: "D", label: "보통 점수" };
+  if (n === 8) return { text: "E", label: "아쉬운 점수" };
+  return { text: "F", label: "다음엔 더 잘해봐요" };
+}
+
+// ---------------------------------------------------------------- hint engine
+// 카테고리당 힌트는 정확히 1개. 데이터가 없으면 null - 카드가 뒤집히지 않고 비활성화된다.
+
+// TM의 정확한 포지션 문구(11종, 전체 90인 풀에서 실측)를 표준 포지션 약자로
+// 보여준다 (CF/LW/RW/CB/GK 등) - 한글 풀네임보다 축구 팬에게 더 익숙하고 짧다.
+const POSITION_KO = {
+  "Attack - Centre-Forward": "CF",
+  "Attack - Left Winger": "LW",
+  "Attack - Right Winger": "RW",
+  "Attack - Second Striker": "SS",
+  "Defender - Centre-Back": "CB",
+  "Defender - Left-Back": "LB",
+  "Defender - Right-Back": "RB",
+  "Goalkeeper": "GK",
+  "Midfield - Attacking Midfield": "CAM",
+  "Midfield - Central Midfield": "CM",
+  "Midfield - Defensive Midfield": "CDM",
+};
+function positionKo(position) {
+  if (!position) return null;
+  if (POSITION_KO[position]) return POSITION_KO[position];
+  if (/Goalkeeper|Keeper/.test(position)) return "GK";
+  if (/Midfield/.test(position)) return "MF";
+  if (/Defe|Back/.test(position)) return "DF";
+  if (/Forward|Attack|Winger|Striker/.test(position)) return "FW";
+  return null;
+}
+
+// 최근 3시즌 순위: 이적한 선수는 시즌마다 실제로 몸담았던 클럽이 다를 수 있어서
+// (crawl_recent_ranks.py가 career 이력으로 시즌별 클럽을 역산해서 채움) 오래된
+// 순으로 "1위 → 3위 → 5위"처럼 화살표로 잇는다. 커리어가 짧아 못 채운 시즌은 그냥
+// 빠지므로 1~3개짜리 체인이 나올 수 있다.
+function formatRecentRanks(ranks) {
+  if (!ranks || !ranks.length) return null;
+  return ranks.map(r => `${r.rank}위`).join(" → ");
+}
+
+function buildHints(p) {
+  const pr = p.profile;
+  const career = (p.career || []).filter(c => c.startYear);
+  const first = career[0];
+
+  // PokeQuiz의 "포케피디아"처럼 완전한 문장 대신 라벨+짧은 값 형태로 보여준다 -
+  // 스캔하기 쉽고, "유명 선수와 뛰었다" 같은 군더더기가 끼어들 자리가 없다.
+  return {
+    birthYear: pr.birthYear ? `${pr.birthYear}년생` : null,
+    height: pr.heightCm ? `${pr.heightCm}cm` : null,
+    foot: pr.foot || null,
+    position: positionKo(pr.position),
+    debutYear: first ? `${first.startYear}년` : null,
+    debutClub: first ? first.club : null,
+    currentLeague: pr.currentLeague || null,
+    recentSeasonRanks: formatRecentRanks(p.recentSeasonRanks),
+    nationality: pr.nationalityKo || null,
+  };
+}
+
+// ---------------------------------------------------------------- data load
+
+let ALL_PLAYERS = [];
+async function loadPlayers() {
+  // 선수 데이터 스키마(힌트 필드 구성)가 바뀔 때마다 이 버전을 올려야 한다 -
+  // 안 올리면 배포 전부터 탭을 열어둔 사용자는 세션이 끝날 때까지 옛 캐시로 게임한다.
+  // v5: profile.nameKo/nameEn/aliases/photoUrl 평문을 없애고 matchHash/aliasHashes/
+  // nameKoEnc/nameEnEnc/photoUrlEnc로 교체 - 옛 캐시는 평문을 그대로 들고 있으므로 버려야 한다.
+  sessionStorage.removeItem("quizPlayersV4");
+  const cached = sessionStorage.getItem("quizPlayersV5");
+  if (cached) { ALL_PLAYERS = JSON.parse(cached); return; }
+  const snap = await getDocs(collection(db, "guessPlayers"));
+  ALL_PLAYERS = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  sessionStorage.setItem("quizPlayersV5", JSON.stringify(ALL_PLAYERS));
+}
+
+// 정답 후보 검색 목록은 90인 풀보다 훨씬 넓다 - 같은 프로젝트(팀메이트 스피드런)가
+// 이미 크롤링해둔 "2020년 이후 유럽 5대리그 1부 출전 선수" 전체(9천여 명, 영문
+// 이름만)를 정적 JSON으로 받아온다. 한글 이름은 90인 풀 밖 선수까지는 알아낼
+// 수 없어서, 검색 목록 자체를 영문 이름으로 통일했다.
+let SEARCH_POOL = [];
+async function loadSearchPool() {
+  const cached = sessionStorage.getItem("quizSearchPoolV1");
+  if (cached) { SEARCH_POOL = JSON.parse(cached); return; }
+  const res = await fetch("data/search_pool.json");
+  SEARCH_POOL = await res.json();
+  sessionStorage.setItem("quizSearchPoolV1", JSON.stringify(SEARCH_POOL));
+}
+
+// 정답이 공개된(맞혔든 실패했든) 선수는 로컬에 기록해두고, 다음 판을 고를 때
+// 뒷순위로 미룬다 - 풀을 다 겪기 전까지는 최대한 새 선수가 나오게. 다 겪고 나면
+// (이미 다 한번씩 본 사람은) 그냥 다시 전체에서 랜덤.
+const SEEN_KEY = "quizSeenPlayers";
+function getSeenIds() {
+  try { return new Set(JSON.parse(localStorage.getItem(SEEN_KEY) || "[]")); }
+  catch { return new Set(); }
+}
+function markSeen(playerId) {
+  const seen = getSeenIds();
+  seen.add(playerId);
+  localStorage.setItem(SEEN_KEY, JSON.stringify([...seen]));
+}
+function shuffle(arr) {
+  return arr.slice().sort(() => Math.random() - 0.5);
+}
+function pickRoundPlayers(n) {
+  const seen = getSeenIds();
+  const unseen = ALL_PLAYERS.filter(p => !seen.has(p.id));
+  const alreadySeen = ALL_PLAYERS.filter(p => seen.has(p.id));
+  // 안 본 선수를 먼저 다 채우고, 모자라면(=풀을 다 겪었으면) 이미 본 선수로 채운다.
+  const ordered = [...shuffle(unseen), ...shuffle(alreadySeen)];
+  return ordered.slice(0, Math.min(n, ordered.length));
+}
+
+// ---------------------------------------------------------------- leaderboard
+
+async function submitScore(collectionPath, docId, hintsUsed, nickname) {
+  const ref = doc(db, ...collectionPath, docId);
+  const prev = await getDoc(ref);
+  if (prev.exists() && prev.data().hintsUsed <= hintsUsed) return false;
+  await commitLeaderboardScore("player-guess", ref, { nickname, hintsUsed, updatedAt: new Date() });
+  return true;
+}
+// 기록이 올라 TOP 10에 들었으면 포인트 보너스 (points.js rankBonus)
+async function rankBonus(game, improved, fetchTop) {
+  if (!improved || !window.FSPoints) return;
+  try {
+    const rank = (await fetchTop()).findIndex(r => r.id === deviceId()) + 1;
+    if (rank > 0) window.FSPoints.rankBonus(game, rank);
+  } catch (e) {
+    console.warn("rank bonus failed", e);
+  }
+}
+async function fetchLeaderboard(collectionPath, top = 10) {
+  const q = query(collection(db, ...collectionPath), orderBy("hintsUsed", "asc"), limit(top));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+// ---------------------------------------------------------------- 플레이 로그 (/bymile 관리자 페이지용)
+// 시각/IP/어떤 게임인지만 남긴다. IP는 로그인이 없어서 클라이언트가 외부 API로
+// 직접 알아낸 값을 그대로 보내는 것 - 참고용이지 위변조 방지가 되는 값은 아니다.
+
+let cachedClientIp = null;
+async function getClientIp() {
+  if (cachedClientIp) return cachedClientIp;
+  try {
+    const res = await fetch("https://api.ipify.org?format=json");
+    cachedClientIp = (await res.json()).ip;
+  } catch {
+    cachedClientIp = "unknown";
+  }
+  return cachedClientIp;
+}
+
+// playLogs는 판마다 문서 하나씩 쌓이는 원본 로그라 시간이 지날수록 계속 커지고,
+// /bymile 관리자 페이지가 "종목별 총 판수"를 보려고 매번 그걸 통째로 훑으면
+// 로그가 많아질수록 페이지 로딩이 느려진다. 그래서 원본 로그(playLogs)는 그대로
+// 남겨두되, 통계용으로 문서 2개(오늘 하루치 + 전체 누적)에 종목별 카운터를
+// increment로 더해서 관리자 페이지는 이 작은 문서 2~3개만 읽으면 되게 한다.
+function todayKeyKST() {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul" }).format(new Date());
+}
+
+// 게임6(records-guess-*)은 team/player 두 모드지만 리더보드(challengeLeaderboard)는
+// 하나라 세션 키도 "challenge" 하나로 합친다 - 아래 sessionConsumed()가 참조하는
+// firestore.rules의 세션 문서 경로와 이름을 맞춰야 한다.
+function sessionGameKey(game) {
+  return (game === "records-guess-team" || game === "records-guess-player") ? "challenge" : game;
+}
+
+async function logPlay(game) {
+  try {
+    const ip = await getClientIp();
+    await Promise.all([
+      addDoc(collection(db, "playLogs"), { ts: serverTimestamp(), ip, game }),
+      setDoc(doc(db, "statsCounters", "totals"), { [game]: increment(1) }, { merge: true }),
+      setDoc(doc(db, "statsDaily", todayKeyKST()), { [game]: increment(1) }, { merge: true }),
+      // 리더보드 위조 방지용 "진짜 방금 플레이를 시작했다" 증거. 서버 타임스탬프라
+      // 클라이언트가 값을 조작할 수 없고, 제출 시 firestore.rules가 이 문서 생성
+      // 이후 실제로 최소 시간이 지났는지 검증한다 (아래 commitLeaderboardScore 참고).
+      setDoc(doc(db, "playSessions", `${sessionGameKey(game)}_${deviceId()}`), { startedAt: serverTimestamp() }),
+    ]);
+  } catch (e) {
+    console.error("logPlay failed", e);
+  }
+}
+
+// 리더보드 문서를 쓸 때 항상 이 함수를 통해서만 쓴다: 위 logPlay()가 만들어 둔
+// playSessions 문서를 같은 배치(트랜잭션)로 삭제하면서 점수를 쓴다. firestore.rules는
+// "그 세션이 실제로 존재했고, 생성된 지 최소 시간이 지났고, 이 커밋으로 삭제되는지"를
+// 검증하므로, 콘솔에서 Firestore SDK를 직접 불러 게임을 하지 않고 setDoc만 호출해도
+// (playSessions 문서가 없어서) 리더보드 쓰기가 거부된다.
+async function commitLeaderboardScore(game, ref, data) {
+  const batch = writeBatch(db);
+  batch.delete(doc(db, "playSessions", `${sessionGameKey(game)}_${deviceId()}`));
+  batch.set(ref, data);
+  await batch.commit();
+}
+
+// ---------------------------------------------------------------- UI
+
+const appEl = document.getElementById("app");
+let state = null; // current round state
+
+function render(html) {
+  // 홈 화면의 "바깥 클릭하면 접힘" 리스너는 document에 붙는데, 다른 화면으로
+  // 넘어갈 때(게임 시작 등) renderHome()을 다시 거치지 않으면 안 떨어져서 남아있다가
+  // 엉뚱한 화면에서의 클릭에도 반응해 홈으로 튕겨버린다 - 그래서 어떤 화면이든
+  // 새로 그릴 때마다 여기서 한 번에 정리한다.
+  if (homeOutsideClickHandler) {
+    document.removeEventListener("click", homeOutsideClickHandler, true);
+    homeOutsideClickHandler = null;
+  }
+  appEl.innerHTML = html;
+}
+
+// "선수 맞히기"/"기록 맞히기" 카드를 누르면 그 자리에서 두 버튼(선수 맞히기: 클래식/
+// 챌린지, 기록 맞히기: 개인/팀)으로 쪼개지고, 나머지 카드는 흐려지면서 눌러도 게임이
+// 시작되지 않고 그냥 원래대로 접힌다. 카드 바깥 아무 곳(흐려진 카드 포함, 제목/여백도
+// 포함)을 눌러도 다시 접힌다. 두 카드가 동시에 펼쳐질 일은 없어서 homeExpanded
+// 하나로 "펼쳐진 카드가 없음(null) / 선수맞히기("player") / 기록맞히기("record") /
+// 발롱도르 만들기("jelly": 물복/딱복)"를 구분한다.
+let homeExpanded = null;
+let homeOutsideClickHandler = null;
+
+function renderHome() {
+  cleanupCaptcha();
+  const ex = homeExpanded;
+  render(`
+    <div class="home-screen">
+      <button class="pts-pill" id="ptsBtn"><span class="pts-ico">P</span><b id="ptsBal">${(window.FSPoints?.balance() || 0).toLocaleString()}</b></button>
+      <a class="pack-btn" href="card/" aria-label="카드깡"><svg viewBox="0 0 64 88" aria-hidden="true">
+            <defs>
+              <linearGradient id="pkFoil" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a77bff"/><stop offset=".5" stop-color="#6d3fd6"/><stop offset="1" stop-color="#3b1d8f"/></linearGradient>
+              <linearGradient id="pkGold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe58a"/><stop offset="1" stop-color="#e0a21c"/></linearGradient>
+            </defs>
+            <path d="M6 10 L10 6 L14 10 L18 6 L22 10 L26 6 L30 10 L34 6 L38 10 L42 6 L46 10 L50 6 L54 10 L58 6 L58 82 L54 78 L50 82 L46 78 L42 82 L38 78 L34 82 L30 78 L26 82 L22 78 L18 82 L14 78 L10 82 L6 78 Z" fill="url(#pkFoil)"/>
+            <rect x="6" y="14" width="52" height="5" fill="url(#pkGold)"/>
+            <rect x="6" y="69" width="52" height="5" fill="url(#pkGold)"/>
+            <path d="M32 28 L36.7 38.5 L48 39.6 L39.5 47.2 L42 58.4 L32 52.6 L22 58.4 L24.5 47.2 L16 39.6 L27.3 38.5 Z" fill="url(#pkGold)" stroke="#fff6cc" stroke-width="1.5" stroke-linejoin="round"/>
+            <path d="M12 20 L22 20 L12 60 Z" fill="#fff" opacity=".18"/>
+          </svg></a>
+      <h1>⚽ 축구 게임</h1>
+      <div class="modes">
+        <a class="mode-card bobble-mode ${ex ? "dimmed" : ""}" href="football/">
+          <div class="emoji">⚽</div>
+          <b>알까기 축구</b>
+          <span>튕겨서 골 넣는 4:4 대결</span>
+        </a>
+        <div class="mode-card penalty-mode ${ex === "penalty" ? "expanded" : ""} ${ex && ex !== "penalty" ? "dimmed" : ""}" id="startPenaltyBtn">
+          ${ex === "penalty" ? `
+            <a class="split-btn split-pk-cpu" href="penalty/?mode=cpu">
+              <span class="emoji">🤖</span><b>CPU</b>
+            </a>
+            <a class="split-btn split-pk-online" href="penalty/?mode=online">
+              <span class="emoji">🌐</span><b>온라인</b>
+            </a>
+          ` : `
+            <div class="emoji">🥅</div>
+            <b>승부차기</b>
+            <span>꾹 눌러 차고, 쭉 끌어 막고</span>
+          `}
+        </div>
+        <a class="mode-card heading-mode ${ex ? "dimmed" : ""}" href="heading/">
+          <div class="emoji">🙆</div>
+          <b>헤딩 연습</b>
+          <span>헤딩으로 수레에 공 모으기</span>
+        </a>
+        <div class="mode-card jelly-mode ${ex === "jelly" ? "expanded" : ""} ${ex && ex !== "jelly" ? "dimmed" : ""}" id="startJellyBtn">
+          ${ex === "jelly" ? `
+            <a class="split-btn split-jelly-soft" href="jelly/">
+              <span class="emoji">🍮</span><b>물복</b>
+            </a>
+            <a class="split-btn split-jelly-hard" href="jelly/?mode=hard">
+              <span class="emoji">⚽</span><b>딱복</b>
+            </a>
+          ` : `
+            <div class="emoji">🏆</div>
+            <b>발롱도르 만들기</b>
+            <span>같은 선수끼리 합쳐서 발롱까지!</span>
+          `}
+        </div>
+        <a class="mode-card scramble-mode ${ex ? "dimmed" : ""}" href="scramble/">
+          <div class="emoji">🔤</div>
+          <b>이름 뒤죽박죽</b>
+          <span>뒤섞인 알파벳으로 이름 완성하기</span>
+        </a>
+        <a class="mode-card gogun-mode ${ex ? "dimmed" : ""}" href="gogun/">
+          <div class="emoji">🏃</div>
+          <b>고군분투</b>
+          <span>경기장 지붕 위를 끝없이 달려라</span>
+        </a>
+        <a class="mode-card connect-mode ${ex ? "dimmed" : ""}" href="connect/">
+          <div class="emoji">🧩</div>
+          <b>커넥트</b>
+          <span>16명의 선수 4그룹으로 나누기</span>
+        </a>
+        <div class="mode-card game8 ${ex ? "dimmed" : ""}" id="startBtn8">
+          <div class="emoji">🎲</div>
+          <b>빅6 야찌</b>
+          <span>빅6 선수들로 하는 야찌</span>
+        </div>
+        <div class="mode-card ${ex === "player" ? "expanded" : ""} ${ex && ex !== "player" ? "dimmed" : ""}" id="startBtn">
+          ${ex === "player" ? `
+            <div class="split-btn split-classic" id="startBtnClassic">
+              <span class="emoji">🕵️</span><b>클래식</b>
+            </div>
+            <div class="split-btn split-new" id="startBtnNew">
+              <span class="emoji">🆕</span><b>챌린지</b>
+            </div>
+          ` : `
+            <div class="emoji">🕵️</div>
+            <b>선수 맞히기</b>
+            <span>힌트 최소로 정답 맞히기</span>
+          `}
+        </div>
+        <div class="mode-card game4 ${ex ? "dimmed" : ""}" id="startBtn4">
+          <div class="emoji">🌑</div>
+          <b>실루엣 맞히기</b>
+          <span>실루엣만 보고 랜덤 20문제 맞히기</span>
+        </div>
+        <div class="mode-card game6 ${ex === "record" ? "expanded" : ""} ${ex && ex !== "record" ? "dimmed" : ""}" id="startBtn6">
+          ${ex === "record" ? `
+            <div class="split-btn split-classic" id="startBtn6Player">
+              <span class="emoji">🏅</span><b>개인</b>
+            </div>
+            <div class="split-btn split-new" id="startBtn6Team">
+              <span class="emoji">🛡️</span><b>팀</b>
+            </div>
+          ` : `
+            <div class="emoji">🏆</div>
+            <b>기록 맞히기</b>
+            <span>이 기록의 주인공은 누구일까요?</span>
+          `}
+        </div>
+        <div class="mode-card captcha-mode ${ex ? "dimmed" : ""}" id="startCaptchaBtn">
+          <div class="emoji">⚡</div>
+          <b>선수 CAPTCHA</b>
+          <span>조건에 맞는 선수를 빠르게 선택</span>
+        </div>
+        <a class="mode-card blackjack-mode ${ex ? "dimmed" : ""}" href="blackjack/">
+          <div class="emoji">🃏</div>
+          <b>등번호 블랙잭</b>
+          <span>등번호로 하는 블랙잭, 목표는 90!</span>
+        </a>
+        <a class="mode-card game7 ${ex ? "dimmed" : ""}" href="https://pin-the-pitch.web.app/" target="_blank" rel="noopener noreferrer">
+          <span class="external-badge" title="다른 사이트로 이동">↗</span>
+          <div class="emoji">🏟️</div>
+          <b>경기장 찾기</b>
+          <span>로고를 보고 경기장을 찾으세요.</span>
+        </a>
+      </div>
+    </div>
+  `);
+  document.getElementById("ptsBtn").onclick = openPointsHistory;
+  if (ex) {
+    if (ex === "player") {
+      document.getElementById("startBtnClassic").onclick = startGame;
+      document.getElementById("startBtnNew").onclick = startGame5;
+    } else if (ex === "record") {
+      document.getElementById("startBtn6Player").onclick = () => startGame6("player");
+      document.getElementById("startBtn6Team").onclick = () => startGame6("team");
+    }
+    // 흐려진 카드들도 이 리스너 하나로 같이 처리된다(펼쳐진 카드 바깥이라서) -
+    // 굳이 카드마다 따로 접기 핸들러를 걸 필요가 없다.
+    const expandedSelector = { player: "#startBtn", record: "#startBtn6", jelly: "#startJellyBtn", penalty: "#startPenaltyBtn" }[ex];
+    homeOutsideClickHandler = (e) => {
+      if (!e.target.closest(expandedSelector)) { homeExpanded = null; renderHome(); }
+    };
+    setTimeout(() => document.addEventListener("click", homeOutsideClickHandler, true), 0);
+  } else {
+    document.getElementById("startBtn").onclick = () => { homeExpanded = "player"; renderHome(); };
+    document.getElementById("startBtn4").onclick = startGame4;
+    document.getElementById("startBtn6").onclick = () => { homeExpanded = "record"; renderHome(); };
+    document.getElementById("startJellyBtn").onclick = () => { homeExpanded = "jelly"; renderHome(); };
+    document.getElementById("startPenaltyBtn").onclick = () => { homeExpanded = "penalty"; renderHome(); };
+    document.getElementById("startBtn8").onclick = startGame8;
+    document.getElementById("startCaptchaBtn").onclick = startCaptchaGame;
+  }
+}
+
+// ---------------------------------------------------------------- points
+function refreshPointsPill() {
+  const el = document.getElementById("ptsBal");
+  if (el && window.FSPoints) el.textContent = FSPoints.balance().toLocaleString();
+}
+// 출석은 메인 페이지에 들어올 때 하루 한 번
+function checkInPoints() {
+  const got = window.FSPoints?.checkIn() || 0;
+  refreshPointsPill();
+  const pill = document.getElementById("ptsBtn");
+  if (!got || !pill) return;
+  const tag = document.createElement("span");
+  tag.className = "pts-gain";
+  tag.textContent = `+${got}`;
+  pill.appendChild(tag);
+  pill.classList.add("bump");
+  setTimeout(() => { tag.remove(); pill.classList.remove("bump"); }, 1600);
+}
+window.addEventListener("pageshow", checkInPoints);
+window.addEventListener("storage", refreshPointsPill);
+window.addEventListener("fs-sync", refreshPointsPill);
+
+const GOOGLE_G = `<svg viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>`;
+function renderPointsAccount(box, reopen) {
+  const acct = window.FSSync?.account();
+  if (!acct?.signedIn) { box.innerHTML = ""; return; }
+  box.innerHTML = acct.linked
+    ? `${GOOGLE_G}<span class="pts-mail">${escapeHtml(acct.email || acct.name)}</span><button id="ptsLogout">로그아웃</button>`
+    : `<button class="wide" id="ptsLink">${GOOGLE_G}구글 계정 연결</button>`;
+  const btn = box.querySelector("button");
+  btn.onclick = async () => {
+    btn.disabled = true;
+    if (acct.linked) await FSSync.signOut();
+    else await FSSync.linkGoogle();
+    await FSSync.ready;
+    reopen();
+  };
+}
+
+function openPointsHistory() {
+  if (!window.FSPoints) return;
+  const two = (n) => String(n).padStart(2, "0");
+  let lastDay = "";
+  const rows = FSPoints.history().map(e => {
+    const d = new Date(e.t);
+    const day = `${d.getFullYear()}.${two(d.getMonth() + 1)}.${two(d.getDate())}`;
+    const head = day !== lastDay ? `<div class="pts-day">${day}</div>` : "";
+    lastDay = day;
+    return `${head}<div class="pts-row">
+      <div class="pts-info"><div class="pts-game">${escapeHtml(FSPoints.gameName(e.g))}</div><div class="pts-detail">${two(d.getHours())}:${two(d.getMinutes())}${e.d ? ` · ${escapeHtml(e.d)}` : ""}</div></div>
+      <div class="pts-amt"><b class="${e.a < 0 ? "minus" : ""}">${e.a > 0 ? "+" : ""}${e.a.toLocaleString()}</b><small>${e.b.toLocaleString()}</small></div>
+    </div>`;
+  }).join("");
+  const overlay = document.createElement("div");
+  overlay.className = "overlay";
+  overlay.innerHTML = `
+    <div class="pts-card" role="dialog" aria-modal="true" aria-labelledby="ptsTitle">
+      <div class="pts-head">
+        <h2 id="ptsTitle">포인트 내역</h2>
+        <div class="pts-bal"><span class="pts-ico">P</span>${FSPoints.balance().toLocaleString()}</div>
+        <button class="pts-x" aria-label="닫기">✕</button>
+      </div>
+      <div class="pts-acct"></div>
+      <div class="pts-list">${rows || `<div class="pts-empty">내역이 없어요</div>`}</div>
+    </div>`;
+  const close = () => { overlay.remove(); document.removeEventListener("keydown", onKey); };
+  const onKey = (e) => { if (e.key === "Escape") close(); };
+  overlay.addEventListener("click", (e) => { if (e.target === overlay) close(); });
+  overlay.querySelector(".pts-x").onclick = close;
+  document.addEventListener("keydown", onKey);
+  renderPointsAccount(overlay.querySelector(".pts-acct"), () => { close(); refreshPointsPill(); openPointsHistory(); });
+  document.body.appendChild(overlay);
+}
+
+function startGame() {
+  logPlay("player-guess");
+  const players = pickRoundPlayers(ROUND_SIZE);
+  state = { players, idx: 0, player: players[0], revealed: [], stageIdx: {}, guessesLeft: MAX_GUESSES, totalHints: 0, history: [] };
+  state.hints = buildHints(state.player);
+  renderGame();
+}
+
+function currentHintCount(s) {
+  return s.revealed.length;
+}
+
+function renderGame() {
+  const s = state;
+  render(`
+    <div class="game-screen">
+      ${renderSourceBadge("classic")}
+      <div class="topbar">
+        <button class="backbtn" id="backBtn">← 처음으로</button>
+        <div class="score-pill">${s.idx + 1} / ${s.players.length}번째 선수 · 힌트 <b>${currentHintCount(s)}</b></div>
+      </div>
+      <div class="cat-grid" id="catGrid"></div>
+      <div class="guess-wrap">
+        <input id="guessInput" placeholder="${guessPlaceholder(s)}" autocomplete="off">
+        <div class="suggest-list" id="suggestList" hidden></div>
+      </div>
+      <div class="wrong-msg" id="wrongMsg"></div>
+    </div>
+  `);
+  document.getElementById("backBtn").onclick = renderHome;
+  wireSourceBadge();
+  const grid = document.getElementById("catGrid");
+  CATEGORIES.forEach(c => {
+    const available = s.hints[c.key] !== null;
+    const used = !!s.stageIdx[c.key];
+    const card = document.createElement("div");
+    card.className = "cat-card" + (used ? " flipped" : "") + (!available ? " empty" : "");
+    card.dataset.key = c.key;
+    card.innerHTML = `
+      <div class="cat-card-inner">
+        <div class="cat-face cat-front"><span class="cat-label">${escapeHtml(c.label)}</span><span class="cat-q">?</span></div>
+        <div class="cat-face cat-back"><span class="cat-label">${escapeHtml(c.label)}</span><span class="cat-val">${used ? escapeHtml(s.hints[c.key]) : ""}</span></div>
+      </div>`;
+    if (available && !used) {
+      card.querySelector(".cat-card-inner").onclick = () => revealHint(c.key);
+    }
+    grid.appendChild(card);
+  });
+
+  const input = document.getElementById("guessInput");
+  input.addEventListener("input", () => renderSuggestions(input.value));
+  input.addEventListener("focus", () => renderSuggestions(input.value));
+  input.focus();
+}
+
+function updateScorePill() {
+  const b = document.querySelector(".score-pill b");
+  if (b) b.textContent = currentHintCount(state);
+}
+
+function guessPlaceholder(s) {
+  return `선수 이름을 검색해보세요 (남은 기회 ${s.guessesLeft}/${MAX_GUESSES})`;
+}
+function updateGuessPlaceholder() {
+  const input = document.getElementById("guessInput");
+  if (input) input.placeholder = guessPlaceholder(state);
+}
+
+function revealHint(catKey) {
+  const s = state;
+  const text = s.hints[catKey];
+  if (!text || s.stageIdx[catKey]) return;
+  s.stageIdx[catKey] = true;
+  s.revealed.push({ category: catKey, text });
+
+  // renderGame() 전체를 다시 그리면 카드가 뒤집히는 애니메이션이 보이지 않는다
+  // (같은 innerHTML 대입 안에서 이전/이후 상태가 한번에 바뀌어버림) - 그래서
+  // 이 카드 하나만 targeted로 건드려서 CSS transition이 실제로 재생되게 한다.
+  const card = document.querySelector(`.cat-card[data-key="${catKey}"]`);
+  if (card) {
+    const label = (CATEGORIES.find(c => c.key === catKey) || {}).label || "";
+    setCatValText(card.querySelector(".cat-back .cat-val"), label, text);
+    card.classList.add("flipped");
+    const inner = card.querySelector(".cat-card-inner");
+    if (inner) inner.onclick = null;
+  }
+  updateScorePill();
+}
+
+function renderSuggestions(query) {
+  const box = document.getElementById("suggestList");
+  if (!box) return;
+  const q = normalize(query);
+  if (!q) { box.hidden = true; box.innerHTML = ""; return; }
+  // 검색 후보는 90인 풀이 아니라 SEARCH_POOL(영문 이름 9천여 개, 5대리그 최근
+  // 시즌 출전자 전체) 대상 - 입력할 때마다("input" 이벤트) 바로바로 다시
+  // 필터링된다. 한글 이름은 이 넓은 목록에서는 알 수 없어서 통일해서 뺐다.
+  const matches = SEARCH_POOL.filter(name => normalize(name).includes(q));
+  renderSuggestBox(box, matches, (name) => {
+    box.hidden = true;
+    box.innerHTML = "";
+    const input = document.getElementById("guessInput");
+    if (input) input.value = "";
+    trySubmitName(name);
+  });
+}
+
+async function isNameMatch(name, player) {
+  const hashes = [player.profile.matchHash, ...(player.profile.aliasHashes || [])];
+  const guessHash = await sha256Hex(normalize(name));
+  return hashes.includes(guessHash);
+}
+
+async function trySubmitName(name) {
+  const s = state;
+  if (await isNameMatch(name, s.player)) {
+    document.getElementById("wrongMsg").textContent = "";
+    onCorrect();
+    return;
+  }
+  s.guessesLeft -= 1;
+  if (s.guessesLeft <= 0) {
+    failRound();
+    return;
+  }
+  const msg = document.getElementById("wrongMsg");
+  if (msg) msg.textContent = `❌ 오답이에요! 남은 기회 ${s.guessesLeft}번`;
+  const wrap = document.querySelector(".guess-wrap");
+  if (wrap) { wrap.classList.remove("shake"); void wrap.offsetWidth; wrap.classList.add("shake"); }
+  updateGuessPlaceholder();
+  document.getElementById("guessInput")?.focus();
+}
+
+function onCorrect() {
+  const s = state;
+  const hintsUsed = currentHintCount(s);
+  s.totalHints += hintsUsed;
+  s.history.push({ player: s.player, hintsUsed, failed: false });
+  markSeen(s.player.id);
+  const isFinal = s.idx + 1 >= s.players.length;
+  renderResult(hintsUsed, isFinal, false);
+}
+
+const FAIL_PENALTY = 10;
+
+function failRound() {
+  // 제출 기회(3번)를 다 썼을 때 - 등급은 F로 고정하고 정답을 공개한 뒤 다음
+  // 선수로 넘어간다. 힌트를 거의 안 열어본 채로 실패해도 누적 힌트가 낮게
+  // 잡혀 최종 등급이 부풀려지지 않도록, 누적 힌트에 페널티를 더한다.
+  const s = state;
+  const hintsUsed = currentHintCount(s);
+  s.totalHints += hintsUsed + FAIL_PENALTY;
+  s.history.push({ player: s.player, hintsUsed, failed: true });
+  markSeen(s.player.id);
+  const isFinal = s.idx + 1 >= s.players.length;
+  renderResult(hintsUsed, isFinal, true);
+}
+
+function renderResult(hintsUsed, isFinal, failed) {
+  const s = state;
+  const p = s.player; // 방금 맞춘(또는 실패한) 선수
+  const grade = failed ? { text: "F", label: "실패했어요" } : gradeFor(hintsUsed);
+
+  if (!isFinal) {
+    // 5명 중 한 명을 맞힐 때마다 그 선수의 점수를 바로 보여주고, 다음 선수로 넘어간다.
+    render(`
+      <div class="game-screen">
+        <div class="topbar">
+          <button class="backbtn" id="backBtn">← 처음으로</button>
+          <div class="score-pill">${s.idx + 1} / ${s.players.length}번째 완료 · 누적 힌트 <b>${s.totalHints}</b></div>
+        </div>
+        <div class="result-card">
+          <img src="${deobfuscate(p.profile.photoUrlEnc)}" onerror="this.style.display='none'">
+          <div class="name">${failed ? "😢 실패! 정답은 " : "정답: "}${escapeHtml(deobfuscate(p.profile.nameKoEnc))}</div>
+          <div class="grade">${grade.text}<small>${hintsUsed}${failed ? ` (+${FAIL_PENALTY} 페널티)` : ""} 힌트 사용 · ${grade.label}</small></div>
+        </div>
+        <div class="btn-row">
+          <button class="primary" id="nextBtn">다음 선수 (${s.idx + 2}/${s.players.length})</button>
+        </div>
+      </div>
+    `);
+    document.getElementById("backBtn").onclick = renderHome;
+    document.getElementById("nextBtn").onclick = () => {
+      s.idx += 1;
+      s.player = s.players[s.idx];
+      s.revealed = []; s.stageIdx = {}; s.guessesLeft = MAX_GUESSES;
+      s.hints = buildHints(s.player);
+      renderGame();
+    };
+    return;
+  }
+
+  const avg = (s.totalHints / s.players.length).toFixed(1);
+  window.FSPoints?.earn("classic",
+    s.history.reduce((t, h) => t + (h.failed ? 0 : Math.min(16, Math.max(4, 18 - 2 * h.hintsUsed))), 0),
+    `${s.history.filter(h => !h.failed).length}/${s.players.length} 정답 · 평균 힌트 ${avg}`);
+  const finalGrade = gradeFor(Math.round(s.totalHints / s.players.length));
+  const streakHtml = `<div class="streak-list">${s.history.map(h =>
+    `<div><span>${escapeHtml(deobfuscate(h.player.profile.nameKoEnc))}${h.failed ? ' (실패)' : ''}</span><span>${h.hintsUsed}${h.failed ? `+${FAIL_PENALTY}` : ''} 힌트</span></div>`).join("")}</div>`;
+
+  render(`
+    <div class="game-screen">
+      <div class="topbar">
+        <button class="backbtn" id="backBtn">← 처음으로</button>
+        <div></div>
+      </div>
+      <div class="result-card">
+        <div class="name">🎉 ${s.players.length}명 완료!</div>
+        <div class="grade">${finalGrade.text}<small>총 ${s.totalHints} 힌트 (평균 ${avg})</small></div>
+        ${streakHtml}
+      </div>
+      <div class="nick-row">
+        <input id="nickInput" maxlength="20" placeholder="닉네임 (리더보드 등록)">
+        <button id="submitScoreBtn">기록 등록</button>
+      </div>
+      <div id="lbBox"></div>
+      <div class="btn-row">
+        <button class="primary" id="nextBtn">다시 하기</button>
+        <button id="homeBtn">처음으로</button>
+      </div>
+    </div>
+  `);
+  document.getElementById("backBtn").onclick = renderHome;
+  document.getElementById("homeBtn").onclick = renderHome;
+  document.getElementById("nextBtn").onclick = startGame;
+
+  const lbPath = ["guessLeaderboard", "streak", "entries"];
+  document.getElementById("submitScoreBtn").onclick = async () => {
+    const nickname = (document.getElementById("nickInput").value || "익명").slice(0, 20);
+    const btn = document.getElementById("submitScoreBtn");
+    btn.disabled = true; btn.textContent = "등록 중…";
+    try {
+      const improved = await submitScore(lbPath, deviceId(), s.totalHints, nickname);
+      await renderLeaderboard(lbPath);
+      rankBonus("classic", improved, () => fetchLeaderboard(lbPath, 10));
+      btn.textContent = "등록 완료";
+    } catch (e) {
+      btn.textContent = "등록 실패";
+      console.error(e);
+    }
+  };
+  renderLeaderboard(lbPath);
+}
+
+async function renderLeaderboard(path) {
+  const box = document.getElementById("lbBox");
+  if (!box) return;
+  box.innerHTML = `<div class="sub">리더보드 불러오는 중…</div>`;
+  try {
+    const rows = await fetchLeaderboard(path, 10);
+    const my = deviceId();
+    box.innerHTML = `<table class="lb"><tr><th>#</th><th>닉네임</th><th>힌트</th></tr>${
+      rows.map((r, i) => `<tr class="${r.id === my ? 'me' : ''}"><td>${i + 1}</td><td>${escapeHtml(r.nickname)}</td><td>${escapeHtml(r.hintsUsed)}</td></tr>`).join("")
+    }</table>`;
+  } catch (e) {
+    box.innerHTML = `<div class="sub">리더보드를 불러오지 못했습니다.</div>`;
+    console.error(e);
+  }
+}
+
+// ---------------------------------------------------------------- 게임4: 실루엣 맞히기
+// design/silhouette-pilot/silhouettes-v2 100장(FotMob 프로필 사진 - 이미
+// 배경이 제거된 렌더 - 기반, 일부는 rembg 결정론적 배경 제거 파이프라인 산출물)을
+// public/silhouettes/에 복사해두고, 매 판 전체가 아니라 랜덤 SIL_ROUND_SIZE
+// (20)문제만 뽑아서 돈다. 정답이 공개된(맞혔든/틀렸든/포기했든) 선수는
+// localStorage(SIL_SEEN_KEY)에 기록해 다음 판 뽑기에서 뒷순위로 미룬다 - 풀을
+// 다 겪기 전까지는 최대한 새 선수가 나오게. 정답 후보 검색은 게임1과 동일하게
+// SEARCH_POOL(영문 이름 9천여 개) 전체 대상 - 한글 이름은 지원하지 않는다.
+// 맞히거나(또는 포기하거나) 정답을 공개할 때는 실루엣 옆에 실제 사진
+// (public/reveal/)을 같이 보여주고, "다음 문제" 버튼을 눌러야 다음 실루엣으로
+// 넘어간다.
+
+let SIL_PLAYERS = null; // lazy-load
+let SIL_SEARCH_POOL = null; // SEARCH_POOL + 은퇴한 레전드 보강본 (게임4 전용, 게임1 SEARCH_POOL은 건드리지 않음)
+async function loadSilPlayers() {
+  if (SIL_PLAYERS) return;
+  // 명단이 바뀔 때마다 캐시 키를 올려서 예전 세션 캐시를 무시한다 (v1: 20명, v2: 30명, v3: 100명,
+  // v4: 137명 - 은퇴 선수 53명 제거 + 현역 유명 선수 90명 추가, v5: 222명 - 현역 유명 선수 85명 추가,
+  // v6: 211명 - 그 사이 은퇴/방출/무소속이 된 11명 제거(웹 검색으로 현역 여부 재확인),
+  // v7: id를 선수 슬러그(예: bellingham)에서 opaque id(예: p164)로 교체 - F12로 이미지
+  // 파일명만 봐도 정답이 드러나던 문제를 막기 위함. v8: nameKo/nameEn 평문을 없애고
+  // matchHash/nameKoEnc/nameEnEnc로 교체 - 세션스토리지를 그냥 열어봐도 이름이 안
+  // 보이게. 값 자체는 안 바뀌었어도 예전 캐시가 평문/옛 슬러그 id를 들고 있으면
+  // 깨지므로 캐시를 버려야 한다.
+  sessionStorage.removeItem("silPlayersV1");
+  sessionStorage.removeItem("silPlayersV2");
+  sessionStorage.removeItem("silPlayersV3");
+  sessionStorage.removeItem("silPlayersV4");
+  sessionStorage.removeItem("silPlayersV5");
+  sessionStorage.removeItem("silPlayersV6");
+  sessionStorage.removeItem("silPlayersV7");
+  const cached = sessionStorage.getItem("silPlayersV8");
+  if (cached) { SIL_PLAYERS = JSON.parse(cached); return; }
+  const res = await fetch("data/silhouette_players.json");
+  SIL_PLAYERS = await res.json();
+  sessionStorage.setItem("silPlayersV8", JSON.stringify(SIL_PLAYERS));
+}
+// SEARCH_POOL은 "2020년 이후 유럽 5대리그 출전 선수" 전용이라 피를로/푸욜/
+// 발데라마/펠라이니/호나우지뉴/이브라히모비치 같은 은퇴 레전드가 아예 없다 -
+// 그대로 쓰면 이 6명은 검색으로 정답을 낼 방법이 없어져서, 게임4 검색 풀에만
+// 빠진 이름을 보충해 넣는다.
+function buildSilSearchPool() {
+  if (SIL_SEARCH_POOL) return SIL_SEARCH_POOL;
+  const poolLower = new Set(SEARCH_POOL.map(n => n.toLowerCase()));
+  const missing = SIL_PLAYERS.map(p => deobfuscate(p.nameEnEnc)).filter(n => !poolLower.has(n.toLowerCase()));
+  SIL_SEARCH_POOL = [...SEARCH_POOL, ...missing];
+  return SIL_SEARCH_POOL;
+}
+
+const SIL_MAX_GUESSES = 3;
+const SIL_ROUND_SIZE = 20; // 전체를 한 번에 도는 대신 매 판 랜덤 20문제만
+
+// 정답이 공개된(맞혔든 실패했든 포기했든) 선수는 로컬에 기록해두고, 다음 판을
+// 고를 때 뒷순위로 미룬다 - 풀을 다 겪기 전까지는 최대한 새 선수가 나오게.
+const SIL_SEEN_KEY = "silSeenPlayers";
+function getSilSeenIds() {
+  try { return new Set(JSON.parse(localStorage.getItem(SIL_SEEN_KEY) || "[]")); }
+  catch { return new Set(); }
+}
+function markSilSeen(playerId) {
+  const seen = getSilSeenIds();
+  seen.add(playerId);
+  localStorage.setItem(SIL_SEEN_KEY, JSON.stringify([...seen]));
+}
+function pickSilRoundPlayers(n) {
+  const seen = getSilSeenIds();
+  const unseen = SIL_PLAYERS.filter(p => !seen.has(p.id));
+  const alreadySeen = SIL_PLAYERS.filter(p => seen.has(p.id));
+  const ordered = [...shuffle(unseen), ...shuffle(alreadySeen)];
+  return ordered.slice(0, Math.min(n, ordered.length));
+}
+
+let sil = null; // 게임4 현재 판 상태
+
+// 실루엣/정답 사진이 문제가 바뀔 때마다 늦게 뜨는 걸 막기 위한 프리로드.
+// 브라우저 이미지 캐시에 미리 앉혀두는 용도라 <img>가 그 src를 쓸 때 즉시 표시된다.
+function silPreloadImage(src) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = img.onerror = () => resolve();
+    img.src = src;
+  });
+}
+function silPreloadPlayer(p) {
+  // 문제 전환과 정답 공개 때 이미지가 늦게 뜨지 않도록 둘 다 미리 불러둔다.
+  return Promise.all([
+    silPreloadImage(`silhouettes/${p.id}.png`),
+    silPreloadImage(`reveal/${p.id}.jpg`),
+  ]);
+}
+function silPreloadRound(order) {
+  order.forEach(silPreloadPlayer);
+}
+
+async function startGame4() {
+  logPlay("silhouette-guess");
+  render(`<div class="loading">불러오는 중…</div>`);
+  await loadSilPlayers();
+  buildSilSearchPool();
+  const order = pickSilRoundPlayers(SIL_ROUND_SIZE);
+  await silPreloadPlayer(order[0]); // 첫 문제는 실루엣+정답 사진 둘 다 로딩까지 기다렸다가 바로 보여준다
+  sil = {
+    order, idx: 0, player: order[0], guessesLeft: SIL_MAX_GUESSES, correct: 0,
+  };
+  renderGame4();
+  silPreloadRound(order); // 이번 판 나머지 실루엣 + 정답 사진은 백그라운드로 미리 로드
+}
+
+async function silIsMatch(name, player) {
+  return matchesHash(name, player.matchHash);
+}
+
+function silGuessPlaceholder(s) {
+  return `선수 이름을 검색해보세요 (남은 기회 ${s.guessesLeft}/${SIL_MAX_GUESSES})`;
+}
+function updateSilGuessPlaceholder() {
+  const input = document.getElementById("silGuessInput");
+  if (input) input.placeholder = silGuessPlaceholder(sil);
+}
+
+function renderGame4() {
+  const s = sil;
+  render(`
+    <div class="game-screen sil-game">
+      ${renderSourceBadge("silhouette")}
+      <div class="topbar">
+        <button class="backbtn" id="backBtn">← 처음으로</button>
+        <div class="score-pill">${s.idx + 1} / ${s.order.length}번째 · 정답 <b>${s.correct}</b>개</div>
+      </div>
+      <div class="criterion-banner">🌑 실루엣만 보고 선수를 맞혀보세요! 기회는 <b>${SIL_MAX_GUESSES}번</b>까지예요.</div>
+      <div class="sil-img-wrap">
+        <img src="silhouettes/${s.player.id}.png" alt="선수 실루엣" draggable="false">
+      </div>
+      <div class="guess-wrap">
+        <input id="silGuessInput" placeholder="${silGuessPlaceholder(s)}" autocomplete="off">
+        <div class="suggest-list" id="silSuggestList" hidden></div>
+      </div>
+      <div class="wrong-msg" id="silWrongMsg"></div>
+      <button class="giveup-btn" id="silSkipBtn">모르겠어요, 정답 보기</button>
+    </div>
+  `);
+  document.getElementById("backBtn").onclick = renderHome;
+  document.getElementById("silSkipBtn").onclick = silSkip;
+  wireSourceBadge();
+  wireSilInput();
+  document.getElementById("silGuessInput")?.focus();
+}
+
+function renderSilSuggestions(query) {
+  const box = document.getElementById("silSuggestList");
+  if (!box) return;
+  const q = normalize(query);
+  if (!q) { box.hidden = true; box.innerHTML = ""; return; }
+  // 선수 맞히기(게임1)와 동일한 후보군: SEARCH_POOL(영문 이름 9천여 개) +
+  // 그 풀에 없는 은퇴 레전드 보충분에서 검색한다. 한글 이름은 지원하지 않는다.
+  const matches = SIL_SEARCH_POOL.filter(name => normalize(name).includes(q));
+  renderSuggestBox(box, matches, (name) => {
+    box.hidden = true;
+    box.innerHTML = "";
+    const input = document.getElementById("silGuessInput");
+    if (input) input.value = "";
+    silSubmit(name);
+  });
+}
+
+function wireSilInput() {
+  const input = document.getElementById("silGuessInput");
+  input.addEventListener("input", () => renderSilSuggestions(input.value));
+  input.addEventListener("focus", () => renderSilSuggestions(input.value));
+}
+
+async function silSubmit(name) {
+  const s = sil;
+  if (!normalize(name)) return;
+  if (await silIsMatch(name, s.player)) {
+    document.getElementById("silWrongMsg").textContent = "";
+    s.correct += 1;
+    silShowReveal(true);
+    return;
+  }
+  s.guessesLeft -= 1;
+  if (s.guessesLeft <= 0) {
+    silShowReveal(false);
+    return;
+  }
+  const msg = document.getElementById("silWrongMsg");
+  if (msg) msg.textContent = `❌ 오답이에요! 남은 기회 ${s.guessesLeft}번`;
+  const wrap = document.querySelector(".guess-wrap");
+  if (wrap) { wrap.classList.remove("shake"); void wrap.offsetWidth; wrap.classList.add("shake"); }
+  updateSilGuessPlaceholder();
+}
+
+function silSkip() {
+  // 스킵 버튼: 현재 선수를 오답 처리하고 정답 화면을 보여준다
+  silShowReveal(false);
+}
+
+function silShowReveal(wasCorrect) {
+  const s = sil;
+  markSilSeen(s.player.id);
+  const isFinal = s.idx + 1 >= s.order.length;
+  render(`
+    <div class="game-screen sil-game">
+      <div class="topbar">
+        <button class="backbtn" id="backBtn">← 처음으로</button>
+        <div class="score-pill">${s.idx + 1} / ${s.order.length}번째 · 정답 <b>${s.correct}</b>개</div>
+      </div>
+      <div class="criterion-banner">
+        ${wasCorrect ? "🎉 정답이에요!" : "😅 아쉬워요, 정답은"}
+        <b>${escapeHtml(deobfuscate(s.player.nameKoEnc))} (${escapeHtml(deobfuscate(s.player.nameEnEnc))})</b>
+      </div>
+      <div class="sil-reveal-row">
+        <div class="sil-reveal-col">
+          <div class="sil-reveal-label">실루엣</div>
+          <img src="silhouettes/${s.player.id}.png" alt="실루엣">
+        </div>
+        <div class="sil-reveal-col">
+          <div class="sil-reveal-label">실제 사진</div>
+          <img src="reveal/${s.player.id}.jpg" alt="실제 사진">
+        </div>
+      </div>
+      <button class="sil-next-btn" id="silNextBtn">${isFinal ? "결과 보기" : "다음 문제 →"}</button>
+    </div>
+  `);
+  document.getElementById("backBtn").onclick = renderHome;
+  document.getElementById("silNextBtn").onclick = silAdvance;
+}
+
+async function silAdvance() {
+  const s = sil;
+  const isFinal = s.idx + 1 >= s.order.length;
+  if (isFinal) {
+    silFinish();
+    return;
+  }
+  const next = s.order[s.idx + 1];
+  // 보통은 silPreloadRound가 판 시작할 때부터 백그라운드로 이미 다 받아놔서 여기선
+  // 즉시 resolve된다 - 아주 빠르게 답을 맞혀 넘어갈 때만 실제로 잠깐 기다리게 되는
+  // 안전장치. 기다리는 동안 화면은 이전 문제 그대로 둬서 빈 화면이 안 뜨게 한다.
+  await silPreloadPlayer(next);
+  s.idx += 1;
+  s.player = s.order[s.idx];
+  s.guessesLeft = SIL_MAX_GUESSES;
+  renderGame4();
+}
+
+async function submitSilScore(nickname, correct) {
+  const ref = doc(db, "silhouetteLeaderboard", "allTime", "entries", deviceId());
+  const prev = await getDoc(ref);
+  if (prev.exists() && prev.data().correct >= correct) return false;
+  await commitLeaderboardScore("silhouette-guess", ref, { nickname, correct, updatedAt: new Date() });
+  return true;
+}
+async function fetchSilLeaderboard(top = 10) {
+  const q = query(
+    collection(db, "silhouetteLeaderboard", "allTime", "entries"),
+    orderBy("correct", "desc"), limit(top)
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+async function renderSilLeaderboard() {
+  const box = document.getElementById("silLbBox");
+  if (!box) return;
+  box.innerHTML = `<div class="sub">리더보드 불러오는 중…</div>`;
+  try {
+    const rows = await fetchSilLeaderboard(10);
+    const my = deviceId();
+    box.innerHTML = `<table class="lb"><tr><th>#</th><th>닉네임</th><th>정답</th></tr>${
+      rows.map((r, i) => `<tr class="${r.id === my ? 'me' : ''}"><td>${i + 1}</td><td>${escapeHtml(r.nickname)}</td><td>${escapeHtml(r.correct)}</td></tr>`).join("")
+    }</table>`;
+  } catch (e) {
+    box.innerHTML = `<div class="sub">리더보드를 불러오지 못했습니다.</div>`;
+    console.error(e);
+  }
+}
+
+function silFinish() {
+  const s = sil;
+  window.FSPoints?.earn("silhouette", s.correct * 3 + (s.correct === s.order.length ? 20 : 0), `${s.correct}/${s.order.length} 정답`);
+  render(`
+    <div class="game-screen sil-game">
+      <div class="topbar">
+        <button class="backbtn" id="backBtn">← 처음으로</button>
+        <div></div>
+      </div>
+      <div class="result-card">
+        <div class="name">${s.correct === s.order.length ? "🏆" : "🌑"} 완료!</div>
+        <div class="grade">${s.correct} / ${s.order.length}<small>정답</small></div>
+      </div>
+      <div class="nick-row">
+        <input id="silNickInput" maxlength="20" placeholder="닉네임 (리더보드 등록)">
+        <button id="silSubmitScoreBtn">기록 등록</button>
+      </div>
+      <div id="silLbBox"></div>
+      <div class="btn-row">
+        <button class="primary" id="silRetryBtn">다시 하기</button>
+        <button id="silHomeBtn">처음으로</button>
+      </div>
+    </div>
+  `);
+  document.getElementById("backBtn").onclick = renderHome;
+  document.getElementById("silHomeBtn").onclick = renderHome;
+  document.getElementById("silRetryBtn").onclick = startGame4;
+  document.getElementById("silSubmitScoreBtn").onclick = async () => {
+    const nickname = (document.getElementById("silNickInput").value || "익명").slice(0, 20);
+    const btn = document.getElementById("silSubmitScoreBtn");
+    btn.disabled = true; btn.textContent = "등록 중…";
+    try {
+      const improved = await submitSilScore(nickname, s.correct);
+      await renderSilLeaderboard();
+      rankBonus("silhouette", improved, () => fetchSilLeaderboard(10));
+      btn.textContent = "등록 완료";
+    } catch (e) {
+      btn.textContent = "등록 실패";
+      console.error(e);
+    }
+  };
+  renderSilLeaderboard();
+}
+
+// ---------------------------------------------------------------- 게임5: 챌린지
+// "선수 맞히기"의 확장판 - 라운드 없이 끝까지 이어간다. 힌트 카테고리를 20개까지
+// 늘리고, 대신 "일회용"으로 만들었다: 어떤 카테고리든 한 번 펼쳐보면 그 판(=한
+// 세션) 동안 다른 어떤 선수한테도 다시 못 쓴다(🔒로 표시). 그래서 뒤로 갈수록
+// 쓸 수 있는 힌트가 줄어들고, 몇 명까지 맞히는지가 기록이 된다. 오답 3회면 종료.
+//
+// 수상 이력처럼 값이 여러 개인 카테고리(clubHonour/individualHonour/teammate)는
+// 매번 그 중 하나를 무작위로 골라 보여준다 - 다 나열하면 그 자체로 정답에 가까운
+// 스포일러가 되고 칸도 넘친다.
+const CHALLENGE_CATEGORIES = [
+  { key: "birthYear", label: "나이" },
+  { key: "height", label: "키" },
+  { key: "foot", label: "주발" },
+  { key: "position", label: "포지션" },
+  { key: "nationality", label: "국적" },
+  { key: "birthCity", label: "출생 도시" },
+  { key: "debutYear", label: "데뷔연도" },
+  { key: "debutClub", label: "프로 데뷔팀" },
+  { key: "youthClub", label: "유스팀" },
+  { key: "currentLeague", label: "현재 소속리그" },
+  { key: "currentClub", label: "현재 소속팀" },
+  { key: "shirt", label: "등번호" },
+  { key: "marketValue", label: "시장가치" },
+  { key: "careerGoals", label: "통산 골" },
+  { key: "recentSeasonRanks", label: "최근 3시즌 순위" },
+  { key: "natCaps", label: "국가대표 출전" },
+  { key: "natGoals", label: "국가대표 골" },
+  { key: "clubHonour", label: "우승 트로피" },
+  { key: "individualHonour", label: "개인 수상" },
+  { key: "teammate", label: "동료 선수" },
+];
+const CHALLENGE_MAX_GUESSES = 3;
+
+function pickRandomFrom(arr) {
+  if (!arr || !arr.length) return null;
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+const CHALLENGE_EMPTY = "없음"; // 데이터가 없어도 칸 자체는 항상 눌러볼 수 있게, 펼치면 이 값이 나온다
+
+// notableTeammates는 수작업으로 정리된 파일이라 이름이 유명 선수라는 보장이 없고
+// (아무 동료나 적혀 있을 수 있음) 표기도 제각각이라 뺀다. teammateLinks(같은 200인
+// "유명 선수" 풀 안에서 재직 기간이 겹치면 자동 계산)만 쓰면 후보가 항상 우리 풀
+// 안의 유명 선수로 한정되고, 영문 이름(nameEn)을 그대로 써서 표기도 정확해진다.
+function buildTeammateCandidates(p) {
+  return [...new Set(
+    (p.teammateLinks || [])
+      .map(l => ALL_PLAYERS.find(x => x.id === l.playerId))
+      .filter(Boolean)
+      .map(mate => deobfuscate(mate.profile.nameEnEnc))
+  )];
+}
+
+function buildChallengeHints(p) {
+  const pr = p.profile;
+  const career = (p.career || []).filter(c => c.startYear);
+  const first = career[0];
+  const nt = p.nationalTeam;
+  const clubHAll = (p.clubHonours || []).map(h => `${h.label} ${h.count}회`).join(", ");
+  const indHAll = (p.individualHonours || []).map(h => `${h.label} ${h.count}회`).join(", ");
+  const mate = pickRandomFrom(buildTeammateCandidates(p));
+  const youthClub = pickRandomFrom(p.youthClubs);
+  // 유소년 시절은 빼고, 프로 데뷔 이후 소속팀 전체(임대 포함) 골을 합산한다.
+  // 클럽별 goals가 비어있는 스틴트(위키에 기록이 없는 임대 등)는 그냥 건너뛴다 -
+  // 알려진 스틴트가 하나도 없을 때만(사실상 없음) E로 표시한다.
+  const careerGoalsKnown = (p.career || []).filter(c => c.goals != null);
+  const careerGoalsTotal = careerGoalsKnown.reduce((sum, c) => sum + c.goals, 0);
+  const E = CHALLENGE_EMPTY;
+  return {
+    birthYear: pr.birthYear ? `${pr.birthYear}년생` : E,
+    height: pr.heightCm ? `${pr.heightCm}cm` : E,
+    foot: pr.foot || E,
+    position: positionKo(pr.position) || E,
+    nationality: pr.nationalityKo || E,
+    birthCity: pr.birthCity || E,
+    debutYear: first ? `${first.startYear}년` : E,
+    debutClub: first ? first.club : E,
+    youthClub: youthClub || E,
+    currentLeague: pr.currentLeague || E,
+    currentClub: pr.currentClub || E,
+    shirt: pr.shirt ? `${pr.shirt}번` : E,
+    marketValue: pr.marketValueEUR ? `€${(pr.marketValueEUR / 1e6).toFixed(1)}M` : E,
+    careerGoals: careerGoalsKnown.length ? `${careerGoalsTotal}골` : E,
+    recentSeasonRanks: formatRecentRanks(p.recentSeasonRanks) || E,
+    natCaps: (nt && nt.caps) ? `${nt.caps}경기` : E,
+    natGoals: (nt && nt.goals != null) ? `${nt.goals}골` : E,
+    // clubHonours/individualHonours가 비어 있는 건 데이터 누락이 아니라 그 선수가
+    // 실제로 우승/개인 수상 기록이 없다는 사실이다 - 그래서 그냥 "없음"이 아니라
+    // 어떤 항목이 비어 있는지 명확히 알 수 있는 문구로 표시한다.
+    clubHonour: clubHAll || "우승 기록 없음",
+    individualHonour: indHAll || "수상 기록 없음",
+    teammate: mate || E,
+  };
+}
+
+let challenge = null;
+
+function startGame5() {
+  logPlay("challenge");
+  challenge = {
+    usedCategories: new Set(), // 이번 세션 동안 소진된 카테고리 - 모든 선수 공통
+    correct: 0,
+    seenIds: new Set(),
+    player: null, hints: null, revealed: {}, guessesLeft: CHALLENGE_MAX_GUESSES,
+  };
+  challengeNextPlayer();
+}
+
+function challengePickPlayer() {
+  const unseen = ALL_PLAYERS.filter(p => !challenge.seenIds.has(p.id));
+  if (!unseen.length) challenge.seenIds.clear();
+  const pool = unseen.length ? unseen : ALL_PLAYERS;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function challengeNextPlayer() {
+  const c = challenge;
+  c.player = challengePickPlayer();
+  c.seenIds.add(c.player.id);
+  c.hints = buildChallengeHints(c.player);
+  c.revealed = {};
+  c.guessesLeft = CHALLENGE_MAX_GUESSES;
+  renderChallenge();
+}
+
+function challengeGuessPlaceholder() {
+  return `선수 이름을 검색해보세요 (남은 기회 ${challenge.guessesLeft}/${CHALLENGE_MAX_GUESSES})`;
+}
+function updateChallengeGuessPlaceholder() {
+  const input = document.getElementById("challengeGuessInput");
+  if (input) input.placeholder = challengeGuessPlaceholder();
+}
+function updateChallengeScorePill() {
+  const pill = document.querySelector(".challenge-game .score-pill");
+  if (pill) pill.innerHTML = `정답 <b>${challenge.correct}</b>명 · 힌트 ${challenge.usedCategories.size}/${CHALLENGE_CATEGORIES.length} 소진`;
+}
+
+function renderChallenge() {
+  const c = challenge;
+  render(`
+    <div class="game-screen challenge-game">
+      ${renderSourceBadge("challenge")}
+      <div class="topbar">
+        <button class="backbtn" id="backBtn">← 처음으로</button>
+        <div class="score-pill">정답 <b>${c.correct}</b>명 · 힌트 ${c.usedCategories.size}/${CHALLENGE_CATEGORIES.length} 소진</div>
+      </div>
+      <div class="criterion-banner">🆕 힌트는 한 번 쓰면 이번 판 내내 다른 선수에게도 못 써요. 오답 <b>${CHALLENGE_MAX_GUESSES}번</b>이면 종료!</div>
+      <div class="cat-grid challenge-grid" id="catGrid"></div>
+      <div class="guess-wrap">
+        <input id="challengeGuessInput" placeholder="${challengeGuessPlaceholder()}" autocomplete="off">
+        <div class="suggest-list" id="challengeSuggestList" hidden></div>
+      </div>
+      <div class="wrong-msg" id="challengeWrongMsg"></div>
+    </div>
+  `);
+  document.getElementById("backBtn").onclick = renderHome;
+  wireSourceBadge();
+  const grid = document.getElementById("catGrid");
+  CHALLENGE_CATEGORIES.forEach(cat => {
+    const usedForever = c.usedCategories.has(cat.key);
+    const revealedNow = !!c.revealed[cat.key];
+    const value = c.hints[cat.key];
+    const available = !usedForever; // 데이터 유무와 상관없이 모든 칸이 처음엔 열려있다 - 소진 여부만 막는다
+    const card = document.createElement("div");
+    card.className = "cat-card"
+      + (revealedNow ? " flipped" : "")
+      + (usedForever && !revealedNow ? " locked" : "");
+    card.dataset.key = cat.key;
+    card.innerHTML = `
+      <div class="cat-card-inner">
+        <div class="cat-face cat-front"><span class="cat-label">${escapeHtml(cat.label)}</span><span class="cat-q">${usedForever && !revealedNow ? "🔒" : "?"}</span></div>
+        <div class="cat-face cat-back"><span class="cat-label">${escapeHtml(cat.label)}</span><span class="cat-val"></span></div>
+      </div>`;
+    if (available && !revealedNow) {
+      card.querySelector(".cat-card-inner").onclick = () => challengeRevealHint(cat.key);
+    }
+    grid.appendChild(card);
+    if (revealedNow) setCatValText(card.querySelector(".cat-val"), cat.label, value);
+  });
+  wireChallengeInput();
+  document.getElementById("challengeGuessInput").focus();
+}
+
+function challengeRevealHint(key) {
+  const c = challenge;
+  const text = c.hints[key];
+  if (!text || c.revealed[key] || c.usedCategories.has(key)) return;
+  c.revealed[key] = true;
+  c.usedCategories.add(key);
+  const card = document.querySelector(`.challenge-grid .cat-card[data-key="${key}"]`);
+  if (card) {
+    card.classList.add("flipped");
+    const label = (CHALLENGE_CATEGORIES.find(cat => cat.key === key) || {}).label || "";
+    setCatValText(card.querySelector(".cat-back .cat-val"), label, text);
+    const inner = card.querySelector(".cat-card-inner");
+    if (inner) inner.onclick = null;
+  }
+  updateChallengeScorePill();
+}
+
+// 우승 트로피/개인 수상처럼 값이 길어서 작은 카드 안에 다 안 들어가면 "...더보기"로
+// 잘라 보여주고, 누르면 전체 텍스트를 작은 모달로 띄운다. 카드 폭(모바일 4열/
+// 데스크탑 5열)에 따라 들어가는 글자 수가 달라서, 고정 글자수 대신 실제 렌더된
+// 높이(scrollHeight vs clientHeight)를 기준으로 잘라낼 지점을 이분 탐색한다.
+function setCatValText(valEl, label, fullText) {
+  valEl.classList.remove("has-more");
+  valEl.onclick = null;
+  valEl.textContent = fullText;
+  requestAnimationFrame(() => {
+    if (valEl.scrollHeight <= valEl.clientHeight + 1) return; // 다 들어감
+    let lo = 0, hi = fullText.length, best = 0;
+    while (lo <= hi) {
+      const mid = (lo + hi) >> 1;
+      valEl.textContent = fullText.slice(0, mid) + "…더보기";
+      if (valEl.scrollHeight <= valEl.clientHeight + 1) { best = mid; lo = mid + 1; }
+      else hi = mid - 1;
+    }
+    valEl.innerHTML = `${escapeHtml(fullText.slice(0, best))}<span class="cat-more-btn">…더보기</span>`;
+    valEl.classList.add("has-more");
+    valEl.onclick = (e) => { e.stopPropagation(); showHintMoreModal(label, fullText); };
+  });
+}
+
+function showHintMoreModal(label, text) {
+  const overlay = document.createElement("div");
+  overlay.className = "overlay";
+  overlay.innerHTML = `
+    <div class="hint-modal-card">
+      <div class="hint-modal-label">${escapeHtml(label)}</div>
+      <div class="hint-modal-val">${escapeHtml(text)}</div>
+      <button class="close-btn" id="hintModalCloseBtn">닫기</button>
+    </div>`;
+  overlay.addEventListener("click", (e) => { if (e.target === overlay) overlay.remove(); });
+  document.body.appendChild(overlay);
+  document.getElementById("hintModalCloseBtn").onclick = () => overlay.remove();
+}
+
+// ---------------------------------------------------------------- 출처 표시
+// 각 게임 화면 우측 상단의 작은 "?" 배지 - 누르면 이 게임에 쓰인 데이터가 어디서
+// 왔는지 보여준다. 게임6(기록 맞히기)은 문제마다 이미 개별 "출처 보기" 링크가
+// 있어서 여기선 그 안내만 짧게 띄운다.
+const SOURCE_INFO = {
+  classic: "선수 프로필(키/주발/포지션/시장가치 등): Transfermarkt, FotMob<br>커리어 수상 이력(우승 트로피/개인 수상): Wikipedia<br>선수 사진: Transfermarkt",
+  challenge: "선수 프로필(키/주발/포지션/시장가치 등): Transfermarkt, FotMob<br>커리어 수상 이력(우승 트로피/개인 수상): Wikipedia<br>선수 사진: Transfermarkt",
+  silhouette: "실루엣 및 정답 사진: FotMob 선수 프로필 사진",
+  records: "각 문제의 정답·해설 출처는 정답 공개 화면 하단의 \"출처 보기\" 링크를 참고하세요.",
+  big6: "선수단 구성(소속팀/포지션)·선수 사진: FotMob 팀 스쿼드 데이터",
+};
+
+function renderSourceBadge(key) {
+  return `<button class="source-badge" data-source="${key}" title="데이터 출처">?</button>`;
+}
+
+function wireSourceBadge() {
+  // render()가 매번 #app 전체를 새로 그리므로 이 시점엔 화면에 배지가 하나뿐이다.
+  const btn = document.querySelector(".source-badge");
+  if (btn) btn.onclick = () => showSourceModal(btn.dataset.source);
+}
+
+function showSourceModal(key) {
+  const overlay = document.createElement("div");
+  overlay.className = "overlay";
+  overlay.innerHTML = `
+    <div class="hint-modal-card">
+      <div class="hint-modal-label">데이터 출처</div>
+      <div class="hint-modal-val" style="text-align:left; word-break:normal;">${SOURCE_INFO[key] || ""}</div>
+      <button class="close-btn" id="sourceModalCloseBtn">닫기</button>
+    </div>`;
+  overlay.addEventListener("click", (e) => { if (e.target === overlay) overlay.remove(); });
+  document.body.appendChild(overlay);
+  document.getElementById("sourceModalCloseBtn").onclick = () => overlay.remove();
+}
+
+function wireChallengeInput() {
+  const input = document.getElementById("challengeGuessInput");
+  input.addEventListener("input", () => renderChallengeSuggestions(input.value));
+  input.addEventListener("focus", () => renderChallengeSuggestions(input.value));
+}
+
+function renderChallengeSuggestions(query) {
+  const box = document.getElementById("challengeSuggestList");
+  if (!box) return;
+  const q = normalize(query);
+  if (!q) { box.hidden = true; box.innerHTML = ""; return; }
+  const matches = SEARCH_POOL.filter(name => normalize(name).includes(q));
+  renderSuggestBox(box, matches, (name) => {
+    box.hidden = true;
+    box.innerHTML = "";
+    const input = document.getElementById("challengeGuessInput");
+    if (input) input.value = "";
+    challengeSubmitName(name);
+  });
+}
+
+async function challengeSubmitName(name) {
+  const c = challenge;
+  if (await isNameMatch(name, c.player)) {
+    document.getElementById("challengeWrongMsg").textContent = "";
+    c.correct += 1;
+    showChallengeCorrectModal();
+    return;
+  }
+  c.guessesLeft -= 1;
+  if (c.guessesLeft <= 0) {
+    challengeGameOver();
+    return;
+  }
+  const msg = document.getElementById("challengeWrongMsg");
+  if (msg) msg.textContent = `❌ 오답이에요! 남은 기회 ${c.guessesLeft}번`;
+  const wrap = document.querySelector(".challenge-game .guess-wrap");
+  if (wrap) { wrap.classList.remove("shake"); void wrap.offsetWidth; wrap.classList.add("shake"); }
+  updateChallengeGuessPlaceholder();
+  document.getElementById("challengeGuessInput")?.focus();
+}
+
+// 정답을 맞히면 곧바로 다음 선수로 넘기지 않고, 이번 선수한테 힌트를 몇 개 썼는지 /
+// 전체 판에서 아직 안 쓴 힌트가 몇 개 남았는지 작은 모달로 보여준 뒤 "다음 문제"를
+// 눌러야 넘어가게 한다 - 결과를 확인할 새도 없이 바로 다음 문제로 넘어가던 걸 개선.
+function showChallengeCorrectModal() {
+  const c = challenge;
+  const usedThisPlayer = Object.keys(c.revealed).length;
+  const remaining = CHALLENGE_CATEGORIES.length - c.usedCategories.size;
+  const overlay = document.createElement("div");
+  overlay.className = "overlay";
+  overlay.innerHTML = `
+    <div class="win-card">
+      <div class="trophy">🎉</div>
+      <h2>정답!</h2>
+      <div class="result-line">힌트 <b>${usedThisPlayer}</b>개 사용</div>
+      <div class="result-line">남은 힌트 <b>${remaining}</b>개</div>
+      <button class="close-btn" id="challengeNextModalBtn">다음 문제 →</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  document.getElementById("challengeNextModalBtn").onclick = () => {
+    overlay.remove();
+    challengeNextPlayer();
+  };
+}
+
+async function submitChallengeScore(nickname, correct) {
+  const ref = doc(db, "challengeLeaderboard", "allTime", "entries", deviceId());
+  const prev = await getDoc(ref);
+  if (prev.exists() && prev.data().correct >= correct) return false;
+  await commitLeaderboardScore("challenge", ref, { nickname, correct, updatedAt: new Date() });
+  return true;
+}
+async function fetchChallengeLeaderboard(top = 10) {
+  const q = query(collection(db, "challengeLeaderboard", "allTime", "entries"), orderBy("correct", "desc"), limit(top));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+function challengeGameOver() {
+  const c = challenge;
+  window.FSPoints?.earn("challenge", Math.min(100, c.correct * 8), `${c.correct}명 정답`);
+  render(`
+    <div class="game-screen challenge-game">
+      <div class="topbar">
+        <button class="backbtn" id="backBtn">← 처음으로</button>
+        <div></div>
+      </div>
+      <div class="result-card">
+        <img src="${deobfuscate(c.player.profile.photoUrlEnc)}" onerror="this.style.display='none'">
+        <div class="name">😢 정답은 ${escapeHtml(deobfuscate(c.player.profile.nameKoEnc))}</div>
+        <div class="grade">${c.correct}<small>명 정답 · 힌트 ${c.usedCategories.size}개 사용</small></div>
+      </div>
+      <div class="nick-row">
+        <input id="challengeNickInput" maxlength="20" placeholder="닉네임 (리더보드 등록)">
+        <button id="challengeSubmitScoreBtn">기록 등록</button>
+      </div>
+      <div id="challengeLbBox"></div>
+      <div class="btn-row">
+        <button class="primary" id="challengeRetryBtn">다시 하기</button>
+        <button id="challengeHomeBtn">처음으로</button>
+      </div>
+    </div>
+  `);
+  document.getElementById("backBtn").onclick = renderHome;
+  document.getElementById("challengeHomeBtn").onclick = renderHome;
+  document.getElementById("challengeRetryBtn").onclick = startGame5;
+  document.getElementById("challengeSubmitScoreBtn").onclick = async () => {
+    const nickname = (document.getElementById("challengeNickInput").value || "익명").slice(0, 20);
+    const btn = document.getElementById("challengeSubmitScoreBtn");
+    btn.disabled = true; btn.textContent = "등록 중…";
+    try {
+      const improved = await submitChallengeScore(nickname, c.correct);
+      await renderChallengeLeaderboard();
+      rankBonus("challenge", improved, () => fetchChallengeLeaderboard(10));
+      btn.textContent = "등록 완료";
+    } catch (e) {
+      btn.textContent = "등록 실패";
+      console.error(e);
+    }
+  };
+  renderChallengeLeaderboard();
+}
+
+async function renderChallengeLeaderboard() {
+  const box = document.getElementById("challengeLbBox");
+  if (!box) return;
+  box.innerHTML = `<div class="sub">리더보드 불러오는 중…</div>`;
+  try {
+    const rows = await fetchChallengeLeaderboard(10);
+    const my = deviceId();
+    box.innerHTML = `<table class="lb"><tr><th>#</th><th>닉네임</th><th>정답</th></tr>${
+      rows.map((r, i) => `<tr class="${r.id === my ? 'me' : ''}"><td>${i + 1}</td><td>${escapeHtml(r.nickname)}</td><td>${escapeHtml(r.correct)}</td></tr>`).join("")
+    }</table>`;
+  } catch (e) {
+    box.innerHTML = `<div class="sub">리더보드를 불러오지 못했습니다.</div>`;
+    console.error(e);
+  }
+}
+
+// ---------------------------------------------------------------- 게임6: 기록 맞히기
+// "선수 맞히기"(게임1)처럼 카드를 누르면 개인/팀 두 버튼으로 쪼개진다.
+// 개인전은 게임1/4와 동일하게 SEARCH_POOL(영문 이름 9천여 개), 팀전은
+// TEAM_POOL(구단명) 대상으로 검색한다. 기회는 문제당 딱 1번 - 틀리면 바로
+// 정답 공개. 리더보드 없이 마지막에 몇 문제 맞혔는지 결과 화면만 보여준다.
+
+let RECORDS_POOL = null;
+async function loadRecordsPool() {
+  if (RECORDS_POOL) return;
+  const res = await fetch("data/records_quiz.json");
+  RECORDS_POOL = await res.json();
+}
+let TEAM_RECORDS_POOL = null;
+async function loadTeamRecordsPool() {
+  if (TEAM_RECORDS_POOL) return;
+  const res = await fetch("data/team_records_quiz.json");
+  TEAM_RECORDS_POOL = await res.json();
+}
+let TEAM_POOL = null;
+async function loadTeamPool() {
+  if (TEAM_POOL) return;
+  const res = await fetch("data/team_pool.json");
+  TEAM_POOL = await res.json();
+}
+
+const REC_ROUND_SIZE = 10;
+let rec = null; // 게임6 현재 판 상태 ({ mode: "player"|"team", order, idx, correct })
+
+// 정답이 공개된(맞혔든 틀렸든) 문제는 로컬에 기록해두고, 다음 판을 고를 때
+// 뒷순위로 미룬다 - 풀을 다 겪기 전까지는 최대한 안 본 문제가 먼저 나오게.
+// 개인/팀은 풀이 완전히 달라서 "본 문제" 기록도 따로 관리한다.
+function recSeenKey(mode) {
+  return mode === "team" ? "recSeenItemsTeam" : "recSeenItems";
+}
+function getRecSeenIds(mode) {
+  try { return new Set(JSON.parse(localStorage.getItem(recSeenKey(mode)) || "[]")); }
+  catch { return new Set(); }
+}
+function markRecSeen(mode, itemId) {
+  const seen = getRecSeenIds(mode);
+  seen.add(itemId);
+  localStorage.setItem(recSeenKey(mode), JSON.stringify([...seen]));
+}
+function pickRecRoundItems(mode, pool, n) {
+  const seen = getRecSeenIds(mode);
+  const unseen = pool.filter(it => !seen.has(it.id));
+  const alreadySeen = pool.filter(it => seen.has(it.id));
+  const ordered = [...shuffle(unseen), ...shuffle(alreadySeen)];
+  return ordered.slice(0, Math.min(n, ordered.length));
+}
+
+async function startGame6(mode) {
+  logPlay(mode === "team" ? "records-guess-team" : "records-guess-player");
+  render(`<div class="loading">불러오는 중…</div>`);
+  let pool;
+  if (mode === "team") {
+    await Promise.all([loadTeamRecordsPool(), loadTeamPool()]);
+    pool = TEAM_RECORDS_POOL;
+  } else {
+    mode = "player";
+    await loadRecordsPool();
+    pool = RECORDS_POOL;
+  }
+  const order = pickRecRoundItems(mode, pool, REC_ROUND_SIZE);
+  rec = { mode, order, idx: 0, correct: 0 };
+  renderGame6();
+}
+
+async function recIsMatch(name, item) {
+  return matchesHash(name, item.answerHash);
+}
+
+function renderGame6() {
+  const s = rec;
+  const isTeam = s.mode === "team";
+  const item = s.order[s.idx];
+  render(`
+    <div class="game-screen">
+      ${renderSourceBadge("records")}
+      <div class="topbar">
+        <button class="backbtn" id="backBtn">← 처음으로</button>
+        <div class="score-pill">${s.idx + 1} / ${s.order.length}번째 · 정답 <b>${s.correct}</b>개</div>
+      </div>
+      <div class="criterion-banner">🏆 이 기록의 주인공은 ${isTeam ? "어느 구단일까요" : "누구일까요"}? 기회는 <b>단 1번</b>이에요!</div>
+      <div class="rec-desc-card">${escapeHtml(item.desc)}</div>
+      <div class="guess-wrap">
+        <input id="recGuessInput" placeholder="${isTeam ? "구단 이름을 검색해보세요" : "선수 이름을 검색해보세요"}" autocomplete="off">
+        <div class="suggest-list" id="recSuggestList" hidden></div>
+      </div>
+    </div>
+  `);
+  document.getElementById("backBtn").onclick = renderHome;
+  wireSourceBadge();
+  wireRecInput();
+  document.getElementById("recGuessInput")?.focus();
+}
+
+function renderRecSuggestions(query) {
+  const box = document.getElementById("recSuggestList");
+  if (!box) return;
+  const q = normalize(query);
+  if (!q) { box.hidden = true; box.innerHTML = ""; return; }
+  const pool = rec.mode === "team" ? TEAM_POOL : SEARCH_POOL;
+  const matches = pool.filter(name => normalize(name).includes(q));
+  renderSuggestBox(box, matches, (name) => {
+    box.hidden = true;
+    box.innerHTML = "";
+    recSubmit(name);
+  });
+}
+
+function wireRecInput() {
+  const input = document.getElementById("recGuessInput");
+  input.addEventListener("input", () => renderRecSuggestions(input.value));
+  input.addEventListener("focus", () => renderRecSuggestions(input.value));
+}
+
+async function recSubmit(name) {
+  const item = rec.order[rec.idx];
+  const wasCorrect = await recIsMatch(name, item);
+  if (wasCorrect) rec.correct += 1;
+  renderRecReveal(wasCorrect, item);
+}
+
+function renderRecReveal(wasCorrect, item) {
+  const s = rec;
+  markRecSeen(s.mode, item.id);
+  const isFinal = s.idx + 1 >= s.order.length;
+  render(`
+    <div class="game-screen">
+      <div class="topbar">
+        <button class="backbtn" id="backBtn">← 처음으로</button>
+        <div class="score-pill">${s.idx + 1} / ${s.order.length}번째 · 정답 <b>${s.correct}</b>개</div>
+      </div>
+      <div class="rec-desc-card">${escapeHtml(item.desc)}</div>
+      <div class="result-card">
+        <div class="name">${wasCorrect ? "🎉 정답이에요!" : "😅 아쉬워요, 정답은"}</div>
+        <div class="grade">${escapeHtml(deobfuscate(item.answerEnc))}</div>
+      </div>
+      ${item.explanation ? `<div class="rec-explain-card">${escapeHtml(item.explanation)}</div>` : ""}
+      ${item.sourceEnc ? `<a class="rec-source-link" href="${escapeHtml(deobfuscate(item.sourceEnc))}" target="_blank" rel="noopener noreferrer">출처 보기 ↗</a>` : ""}
+      <div class="btn-row">
+        <button class="primary" id="recNextBtn">${isFinal ? "결과 보기" : "다음 문제 →"}</button>
+      </div>
+    </div>
+  `);
+  document.getElementById("backBtn").onclick = renderHome;
+  document.getElementById("recNextBtn").onclick = recAdvance;
+}
+
+function recAdvance() {
+  if (rec.idx + 1 >= rec.order.length) { renderRecFinish(); return; }
+  rec.idx += 1;
+  renderGame6();
+}
+
+function renderRecFinish() {
+  const s = rec;
+  window.FSPoints?.earn(s.mode === "team" ? "records-team" : "records-player",
+    s.correct * 6 + (s.correct === s.order.length ? 20 : 0), `${s.correct}/${s.order.length} 정답`);
+  render(`
+    <div class="game-screen">
+      <div class="topbar">
+        <button class="backbtn" id="backBtn">← 처음으로</button>
+        <div></div>
+      </div>
+      <div class="result-card">
+        <div class="name">${s.correct === s.order.length ? "🏆" : "📜"} 완료!</div>
+        <div class="grade">${s.correct} / ${s.order.length}<small>정답</small></div>
+      </div>
+      <div class="btn-row">
+        <button class="primary" id="recRetryBtn">다시 하기</button>
+        <button id="recHomeBtn">처음으로</button>
+      </div>
+    </div>
+  `);
+  document.getElementById("backBtn").onclick = renderHome;
+  document.getElementById("recHomeBtn").onclick = renderHome;
+  document.getElementById("recRetryBtn").onclick = () => startGame6(s.mode);
+}
+
+// ---------------------------------------------------------------- 게임8: 빅6 야찌
+// 프리미어리그 빅6(120명, 팀당 20명 - crawler/build_big6_dataset.py가 FotMob 팀
+// 스쿼드 API로 생성) 선수 카드로 하는 1인용 Yahtzee. 매 라운드 5장을 뽑아 원하는
+// 카드를 HOLD하고 최대 2번 재굴림한 뒤, 13개 족보(팀 6 + 포지션 3 + 조합 4) 중
+// 아직 안 쓴 하나를 골라 점수를 기록한다 - 13라운드=족보 13개라 항상 라운드 수와
+// 남은 족보 수가 맞아떨어진다. 매 카드는 항상 120명 전체 풀에서 독립 복원추출
+// (HOLD한 카드도 이후 재추첨에 다시 등장 가능, 같은 선수 중복 허용).
+const BIG6_TEAMS = ["ARS", "CHE", "LIV", "MCI", "MUN", "TOT"];
+const BIG6_TEAM_LABEL = { ARS: "아스날", CHE: "첼시", LIV: "리버풀", MCI: "맨시티", MUN: "맨유", TOT: "토트넘" };
+const BIG6_TEAM_COLOR = { ARS: "#EF0107", CHE: "#034694", LIV: "#C8102E", MCI: "#6CABDD", MUN: "#DA291C", TOT: "#132257" };
+// GK(골키퍼)는 카드에 표시는 하되 별도 족보가 없다 - POSITION 족보는 공격수/
+// 미드필더/수비수 3개뿐이라 골키퍼 카드는 POSITION 점수에 전혀 기여하지 않는다.
+const BIG6_POS_LABEL = { FWD: "공격수", MID: "미드필더", DEF: "수비수", GK: "골키퍼" };
+const BIG6_POSITIONS = ["FWD", "MID", "DEF"];
+const BIG6_HAND_SIZE = 5;
+const BIG6_MAX_REROLLS = 2;
+const BIG6_TOTAL_ROUNDS = 13;
+const BIG6_TEAM_BONUS_THRESHOLD = 90;
+const BIG6_TEAM_BONUS_SCORE = 30;
+const BIG6_POSITION_BONUS_THRESHOLD = 35;
+const BIG6_POSITION_BONUS_SCORE = 25;
+// 사진을 여러 장 스핀시키는 방식은 로딩/디코딩이 못 따라와 빈 프레임이 스치는
+// 문제가 계속 나서, "?" 카드가 잠깐 흔들리다가 바로 결과가 나오는 방식으로
+// 바꿨다 - 애니메이션 중엔 이미지를 아예 그리지 않으니 로딩 문제 자체가 없다.
+const BIG6_SPIN_MS = 550;
+
+const BIG6_CATEGORIES = [
+  { key: "ARS", section: "team", label: "아스날" },
+  { key: "CHE", section: "team", label: "첼시" },
+  { key: "LIV", section: "team", label: "리버풀" },
+  { key: "MCI", section: "team", label: "맨시티" },
+  { key: "MUN", section: "team", label: "맨유" },
+  { key: "TOT", section: "team", label: "토트넘" },
+  { key: "FWD", section: "position", label: "공격수" },
+  { key: "MID", section: "position", label: "미드필더" },
+  { key: "DEF", section: "position", label: "수비수" },
+  { key: "STRAIGHT", section: "combo", label: "스트레이트" },
+  { key: "FULL_HOUSE", section: "combo", label: "풀하우스" },
+  { key: "FOUR_KIND", section: "combo", label: "포카인드" },
+  { key: "YAHTZEE", section: "combo", label: "야찌" },
+];
+const BIG6_SECTIONS = [
+  { key: "team", label: "TEAM · 카드당 5점" },
+  { key: "position", label: "POSITION · 카드당 3점" },
+  { key: "combo", label: "COMBINATION" },
+];
+
+let BIG6_PLAYERS = [];
+async function loadBig6Players() {
+  if (BIG6_PLAYERS.length) return;
+  // v2: positionGroup의 "BACK"(수비수+골키퍼 통합)을 "DEF"/"GK"로 분리 - 옛 캐시는
+  // 여전히 BACK을 들고 있으므로 버려야 한다.
+  sessionStorage.removeItem("big6PlayersV1");
+  const cached = sessionStorage.getItem("big6PlayersV2");
+  if (cached) { BIG6_PLAYERS = JSON.parse(cached); return; }
+  const res = await fetch("data/big6_players.json");
+  BIG6_PLAYERS = await res.json();
+  sessionStorage.setItem("big6PlayersV2", JSON.stringify(BIG6_PLAYERS));
+}
+
+// 스핀 애니메이션 도중 사진이 늦게 로드되어 빈 프레임이 스치는 걸 막기 위해
+// 120명 사진을 미리 한 번에 브라우저 캐시에 앉혀둔다 - 같은 120장을 반복해서
+// 뽑는 구조라(복원추출) 한 번만 받아두면 이후 모든 스핀은 네트워크 지연 없이 돈다.
+function big6PreloadImage(src) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      // onload는 바이트를 다 받았다는 뜻일 뿐 디코딩까지 끝났다는 보장은 아니다 -
+      // decode()까지 기다려야 스핀 중 새로 끼워 넣는 <img>가 첫 프레임부터 바로
+      // 그려진다(디코딩 대기 때문에 빈 채로 한 박자 스치는 걸 막기 위함).
+      if (img.decode) img.decode().then(resolve).catch(resolve);
+      else resolve();
+    };
+    img.onerror = () => resolve();
+    img.src = src;
+  });
+}
+function big6PreloadAllPhotos() {
+  return Promise.all(BIG6_PLAYERS.map(p => big6PreloadImage(p.profileImage)));
+}
+
+function big6DrawOne() {
+  return BIG6_PLAYERS[Math.floor(Math.random() * BIG6_PLAYERS.length)];
+}
+function big6DrawHand() {
+  return Array.from({ length: BIG6_HAND_SIZE }, big6DrawOne);
+}
+
+function big6TeamCounts(hand) {
+  const c = {};
+  BIG6_TEAMS.forEach(t => c[t] = 0);
+  hand.forEach(p => c[p.team]++);
+  return c;
+}
+// GK(골키퍼)는 족보가 없어 카운트 대상에서 아예 뺀다 - 골키퍼 카드는 POSITION
+// 점수에 기여하지 않는다.
+function big6PositionCounts(hand) {
+  const c = { FWD: 0, MID: 0, DEF: 0 };
+  hand.forEach(p => { if (c[p.positionGroup] !== undefined) c[p.positionGroup]++; });
+  return c;
+}
+// 특수 족보(스트레이트/풀하우스/포카인드/야찌)는 팀별 카드 개수를 내림차순
+// 정렬하면 전부 이 배열 하나로 판정된다 (기획서 18장).
+function big6ScoreFor(key, hand) {
+  const tc = big6TeamCounts(hand);
+  if (BIG6_TEAMS.includes(key)) return tc[key] * 5;
+  if (key === "FWD" || key === "MID" || key === "DEF") return big6PositionCounts(hand)[key] * 3;
+  const sorted = Object.values(tc).sort((a, b) => b - a);
+  if (key === "STRAIGHT") return sorted.filter(x => x > 0).length === 5 ? 20 : 0;
+  if (key === "FULL_HOUSE") return (sorted[0] === 3 && sorted[1] === 2) ? 30 : 0;
+  if (key === "FOUR_KIND") return sorted[0] >= 4 ? 40 : 0;
+  if (key === "YAHTZEE") return sorted[0] === 5 ? 50 : 0;
+  return 0;
+}
+function big6TeamSubtotal(scores) {
+  return BIG6_TEAMS.reduce((sum, t) => sum + (scores[t] || 0), 0);
+}
+function big6TeamBonusEligible(scores) {
+  return big6TeamSubtotal(scores) >= BIG6_TEAM_BONUS_THRESHOLD;
+}
+function big6PositionSubtotal(scores) {
+  return BIG6_POSITIONS.reduce((sum, k) => sum + (scores[k] || 0), 0);
+}
+function big6PositionBonusEligible(scores) {
+  return big6PositionSubtotal(scores) >= BIG6_POSITION_BONUS_THRESHOLD;
+}
+function big6Total(scores) {
+  let total = 0;
+  BIG6_CATEGORIES.forEach(c => { total += scores[c.key] || 0; });
+  if (BIG6_TEAMS.every(t => scores[t] !== null) && big6TeamBonusEligible(scores)) total += BIG6_TEAM_BONUS_SCORE;
+  if (BIG6_POSITIONS.every(k => scores[k] !== null) && big6PositionBonusEligible(scores)) total += BIG6_POSITION_BONUS_SCORE;
+  return total;
+}
+
+let big6 = null; // { round, drawCount, hand, held:Set, scores }
+let big6Animating = false; // 스핀 애니메이션 도중엔 HOLD/리롤/족보선택을 전부 무시한다
+
+function big6InitScores() {
+  const s = {};
+  BIG6_CATEGORIES.forEach(c => s[c.key] = null);
+  return s;
+}
+
+// 게임 시작 전(그리고 인게임에서 다시보기 버튼으로) 한 번에 보여주는 설명 모달.
+// 인게임 화면 자체에는 이 설명을 반복해서 띄우지 않고 상단 작은 배지로만
+// 다시 열 수 있게 해서 화면을 깔끔하게 유지한다.
+function big6IntroContentHtml() {
+  return `
+    <div class="b6-intro-title">🎲 빅6 야찌 게임 방법</div>
+    <div class="b6-intro-list">
+      <div><b>1.</b> 매 라운드 선수 카드 5장을 뽑아요.</div>
+      <div><b>2.</b> 마음에 드는 카드는 HOLD, 나머지는 최대 2번까지 다시 뽑을 수 있어요.</div>
+      <div><b>3.</b> 마지막 패로 아직 안 쓴 족보 하나를 골라 점수를 기록해요.</div>
+      <div class="b6-intro-sub">TEAM · 6개</div>
+      <div>해당 팀 카드 1장당 <b>5점</b>. 6팀 점수 합계가 90점 이상이면 <b>+30점</b> 보너스!</div>
+      <div class="b6-intro-sub">POSITION · 3개</div>
+      <div>해당 포지션(공격수/미드필더/수비수) 카드 1장당 <b>3점</b>. 골키퍼 카드는 포지션 점수에 들어가지 않아요. 3개 합계가 35점 이상이면 <b>+25점</b> 보너스!</div>
+      <div class="b6-intro-sub">COMBINATION · 4개</div>
+      <div>스트레이트(5장 모두 다른 팀) <b>20점</b> · 풀하우스(3+2) <b>30점</b> · 포카인드(한 팀 4장 이상) <b>40점</b> · 야찌(한 팀 5장) <b>50점</b></div>
+      <div class="b6-intro-sub">13라운드 = 족보 13개를 모두 기록하면 게임 종료!</div>
+      <div class="b6-intro-sub">카드 구성</div>
+      <div>총 120명 · 팀별 20명씩 · 포지션별(공격수/미드필더/수비수) 40명씩</div>
+    </div>
+  `;
+}
+function showBig6IntroModal(closeLabel) {
+  return new Promise((resolve) => {
+    const overlay = document.createElement("div");
+    overlay.className = "overlay";
+    overlay.innerHTML = `
+      <div class="hint-modal-card b6-intro-card">
+        ${big6IntroContentHtml()}
+        <button class="close-btn" id="b6IntroCloseBtn">${closeLabel}</button>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    overlay.addEventListener("click", (e) => { if (e.target === overlay) { overlay.remove(); resolve(); } });
+    document.getElementById("b6IntroCloseBtn").onclick = () => { overlay.remove(); resolve(); };
+  });
+}
+
+function big6EmptyHand() {
+  return new Array(BIG6_HAND_SIZE).fill(null);
+}
+
+const BIG6_INTRO_SEEN_KEY = "big6IntroSeenV1";
+
+async function startGame8() {
+  logPlay("big6-yahtzee");
+  render(`<div class="loading">불러오는 중…</div>`);
+  await loadBig6Players();
+  const preloadPromise = big6PreloadAllPhotos(); // 설명 모달 보는 동안 백그라운드로 미리 캐싱
+  // 설명 모달은 이 기기에서 처음 플레이할 때 한 번만 보여준다 - 그 다음부터는
+  // 인게임 화면의 📖 배지로만 다시 볼 수 있다.
+  if (!localStorage.getItem(BIG6_INTRO_SEEN_KEY)) {
+    await showBig6IntroModal("시작하기");
+    localStorage.setItem(BIG6_INTRO_SEEN_KEY, "1");
+  }
+  await preloadPromise; // 모달을 바로 닫아도(또는 생략돼도) 첫 뽑기 스핀 전에는 사진이 준비되게 기다린다
+  big6 = { round: 1, drawCount: 0, hand: big6EmptyHand(), held: new Set(), scores: big6InitScores(), drawn: false };
+  renderGame8();
+}
+
+// 라운드 시작 시엔 카드를 바로 뽑지 않고 빈 칸으로 두고, 버튼을 눌러야 첫 5장이
+// 돈다(초기 드로우는 리롤 횟수에 포함되지 않는다). 이후엔 같은 버튼이 "다시
+// 뽑기"로 바뀐다.
+function big6InitialDraw() {
+  if (big6Animating || big6.drawn) return;
+  const finalHand = big6DrawHand();
+  big6RunSpin([0, 1, 2, 3, 4], finalHand, () => {
+    if (!big6) return;
+    big6.hand = finalHand;
+    big6.drawn = true;
+  });
+}
+function big6Reroll() {
+  const s = big6;
+  if (big6Animating || !s.drawn || s.drawCount >= BIG6_MAX_REROLLS) return;
+  const spinIdx = s.hand.map((_, i) => i).filter(i => !s.held.has(i));
+  if (!spinIdx.length) { s.drawCount += 1; big6MaybeClearHolds(); big6UpdateDrawBtn(); return; } // 전부 HOLD면 돌릴 카드가 없다
+  const finalHand = s.hand.map((p, i) => s.held.has(i) ? p : big6DrawOne());
+  big6RunSpin(spinIdx, finalHand, () => {
+    if (!big6) return;
+    big6.hand = finalHand;
+    big6.drawCount += 1;
+    big6MaybeClearHolds();
+  });
+}
+function big6DrawBtnClick() {
+  if (!big6.drawn) big6InitialDraw();
+  else big6Reroll();
+}
+// 마지막 재굴림(2번째)까지 다 쓰고 나면 더 이상 돌릴 기회가 없어서 HOLD가
+// 아무 의미도 없다 - 자동으로 전부 풀고, 다시 못 누르게 막는다.
+function big6MaybeClearHolds() {
+  const s = big6;
+  if (!s || s.drawCount < BIG6_MAX_REROLLS || !s.held.size) return;
+  s.held.forEach(i => {
+    const card = document.querySelector(`.b6-card[data-idx="${i}"]`);
+    if (card) card.classList.remove("held");
+  });
+  s.held.clear();
+}
+function big6ToggleHold(i) {
+  if (big6Animating) return;
+  const s = big6;
+  if (!s.drawn || !s.hand[i]) return; // 아직 안 뽑힌 빈 칸은 HOLD할 게 없다
+  if (s.drawCount >= BIG6_MAX_REROLLS) return; // 재굴림을 다 썼으면 HOLD는 더 이상 의미가 없다
+  if (s.held.has(i)) s.held.delete(i); else s.held.add(i);
+  // renderGame8() 전체를 다시 그리면 <img>가 통째로 새로 생성되면서 캐시된
+  // 사진이어도 한 프레임 깜빡인다 - HOLD는 점수판에 영향이 없으므로(다음
+  // 재굴림에서 어떤 칸을 지킬지 표시하는 것뿐) 해당 카드의 클래스만 토글한다.
+  const card = document.querySelector(`.b6-card[data-idx="${i}"]`);
+  if (card) card.classList.toggle("held", s.held.has(i));
+}
+
+function big6WireCard(el) {
+  el.onclick = () => big6ToggleHold(Number(el.dataset.idx));
+}
+// 카드 한 장의 DOM만 통째로 교체하고 새 노드에 클릭 핸들러를 다시 건다 - 화면
+// 전체를 다시 그리면(renderGame8) HOLD된 다른 카드들의 <img>까지 새로 생성되며
+// 깜빡이므로, 리롤 중엔 실제로 바뀌는 칸만 이렇게 targeted로 건드린다.
+function big6SetCardSlot(i, html) {
+  const card = document.querySelector(`.b6-card[data-idx="${i}"]`);
+  if (!card) return;
+  const temp = document.createElement("div");
+  temp.innerHTML = html.trim();
+  const newCard = temp.firstElementChild;
+  card.replaceWith(newCard);
+  if (!newCard.classList.contains("empty")) big6WireCard(newCard);
+}
+function big6UpdateDrawBtn() {
+  const s = big6;
+  const btn = document.getElementById("b6RerollBtn");
+  if (!btn || !s) return;
+  const rerollsLeft = BIG6_MAX_REROLLS - s.drawCount;
+  btn.textContent = !s.drawn ? "카드 뽑기" : `다시 뽑기 (남은 기회 ${rerollsLeft}/${BIG6_MAX_REROLLS})`;
+  btn.disabled = s.drawn && rerollsLeft <= 0;
+}
+
+// spinIdx 자리만 "?" 카드로 바꿔 잠깐 흔들리는 걸 보여주고(사진은 전혀 그리지
+// 않는다 - 로딩 문제를 원천 차단), 다 끝나면 onDone에서 실제 결과를 반영한 뒤
+// 그 자리만 다시 targeted로 교체한다. HOLD된 카드 등 나머지 칸은 이 스핀
+// 사이클 내내 DOM에 전혀 손대지 않아 깜빡이지 않는다.
+function big6RunSpin(spinIdx, finalHand, onDone) {
+  big6Animating = true;
+  spinIdx.forEach(i => big6SetCardSlot(i, big6SpinCardHtml(i)));
+  const btn = document.getElementById("b6RerollBtn");
+  if (btn) btn.disabled = true;
+  setTimeout(() => {
+    big6Animating = false;
+    onDone();
+    if (!big6) return; // 스핀 도중 처음으로 나가버린 경우
+    spinIdx.forEach(i => big6SetCardSlot(i, big6CardHtml(big6.hand[i], i, big6)));
+    big6UpdateDrawBtn();
+    renderBig6Sheet();
+  }, BIG6_SPIN_MS);
+}
+
+function big6CardHtml(p, i, s) {
+  const held = s.held.has(i);
+  return `
+    <div class="b6-card ${held ? "held" : ""}" data-idx="${i}" style="--b6-team-color:${BIG6_TEAM_COLOR[p.team]}">
+      <div class="b6-hold-badge"><svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5zm3 8H9V6a3 3 0 0 1 6 0v3z"/></svg></div>
+      <div class="b6-photo-wrap"><img src="${escapeHtml(p.profileImage)}" alt="${escapeHtml(p.name)}" loading="lazy" onerror="this.style.visibility='hidden'"></div>
+      <div class="b6-card-info">
+        <div class="b6-name">${escapeHtml(p.name)}</div>
+        <div class="b6-pill-row">
+          <span class="b6-team-pill">${BIG6_TEAM_LABEL[p.team]}</span>
+          <span class="b6-pos-pill">${BIG6_POS_LABEL[p.positionGroup]}</span>
+        </div>
+      </div>
+    </div>`;
+}
+
+function big6EmptyCardHtml(i) {
+  return `
+    <div class="b6-card empty" data-idx="${i}">
+      <div class="b6-photo-wrap"><span class="b6-photo-placeholder">?</span></div>
+      <div class="b6-card-info">
+        <div class="b6-name">&nbsp;</div>
+        <div class="b6-pill-row">
+          <span class="b6-team-pill" style="background:var(--border)">&nbsp;</span>
+          <span class="b6-pos-pill">&nbsp;</span>
+        </div>
+      </div>
+    </div>`;
+}
+
+function big6SpinCardHtml(i) {
+  return `
+    <div class="b6-card spinning" data-idx="${i}">
+      <div class="b6-photo-wrap"><span class="b6-photo-placeholder">?</span></div>
+      <div class="b6-card-info">
+        <div class="b6-name">&nbsp;</div>
+        <div class="b6-pill-row">
+          <span class="b6-team-pill" style="background:var(--border)">&nbsp;</span>
+          <span class="b6-pos-pill">&nbsp;</span>
+        </div>
+      </div>
+    </div>`;
+}
+
+// 팀 족보와 포지션 족보 사이, 포지션 족보와 콤비네이션 족보 사이에 끼워 넣는
+// 아주 짧은 한 줄 - 길게 설명하지 않고 "보너스(+30) 37/90" 형태로 현재 합계
+// 진행 상황만 보여준다.
+function big6BonusInlineHtml(scores) {
+  const subtotal = big6TeamSubtotal(scores);
+  const done = subtotal >= BIG6_TEAM_BONUS_THRESHOLD;
+  return `<span class="b6-bonus-inline ${done ? "done" : ""}">보너스(+${BIG6_TEAM_BONUS_SCORE}) ${subtotal}/${BIG6_TEAM_BONUS_THRESHOLD}</span>`;
+}
+function big6PositionBonusInlineHtml(scores) {
+  const subtotal = big6PositionSubtotal(scores);
+  const done = subtotal >= BIG6_POSITION_BONUS_THRESHOLD;
+  return `<span class="b6-bonus-inline ${done ? "done" : ""}">보너스(+${BIG6_POSITION_BONUS_SCORE}) ${subtotal}/${BIG6_POSITION_BONUS_THRESHOLD}</span>`;
+}
+
+function renderGame8() {
+  const s = big6;
+  const rerollsLeft = BIG6_MAX_REROLLS - s.drawCount;
+  const cardsHtml = s.hand.map((p, i) => p ? big6CardHtml(p, i, s) : big6EmptyCardHtml(i)).join("");
+  const drawBtnLabel = !s.drawn ? "카드 뽑기" : `다시 뽑기 (남은 기회 ${rerollsLeft}/${BIG6_MAX_REROLLS})`;
+  const drawBtnDisabled = s.drawn && rerollsLeft <= 0;
+  render(`
+    <div class="game-screen b6-game">
+      <div class="topbar">
+        <button class="backbtn" id="backBtn">← 처음으로</button>
+        <div class="score-pill b6-round-pill">${s.round} / ${BIG6_TOTAL_ROUNDS}라운드 · 누적 <b>${big6Total(s.scores)}</b>점</div>
+        <div class="b6-icon-row">
+          ${renderSourceBadge("big6")}
+          <button class="source-badge" id="b6RulesBadge" title="게임 방법">📖</button>
+        </div>
+      </div>
+      <div class="b6-layout">
+        <div class="b6-hand-col">
+          <div class="b6-hand">${cardsHtml}</div>
+          <div class="b6-reroll-row">
+            <button id="b6RerollBtn" ${drawBtnDisabled ? "disabled" : ""}>${drawBtnLabel}</button>
+          </div>
+        </div>
+        <div class="b6-sheet-col">
+          <div class="b6-sheet" id="b6Sheet"></div>
+        </div>
+      </div>
+    </div>
+  `);
+  document.getElementById("backBtn").onclick = () => { big6 = null; renderHome(); };
+  wireSourceBadge();
+  document.getElementById("b6RulesBadge").onclick = () => showBig6IntroModal("확인");
+  document.getElementById("b6RerollBtn").onclick = big6DrawBtnClick;
+  document.querySelectorAll(".b6-card:not(.empty)").forEach(big6WireCard);
+  renderBig6Sheet();
+}
+
+function renderBig6Sheet() {
+  const box = document.getElementById("b6Sheet");
+  if (!box) return;
+  const s = big6;
+  const ready = s.drawn; // 아직 카드를 뽑기 전이면 미리보기 점수를 계산할 수 없다
+  box.innerHTML = BIG6_SECTIONS.map(sec => {
+    const items = BIG6_CATEGORIES.filter(c => c.section === sec.key);
+    const gridClass = items.length % 3 === 0 ? "cols-3" : "";
+    // 보너스 진행 상황은 섹션 제목과 같은 줄 오른쪽에 붙여서 세로 공간을 아낀다.
+    const bonusHtml = sec.key === "team" ? big6BonusInlineHtml(s.scores)
+      : sec.key === "position" ? big6PositionBonusInlineHtml(s.scores)
+      : "";
+    return `
+    <div class="b6-sheet-heading-row">
+      <span class="b6-sheet-heading">${escapeHtml(sec.label)}</span>
+      ${bonusHtml}
+    </div>
+    <div class="b6-tile-grid ${gridClass}">
+      ${items.map(c => {
+        const used = s.scores[c.key] !== null;
+        // 아직 카드를 뽑기 전(!ready)에도 흐리게 만들지 않고 그냥 0점으로 보여준다 -
+        // 대신 클릭은 안 되게 "locked"로 막는다.
+        let tileClass, scoreText;
+        if (used) { tileClass = "used"; scoreText = s.scores[c.key]; }
+        else if (ready) { tileClass = ""; scoreText = "+" + big6ScoreFor(c.key, s.hand); }
+        else { tileClass = "locked"; scoreText = "0"; }
+        return `
+          <div class="b6-tile ${tileClass}" data-key="${c.key}">
+            <div class="b6-tile-label">${escapeHtml(c.label)}</div>
+            <div class="b6-tile-score">${scoreText}</div>
+          </div>`;
+      }).join("")}
+    </div>`;
+  }).join("");
+  box.querySelectorAll(".b6-tile:not(.used):not(.locked)").forEach(el => {
+    el.onclick = () => big6ConfirmCategory(el.dataset.key);
+  });
+}
+
+function big6ConfirmCategory(key) {
+  if (big6Animating) return;
+  const s = big6;
+  const cat = BIG6_CATEGORIES.find(c => c.key === key);
+  const preview = big6ScoreFor(key, s.hand);
+  const overlay = document.createElement("div");
+  overlay.className = "overlay";
+  overlay.innerHTML = `
+    <div class="win-card">
+      <div class="trophy">🎲</div>
+      <h2>${escapeHtml(cat.label)}로 기록할까요?</h2>
+      <div class="result-line">이번 패 기준 <b>${preview}점</b></div>
+      <button class="close-btn" id="b6ConfirmBtn">확정하기</button>
+      <button class="close-btn" id="b6CancelBtn" style="background:var(--panel2); color:var(--text); margin-top:8px;">취소</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.addEventListener("click", (e) => { if (e.target === overlay) overlay.remove(); });
+  document.getElementById("b6CancelBtn").onclick = () => overlay.remove();
+  document.getElementById("b6ConfirmBtn").onclick = () => {
+    overlay.remove();
+    big6CommitCategory(key, preview);
+  };
+}
+
+function big6CommitCategory(key, score) {
+  const s = big6;
+  s.scores[key] = score;
+  if (s.round >= BIG6_TOTAL_ROUNDS) {
+    big6Finish();
+    return;
+  }
+  s.round += 1;
+  s.drawCount = 0;
+  s.hand = big6EmptyHand();
+  s.held = new Set();
+  s.drawn = false;
+  renderGame8();
+}
+
+async function submitBig6Score(nickname, score) {
+  const ref = doc(db, "big6Leaderboard", "allTime", "entries", deviceId());
+  const prev = await getDoc(ref);
+  if (prev.exists() && prev.data().score >= score) return false;
+  await commitLeaderboardScore("big6-yahtzee", ref, { nickname, score, updatedAt: new Date() });
+  return true;
+}
+async function fetchBig6Leaderboard(top = 10) {
+  const q = query(collection(db, "big6Leaderboard", "allTime", "entries"), orderBy("score", "desc"), limit(top));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+function big6Medal(i) {
+  return i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : String(i + 1);
+}
+async function renderBig6Leaderboard() {
+  const box = document.getElementById("b6LbBox");
+  if (!box) return;
+  box.innerHTML = `<div class="sub">리더보드 불러오는 중…</div>`;
+  try {
+    const rows = await fetchBig6Leaderboard(10);
+    const my = deviceId();
+    box.innerHTML = rows.length
+      ? `<table class="lb"><tr><th>#</th><th>닉네임</th><th>점수</th></tr>${
+          rows.map((r, i) => `<tr class="${r.id === my ? 'me' : ''}"><td>${big6Medal(i)}</td><td>${escapeHtml(r.nickname)}</td><td>${escapeHtml(r.score)}</td></tr>`).join("")
+        }</table>`
+      : `<div class="sub">아직 등록된 기록이 없어요. 첫 기록을 남겨보세요!</div>`;
+  } catch (e) {
+    box.innerHTML = `<div class="sub">리더보드를 불러오지 못했습니다.</div>`;
+    console.error(e);
+  }
+}
+
+function big6Finish() {
+  const s = big6;
+  const teamSubtotal = big6TeamSubtotal(s.scores);
+  const bonus = big6TeamBonusEligible(s.scores) ? BIG6_TEAM_BONUS_SCORE : 0;
+  const posSubtotal = big6PositionSubtotal(s.scores);
+  const posBonus = big6PositionBonusEligible(s.scores) ? BIG6_POSITION_BONUS_SCORE : 0;
+  const comboSubtotal = ["STRAIGHT", "FULL_HOUSE", "FOUR_KIND", "YAHTZEE"].reduce((sum, k) => sum + (s.scores[k] || 0), 0);
+  const total = teamSubtotal + bonus + posSubtotal + posBonus + comboSubtotal;
+  window.FSPoints?.earn("big6", Math.min(70, Math.round(total / 4)), `${total}점`);
+  render(`
+    <div class="game-screen b6-game">
+      <div class="topbar">
+        <button class="backbtn" id="backBtn">← 처음으로</button>
+        <div></div>
+      </div>
+      <div class="result-card">
+        <div class="name">🏆 13라운드 완료!</div>
+        <div class="grade">${total}<small>총점 · TEAM ${teamSubtotal}${bonus ? ` (+보너스 ${bonus})` : ""} · POSITION ${posSubtotal}${posBonus ? ` (+보너스 ${posBonus})` : ""} · COMBO ${comboSubtotal}</small></div>
+      </div>
+      <div class="nick-row">
+        <input id="b6NickInput" maxlength="20" placeholder="닉네임 (리더보드 등록)">
+        <button id="b6SubmitScoreBtn">기록 등록</button>
+      </div>
+      <div id="b6LbBox"></div>
+      <div class="btn-row">
+        <button class="primary" id="b6RetryBtn">다시 하기</button>
+        <button id="b6HomeBtn">처음으로</button>
+      </div>
+    </div>
+  `);
+  document.getElementById("backBtn").onclick = renderHome;
+  document.getElementById("b6HomeBtn").onclick = renderHome;
+  document.getElementById("b6RetryBtn").onclick = startGame8;
+  document.getElementById("b6SubmitScoreBtn").onclick = async () => {
+    const nickname = (document.getElementById("b6NickInput").value || "익명").slice(0, 20);
+    const btn = document.getElementById("b6SubmitScoreBtn");
+    btn.disabled = true; btn.textContent = "등록 중…";
+    try {
+      const improved = await submitBig6Score(nickname, total);
+      await renderBig6Leaderboard();
+      rankBonus("big6", improved, () => fetchBig6Leaderboard(10));
+      btn.textContent = improved ? "등록 완료" : "이미 더 높은 기록 보유";
+    } catch (e) {
+      btn.textContent = "등록 실패";
+      console.error(e);
+    }
+  };
+  renderBig6Leaderboard();
+}
+
+// ---------------------------------------------------------------- game 9: CAPTCHA speedrun
+
+const CAPTCHA_QUESTION_GROUPS = [
+  ["teamId"],
+  ["leagueId"],
+  ["countryCode"],
+  ["positionGroup"],
+  ["cityGroup"],
+];
+const CAPTCHA_REFRESH_TYPES = CAPTCHA_QUESTION_GROUPS.flat();
+const CAPTCHA_TYPE_LABELS = {
+  teamId: p => `${p.teamKo} 소속`,
+  leagueId: p => `${p.leagueKo} 소속`,
+  countryCode: p => `${p.countryKo} 국적`,
+  positionGroup: p => `${p.positionKo}`,
+  cityGroup: p => p.cityKo,
+};
+let captchaState = null;
+let captchaGeneration = 0;
+let captchaCountdownInterval = null;
+let captchaCountdownTimeout = null;
+let captchaCountdownResolve = null;
+const CAPTCHA_COUNTDOWN_MS = 3000;
+let captchaTimerFrame = null;
+let captchaFeedbackTimeout = null;
+
+function cleanupCaptcha() {
+  captchaGeneration += 1;
+  if (captchaCountdownInterval !== null) clearInterval(captchaCountdownInterval);
+  if (captchaCountdownTimeout !== null) clearTimeout(captchaCountdownTimeout);
+  if (captchaCountdownResolve) captchaCountdownResolve(false);
+  if (captchaTimerFrame !== null) cancelAnimationFrame(captchaTimerFrame);
+  if (captchaFeedbackTimeout !== null) clearTimeout(captchaFeedbackTimeout);
+  captchaCountdownInterval = null;
+  captchaCountdownTimeout = null;
+  captchaCountdownResolve = null;
+  captchaTimerFrame = null;
+  captchaFeedbackTimeout = null;
+  captchaState = null;
+  return captchaGeneration;
+}
+
+function captchaPredicate(player, condition) {
+  return String(player[condition.key]) === condition.value;
+}
+
+function buildCaptchaQuestion(players, key, excludedConditions = new Set(), blockedIds = new Set()) {
+  const available = players.filter(player => !blockedIds.has(String(player.id)));
+  const values = new Map();
+  for (const player of available) {
+    const value = String(player[key] ?? "");
+    if (!value || excludedConditions.has(`${key}:${value}`)) continue;
+    if (!values.has(value)) values.set(value, []);
+    values.get(value).push(player);
+  }
+  for (const [value, matches] of shuffle([...values.entries()]).slice(0, 100)) {
+    const distractors = available.filter(player => String(player[key]) !== value);
+    // 정답 수가 너무 적거나 많으면 클릭 난이도가 한쪽으로 치우친다.
+    // 모든 문제는 9명 중 정답이 3~6명이 되도록 구성한다.
+    const validCounts = shuffle([3, 4, 5, 6]).filter(count =>
+      matches.length >= count && distractors.length >= 9 - count
+    );
+    if (!validCounts.length) continue;
+    const answerCount = validCounts[0];
+    const answerPlayers = shuffle(matches).slice(0, answerCount);
+    const cards = shuffle([...answerPlayers, ...shuffle(distractors).slice(0, 9 - answerCount)]);
+    return {
+      condition: { key, value, label: CAPTCHA_TYPE_LABELS[key](matches[0]) },
+      cards,
+      answerIds: answerPlayers.map(player => String(player.id)),
+    };
+  }
+  return null;
+}
+
+function buildCaptchaRound(players) {
+  if (!Array.isArray(players) || players.length < 45) throw new Error("선수 데이터가 부족합니다.");
+  for (let roundAttempt = 0; roundAttempt < 300; roundAttempt += 1) {
+    const blockedIds = new Set();
+    const usedConditions = new Set();
+    const questions = [];
+    const questionTypes = shuffle(CAPTCHA_QUESTION_GROUPS.map(group => shuffle(group)[0]));
+    for (const key of questionTypes) {
+      const made = buildCaptchaQuestion(players, key, usedConditions, blockedIds);
+      if (!made) break;
+      questions.push(made);
+      usedConditions.add(`${made.condition.key}:${made.condition.value}`);
+      made.cards.forEach(player => blockedIds.add(String(player.id)));
+    }
+    if (questions.length === 5) return questions;
+  }
+  throw new Error("서로 겹치지 않는 5문제를 만들 수 없습니다.");
+}
+
+async function loadCaptchaPlayers() {
+  const response = await fetch("data/captcha_players.json", { cache: "no-cache" });
+  if (!response.ok) throw new Error(`선수 데이터 요청 실패 (${response.status})`);
+  const payload = await response.json();
+  const players = payload.players;
+  if (!Array.isArray(players) || players.length < 45) throw new Error("선수 데이터 형식이 올바르지 않습니다.");
+  for (const player of players) {
+    if (!player.id || !player.name || !player.photo || !player.teamId || !player.leagueId ||
+        !player.countryCode || !player.countryKo || !player.continentId || !player.continentKo ||
+        !player.positionGroup || !player.positionDetailGroup) throw new Error("필수 선수 정보가 빠져 있습니다.");
+  }
+  return players;
+}
+
+function preloadCaptchaPhoto(player) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = async () => {
+      try {
+        if (image.decode) await image.decode();
+        resolve();
+      } catch (error) {
+        reject(new Error(`${player.name} 사진 해독 실패`));
+      }
+    };
+    image.onerror = () => reject(new Error(`${player.name} 사진 로드 실패`));
+    image.src = player.photo;
+  });
+}
+
+function runCaptchaCountdown(token) {
+  const started = performance.now();
+  const update = () => {
+    if (token !== captchaGeneration) return;
+    const number = document.getElementById("captchaCountdownNumber");
+    if (number) number.textContent = Math.max(1, Math.ceil((CAPTCHA_COUNTDOWN_MS - (performance.now() - started)) / 1000));
+  };
+  update();
+  captchaCountdownInterval = setInterval(update, 100);
+  return new Promise(resolve => {
+    captchaCountdownResolve = resolve;
+    captchaCountdownTimeout = setTimeout(() => {
+      clearInterval(captchaCountdownInterval);
+      captchaCountdownInterval = null;
+      captchaCountdownTimeout = null;
+      captchaCountdownResolve = null;
+      resolve(true);
+    }, CAPTCHA_COUNTDOWN_MS);
+  });
+}
+
+async function waitForCaptchaPaint() {
+  await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+}
+
+async function startCaptchaGame() {
+  const token = cleanupCaptcha();
+  logPlay("captcha-speedrun");
+  render(`
+    <div class="captcha-screen captcha-countdown">
+      <button class="backbtn" id="captchaCountdownBack">← 처음으로</button>
+      <div class="captcha-countdown-number" id="captchaCountdownNumber">3</div>
+      <h1>선수 CAPTCHA 준비!</h1>
+      <div class="captcha-countdown-status">문제와 선수 사진을 미리 불러오는 중…</div>
+      <div class="captcha-source">선수·소속 정보 및 사진: FotMob 스쿼드 데이터</div>
+    </div>
+  `);
+  document.getElementById("captchaCountdownBack").onclick = renderHome;
+
+  try {
+    const playersPromise = loadCaptchaPlayers();
+    const roundPromise = playersPromise.then(buildCaptchaRound);
+    const preloadPromise = playersPromise.then(players => Promise.all(players.map(preloadCaptchaPhoto)));
+    await Promise.all([runCaptchaCountdown(token), roundPromise, preloadPromise]);
+    if (token !== captchaGeneration) return;
+    const players = await playersPromise;
+    const questions = await roundPromise;
+    captchaState = {
+      players, questions, index: 0, selected: new Set(), wrong: 0, startAt: null, replacing: false,
+      usedConditions: new Set(questions.map(q => `${q.condition.key}:${q.condition.value}`)),
+    };
+    renderCaptchaQuestion();
+    await waitForCaptchaPaint();
+    if (token !== captchaGeneration || !captchaState) return;
+    captchaState.startAt = performance.now();
+    updateCaptchaTimer(token);
+  } catch (error) {
+    if (token !== captchaGeneration) return;
+    console.error("CAPTCHA preparation failed", error);
+    renderCaptchaError();
+  }
+}
+
+function renderCaptchaError() {
+  render(`
+    <div class="captcha-screen"><div class="captcha-error">
+      <div style="font-size:42px">🛠️</div><h1>준비하지 못했어요</h1>
+      <p class="sub">데이터나 사진을 불러오지 못했습니다. 연결을 확인한 뒤 다시 시도해 주세요.</p>
+      <button class="primary" id="captchaRetryBtn">다시 시도</button>
+      <button id="captchaErrorHome">처음으로</button>
+    </div></div>
+  `);
+  document.getElementById("captchaRetryBtn").onclick = startCaptchaGame;
+  document.getElementById("captchaErrorHome").onclick = renderHome;
+}
+
+function renderCaptchaQuestion() {
+  const s = captchaState;
+  if (!s) return;
+  const question = s.questions[s.index];
+  render(`
+    <div class="captcha-screen">
+      <div class="captcha-topbar">
+        <button class="backbtn" id="captchaBackBtn">← 홈</button>
+        <div class="captcha-timer" id="captchaTimer">${captchaElapsedText(s)}</div>
+      </div>
+      <div class="captcha-box">
+        <div class="captcha-prompt">
+          <div class="captcha-prompt-copy"><span>다음 조건에 맞는 선수를 모두 선택하세요</span><strong>${escapeHtml(question.condition.label)}</strong><small>해당 선수를 빠짐없이 선택한 뒤 제출을 누르세요.</small></div>
+          <div class="captcha-round" aria-label="현재 라운드">${s.index + 1} / 5</div>
+        </div>
+        <div class="captcha-grid">
+          ${question.cards.map((player, index) => `
+            <button class="captcha-card" type="button" aria-label="선수 사진 ${index + 1}" aria-pressed="false">
+              <img src="${escapeHtml(player.photo)}" alt="" draggable="false">
+            </button>
+          `).join("")}
+        </div>
+        <div class="captcha-actions">
+          <button class="captcha-refresh" id="captchaRefreshBtn" type="button" aria-label="새 문제로 교체" title="새 문제로 교체">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.65 6.35A7.95 7.95 0 0 0 12 4a8 8 0 1 0 7.75 10h-2.1A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35Z"/></svg>
+          </button>
+          <div class="captcha-feedback" id="captchaFeedback" role="status" aria-live="polite"></div>
+          <button class="captcha-submit" id="captchaSubmitBtn">제출</button>
+        </div>
+      </div>
+      <div class="captcha-source">데이터와 선수 사진 출처: FotMob</div>
+    </div>
+  `);
+  document.getElementById("captchaBackBtn").onclick = renderHome;
+  document.querySelectorAll(".captcha-card").forEach((card, index) => {
+    card.onclick = () => {
+      if (s.replacing) return;
+      const id = String(question.cards[index].id);
+      if (s.selected.has(id)) s.selected.delete(id); else s.selected.add(id);
+      const selected = s.selected.has(id);
+      card.classList.toggle("selected", selected);
+      card.setAttribute("aria-pressed", String(selected));
+      const feedback = document.getElementById("captchaFeedback");
+      if (feedback) feedback.textContent = "";
+    };
+  });
+  document.getElementById("captchaRefreshBtn").onclick = refreshCaptchaQuestion;
+  document.getElementById("captchaSubmitBtn").onclick = submitCaptchaAnswer;
+}
+
+function updateCaptchaTimer(token) {
+  if (token !== captchaGeneration || !captchaState?.startAt) return;
+  const timer = document.getElementById("captchaTimer");
+  if (timer) timer.textContent = `${((performance.now() - captchaState.startAt) / 1000).toFixed(3)}초`;
+  captchaTimerFrame = requestAnimationFrame(() => updateCaptchaTimer(token));
+}
+
+function captchaElapsedText(state) {
+  return state?.startAt ? `${((performance.now() - state.startAt) / 1000).toFixed(3)}초` : "0.000초";
+}
+
+function buildCaptchaReplacement(state, keys) {
+  const current = state.questions[state.index];
+  const currentCardIds = new Set(current.cards.map(player => String(player.id)));
+  for (const key of shuffle(keys)) {
+    const replacement = buildCaptchaQuestion(state.players, key, state.usedConditions, currentCardIds);
+    if (replacement) return replacement;
+  }
+  // 오래 플레이해 새 조건이 소진되면 방금 본 조건만 피한다. 사진판은 항상 전부 바꾼다.
+  const justFailed = new Set([`${current.condition.key}:${current.condition.value}`]);
+  for (const key of shuffle(keys)) {
+    const replacement = buildCaptchaQuestion(state.players, key, justFailed, currentCardIds);
+    if (replacement) return replacement;
+  }
+  return null;
+}
+
+function finishCaptchaReplacement(state, replacement) {
+  if (!replacement) {
+    cleanupCaptcha();
+    renderCaptchaError();
+    return;
+  }
+  state.questions[state.index] = replacement;
+  state.usedConditions.add(`${replacement.condition.key}:${replacement.condition.value}`);
+  state.selected = new Set();
+  state.replacing = false;
+  renderCaptchaQuestion();
+}
+
+function refreshCaptchaQuestion() {
+  const s = captchaState;
+  if (!s?.startAt || s.replacing) return;
+  s.replacing = true;
+  document.querySelectorAll(".captcha-card, #captchaRefreshBtn, #captchaSubmitBtn").forEach(element => { element.disabled = true; });
+  const grid = document.querySelector(".captcha-grid");
+  if (grid) {
+    grid.className = "captcha-grid is-loading";
+    grid.innerHTML = `<div class="captcha-loader" role="status"><div class="captcha-loader-ring" aria-hidden="true"></div><span>새 문제를 준비하는 중…</span></div>`;
+  }
+  const token = captchaGeneration;
+  captchaFeedbackTimeout = setTimeout(() => {
+    captchaFeedbackTimeout = null;
+    if (token !== captchaGeneration || captchaState !== s) return;
+    finishCaptchaReplacement(s, buildCaptchaReplacement(s, CAPTCHA_REFRESH_TYPES));
+  // 연타를 막고 오답 교체 때와 같은 로딩 시간을 보여준다.
+  }, 600);
+}
+
+function submitCaptchaAnswer() {
+  const s = captchaState;
+  if (!s?.startAt || s.replacing) return;
+  const answers = new Set(s.questions[s.index].answerIds);
+  const correct = s.selected.size === answers.size && [...s.selected].every(id => answers.has(id));
+  if (!correct) {
+    s.wrong += 1;
+    s.replacing = true;
+    document.querySelectorAll(".captcha-card, #captchaRefreshBtn, #captchaSubmitBtn").forEach(element => { element.disabled = true; });
+    const token = captchaGeneration;
+    const grid = document.querySelector(".captcha-grid");
+    const feedback = document.getElementById("captchaFeedback");
+    if (grid) {
+      grid.className = "captcha-grid is-loading";
+      grid.innerHTML = `<div class="captcha-loader is-error" role="status"><div class="captcha-loader-ring" aria-hidden="true"></div><span>오답입니다.</span></div>`;
+    }
+    if (feedback) feedback.textContent = "";
+    captchaFeedbackTimeout = setTimeout(() => {
+      captchaFeedbackTimeout = null;
+      if (token !== captchaGeneration || captchaState !== s) return;
+      finishCaptchaReplacement(s, buildCaptchaReplacement(s, [s.questions[s.index].condition.key]));
+    }, 600);
+    return;
+  }
+  if (s.index === s.questions.length - 1) {
+    const elapsedMs = performance.now() - s.startAt;
+    if (captchaTimerFrame !== null) cancelAnimationFrame(captchaTimerFrame);
+    captchaTimerFrame = null;
+    renderCaptchaResult(elapsedMs);
+    return;
+  }
+  s.index += 1;
+  s.selected = new Set();
+  renderCaptchaQuestion();
+}
+
+async function submitCaptchaScore(nickname, elapsedMs) {
+  const ref = doc(db, "captchaLeaderboard", "allTime", "entries", deviceId());
+  const previous = await getDoc(ref);
+  if (previous.exists() && previous.data().elapsedMs <= elapsedMs) return false;
+  await commitLeaderboardScore("captcha-speedrun", ref, { nickname, elapsedMs, updatedAt: new Date() });
+  return true;
+}
+
+async function fetchCaptchaLeaderboard(top = 10) {
+  const q = query(collection(db, "captchaLeaderboard", "allTime", "entries"), orderBy("elapsedMs", "asc"), limit(top));
+  const snap = await getDocs(q);
+  return snap.docs.map(item => ({ id: item.id, ...item.data() }));
+}
+
+async function renderCaptchaLeaderboard() {
+  const body = document.getElementById("captchaLeaderboardBody");
+  if (!body) return;
+  try {
+    const rows = await fetchCaptchaLeaderboard();
+    const mine = deviceId();
+    body.innerHTML = rows.length ? rows.map((row, index) => {
+      const rank = rows.findIndex(other => other.elapsedMs === row.elapsedMs) + 1;
+      return `<tr class="${row.id === mine ? "me" : ""}"><td>${rank}</td><td>${escapeHtml(row.nickname)}</td><td>${(row.elapsedMs / 1000).toFixed(3)}초</td></tr>`;
+    }).join("") : `<tr><td colspan="3">아직 기록이 없습니다.</td></tr>`;
+  } catch (error) {
+    console.error("CAPTCHA leaderboard failed", error);
+    body.innerHTML = `<tr><td colspan="3">순위표를 불러오지 못했습니다.</td></tr>`;
+  }
+}
+
+function renderCaptchaResult(elapsedMs) {
+  const finalElapsedMs = Math.max(1, Math.round(elapsedMs));
+  const sec = finalElapsedMs / 1000, wrong = captchaState?.wrong || 0;
+  window.FSPoints?.earn("captcha", Math.max(5, 25 + (sec < 15 ? 25 : sec < 30 ? 15 : sec < 60 ? 5 : 0) - 5 * wrong),
+    `${sec.toFixed(1)}초${wrong ? ` · 오답 ${wrong}` : ""}`);
+  render(`
+    <div class="captcha-screen"><div class="captcha-result">
+      <div class="captcha-result-mark" aria-hidden="true">✅</div><h1>5문제 완료!</h1>
+      <div class="captcha-result-time">${(finalElapsedMs / 1000).toFixed(3)}초</div>
+      <div class="nick-row"><input id="captchaNickInput" maxlength="20" placeholder="닉네임"><button class="primary" id="captchaScoreBtn">기록 등록</button></div>
+      <table class="lb"><thead><tr><th>순위</th><th>닉네임</th><th>시간</th></tr></thead><tbody id="captchaLeaderboardBody"><tr><td colspan="3">불러오는 중…</td></tr></tbody></table>
+      <div class="captcha-result-actions">
+        <button class="captcha-result-btn primary" id="captchaAgainBtn">다시 도전</button>
+        <button class="captcha-result-btn" id="captchaResultHome">처음으로</button>
+      </div>
+      <div class="captcha-source">데이터와 선수 사진 출처: FotMob</div>
+    </div></div>
+  `);
+  document.getElementById("captchaAgainBtn").onclick = startCaptchaGame;
+  document.getElementById("captchaResultHome").onclick = renderHome;
+  document.getElementById("captchaScoreBtn").onclick = async () => {
+    const nickname = (document.getElementById("captchaNickInput").value.trim() || "익명").slice(0, 20);
+    const button = document.getElementById("captchaScoreBtn");
+    button.disabled = true;
+    button.textContent = "등록 중…";
+    try {
+      const improved = await submitCaptchaScore(nickname, finalElapsedMs);
+      await renderCaptchaLeaderboard();
+      rankBonus("captcha", improved, () => fetchCaptchaLeaderboard(10));
+      button.textContent = improved ? "등록 완료" : "이미 더 빠른 기록 보유";
+    } catch (error) {
+      console.error(error);
+      button.disabled = false;
+      button.textContent = "등록 실패 · 다시 시도";
+    }
+  };
+  renderCaptchaLeaderboard();
+}
+
+// ---------------------------------------------------------------- boot
+
+(async function boot() {
+  try {
+    await Promise.all([loadPlayers(), loadSearchPool()]);
+    if (!ALL_PLAYERS.length) {
+      render(`<div class="loading">아직 선수 데이터가 준비되지 않았습니다.</div>`);
+      return;
+    }
+    renderHome();
+  } catch (e) {
+    console.error(e);
+    render(`<div class="loading">데이터를 불러오는 중 오류가 발생했습니다.</div>`);
+  }
+})();
+</script>
+</body>
+</html>
